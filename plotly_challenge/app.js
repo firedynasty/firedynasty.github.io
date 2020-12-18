@@ -106,7 +106,9 @@ d3.json("samples.json").then((d) => {
       xaxis: { title: "OTU ID"},
     };
 
-    
+    console.log(OtuID);
+    console.log(SampleValues);
+
     var bubbleTrace1 = {
       x: OtuID,
       y: SampleValues,
