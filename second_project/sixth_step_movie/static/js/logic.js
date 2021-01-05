@@ -16,13 +16,7 @@ L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_toke
 
 // Use this link to get the geojson data.
 var link = "static/data/movies.geojson";
-
-
-
 var man = []
-
-
-
 var geojsonMarkerOptions = {
   radius: 3,
   fillColor: "#4682B4",
@@ -32,37 +26,29 @@ var geojsonMarkerOptions = {
   fillOpacity: 0.8
 };
 
-
-
-
 // Grabbing our GeoJSON data..
 d3.json(link, function(data) {
   // Creating a GeoJSON layer with the retrieved data
   // this beomes blue and then you can style it however which way you need in the other logic files
   console.log(data);
-  
   man = data;
-
- console.log(man)
-
-
-
+  console.log(man)
   // .bindPopup("<h3>"+"<a href=\""+ man['features'][i]['properties']['url'] + "\""+" target=\"_blank\">" + man['features'][i]['properties']['name'] + "</a> </h3> <hr> <h5>Rating " + man['features'][i]['properties']['rating'] + "</h5>")
-var geoJsonMap = L.geoJSON(data, {
+  var geoJsonMap = L.geoJSON(data, {
 
-  pointToLayer: function (feature, latlng) {
-    return L.circleMarker(latlng, geojsonMarkerOptions);
+    pointToLayer: function (feature, latlng) {
+     return L.circleMarker(latlng, geojsonMarkerOptions);
   },
   // onEachFeature: function(feature, layer) {
   //             var popupText = ""<h3>"+"<a href=\""+ man['features'][i]['properties']['url'] + "\""+" target=\"_blank\">" + man['features'][i]['properties']['name'] + "</a> </h3> <hr> <h5>Rating " + man['features'][i]['properties']['rating'] + "</h5>";
   //             layer.bindPopup(popupText); }
   // onEachFeature: onEachFeature
-  onEachFeature: function (feature, layer) {
-    var popupText = "<h5>" + "<a href=\"" + feature.properties.url + "\""+" target=\"_blank\">" + feature.properties.film_year + "</a></h5> <hr> <h5>" + feature.properties.location + "</h5><h5>" + feature.properties.genre + "</h5> <h5>" + feature.properties.plot + "</h5> <h5> Rated: " + feature.properties.rated + " ,     Ratings: " + feature.properties.rating + "<h5>" 
+    onEachFeature: function (feature, layer) {
+      var popupText = "<h5>" + "<a href=\"" + feature.properties.url + "\""+" target=\"_blank\">" + feature.properties.film_year + "</a></h5> <hr> <h5>" + feature.properties.location + "</h5><h5>" + feature.properties.genre + "</h5> <h5>" + feature.properties.plot + "</h5> <h5> Rated: " + feature.properties.rated + " ,     Ratings: " + feature.properties.rating + "<h5>" 
     // var popupText = "<h3>"+"<a href=\""+ feature.properties.url + "\""+" target=\"_blank\">" + feature.properties.name +
     // "</a> </h3> <hr> <h5>Rating " + feature.properties.rating + "</h5>" + "<hr> <h5>" + feature.properties.review_count + "</h5> <hr> <h5>" + feature.properties.categories_list.replace(/[`~!@#$%^&*()_|+\-=?;:'".<>\{\}\[\]\\\/]/gi, '') + "</h5>"
-    layer.bindPopup(popupText);
-    layer.on('mouseover', function() {layer.openPopup();});
+      layer.bindPopup(popupText);
+      layer.on('mouseover', function() {layer.openPopup();});
     // layer.on('mouseout', function() {layer.closePopup();});
   }
 }).addTo(myMap);
