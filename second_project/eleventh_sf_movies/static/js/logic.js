@@ -92,11 +92,12 @@ function makeMyMap(error, movies, nyc_yelp)  {
   var myMap = L.map("map", {
     center: [37.7749, -122.4194],
   zoom: 13,
-  layers: [light]
+  layers: [light, moviesGeoJsonMap2]
   });
 
   L.control.layers(baseMaps, overlayMaps).addTo(myMap);
 
+  myMap.addLayer(movies_popup);
 };
 
 
