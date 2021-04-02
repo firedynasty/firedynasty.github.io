@@ -1,9 +1,9 @@
 
 
-## Link to deployed:
+## Data Visualization Project
 
 
-[Link to Deployed](https://firedynasty.github.io/second_project/tenth_step_plus_airbnb/)
+[Link to site](https://firedynasty.github.io/second_project/tenth_step_plus_airbnb/)
 
 
 Deployed are New York Yelp ratings, movie ratings, demographics, and crime. 
