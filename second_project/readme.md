@@ -16,7 +16,7 @@ Movie data was obtained from NYC Open Data.
 
 ### Yelp: 
 
-![yelp](images/yelp.png)
+![yelp](images/yelp.jpg)
 
 ### Movies:
 
