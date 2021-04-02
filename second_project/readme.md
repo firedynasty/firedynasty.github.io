@@ -20,7 +20,9 @@ Movie data was obtained from NYC Open Data.
 
 ### Movies:
 
+![movies](images/movies.jpg)
 
 ### Demographics: 
 
+![demographics](images/demographics.jpg)
 
