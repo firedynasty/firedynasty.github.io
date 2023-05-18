@@ -183,14 +183,17 @@ function renderFlippedChessboard(fenString, tableId) {
 
 
   function scrollToHome() {
-    const element = document.getElementById('myBoard');
+    event.preventDefault(); // Prevent default link behavior
+    const element = document.getElementById('header_title');
+    const delay = 100; // Delay in milliseconds (adjust as needed)
     previousScrollPosition = window.pageYOffset; // Store the current scroll position
-
+  
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+      setTimeout(function() {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }, delay);
     }
   }
-
 
 
 // Get all the tables with a specific class
@@ -208,6 +211,7 @@ for (var i = 0; i < tables.length; i++) {
       board.position(content)
       document.getElementById("fenposition_1").innerHTML = content
       console.log(content);
+      scrollToHome();
     }
   });
 }
