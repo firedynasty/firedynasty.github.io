@@ -211,7 +211,6 @@ for (var i = 0; i < tables.length; i++) {
       board.position(content)
       document.getElementById("fenposition_1").innerHTML = content
       console.log(content);
-      scrollToHome();
     }
   });
 }

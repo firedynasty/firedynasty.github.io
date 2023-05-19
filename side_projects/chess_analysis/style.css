@@ -166,21 +166,20 @@ article {
 }
 
 
+
 @media screen and (min-width: 70em) {
   main {
     display: grid;
-    grid-template-columns: 3fr 1fr;
+    grid-template-columns: 3fr 1fr; /* Adjusted to have four columns */
     column-gap: 20px;
   }
-
-  article {
-    margin-bottom: 0;
+  
+  .two-columns-grid {
+    grid-column: 1 / span 3; /* Span three columns */
   }
-
-
-  footer {
-    border-top: 1px solid #ccc;
-    margin-top: 2em;
+  
+  .sidebar {
+    grid-column: 4; /* Place in the fourth column */
   }
 }
 
@@ -213,8 +212,8 @@ tfoot{
 
 #fenposition_1 {
   display: flex;
-  justify-content: center;
-  align-items: center;
+  /* justify-content: center;
+  align-items: center; */
 }
 
 .chess-table:hover {
@@ -226,3 +225,14 @@ tfoot{
 }
 
 /* the way to use this is "chess-table pink" */
+
+/* container */
+.two-columns-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+/* columns */
+.two-columns-grid > * {
+  padding:1rem;
+}
