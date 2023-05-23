@@ -227,6 +227,19 @@ window.onload = function () {
   }
   
 
+    
+
+  function scrollToHome() {
+    event.preventDefault(); // Prevent default link behavior
+    const delay = 100; // Delay in milliseconds (adjust as needed)
+    previousScrollPosition = window.pageYOffset; // Store the current scroll position
+  
+    setTimeout(function() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, delay);
+  }
+  
+
 
 
 
@@ -247,7 +260,6 @@ for (var i = 0; i < tables.length; i++) {
       console.log(content);
       //return index of the list
       counter_ = listOfFenPositions.indexOf(content)
-      document.getElementById('forIndexOfList').innerHTML = counter_
       document.getElementById('forIndexOfList2').innerHTML = counter_
     }
   });
@@ -284,7 +296,6 @@ $("body").keydown(function(e) {
       // Reset the counter to 0
           counter_ = 0;
    }
-   document.getElementById('forIndexOfList').innerHTML = counter_
    document.getElementById('forIndexOfList2').innerHTML = counter_
 
    board.position(listOfFenPositions[counter_])
@@ -300,7 +311,6 @@ $("body").keydown(function(e) {
   // Reset the counter to 0
       counter_ = 0;
   }
-  document.getElementById('forIndexOfList').innerHTML = counter_
   document.getElementById('forIndexOfList2').innerHTML = counter_
 
    console.log(counter_)
@@ -309,11 +319,7 @@ $("body").keydown(function(e) {
 });
 
 
-var createBoardLink = document.getElementById('createBoardLink')
 
-createBoardLink.addEventListener('click', function() {
-  scrollToElement();
-})
 
 
      // create a javascript function called "repopulate_table_drop"
@@ -376,7 +382,6 @@ table_drop_choice.addEventListener("change", function () {
       console.log(content);
     //return index of the list
       counter_ = listOfFenPositions.indexOf(content)
-      document.getElementById('forIndexOfList').innerHTML = counter_
       document.getElementById('forIndexOfList2').innerHTML = counter_
     }
 
@@ -401,7 +406,6 @@ for (var i = 0; i < tables2.length; i++) {
       var matchResult = tableId.match(/\d+$/);
       if (matchResult !== null) {
         counter_ = parseInt(matchResult[0]);
-        document.getElementById('forIndexOfList').innerHTML = counter_
         document.getElementById('forIndexOfList2').innerHTML = counter_
       } else {
         console.log("No match found.");
@@ -424,7 +428,6 @@ for (var i = 0; i < tables3.length; i++) {
       if (firstTd) {
         var dataValue = firstTd.getAttribute('data-value');
         counter_ = parseInt(dataValue);
-        document.getElementById('forIndexOfList').innerHTML = counter_;
         document.getElementById('forIndexOfList2').innerHTML = counter_;
       } else {
         console.log("No matching cell found.");
@@ -439,6 +442,59 @@ for (var i = 0; i < tables3.length; i++) {
       // ... rest of your event listener code ...
     });
   })(i);
+}
+
+
+
+
+
+
+
+
+// var createBoardLink = document.getElementById('createBoardLink')
+
+// createBoardLink.addEventListener('click', function() {
+//   event.preventDefault();
+//   navigateToNextComment();
+
+// })
+
+
+
+function testFunction(number) {
+  let commentElements = document.querySelectorAll('span.comment');
+
+  // Handle different test functions based on the number parameter
+  switch (number) {
+    case 1:
+      // Test function for number 1
+      console.log("Test function 1");
+      commentElements[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      break;
+    case 2:
+      // Test function for number 2
+      console.log("Test function 2");
+      commentElements[1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      break;
+    case 3:
+      // Test function for number 3
+      console.log("Test function 3");
+      commentElements[2].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      break;
+    case 4:
+      // Test function for number 4
+      console.log("Test function 4");
+      commentElements[3].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      break;
+    case 5:
+      // Test function for number 5
+      console.log("Test function 5");
+      commentElements[4].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      break;
+    default:
+      console.log("Invalid number");
+      break;
+  }
 }
 
 

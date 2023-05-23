@@ -887,3 +887,46 @@ for (var i = 0; i < tables3.length; i++) {
     });
 
 ```
+
+Added a link to go to comments and by number: 
+However, there is an issue that I cannot dynamically generate these links
+
+```js
+function testFunction(number) {
+  let commentElements = document.querySelectorAll('span.comment');
+
+  // Handle different test functions based on the number parameter
+  switch (number) {
+    case 1:
+      // Test function for number 1
+      console.log("Test function 1");
+      commentElements[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      break;
+    case 2:
+      // Test function for number 2
+      console.log("Test function 2");
+      commentElements[1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      break;
+    case 3:
+      // Test function for number 3
+      console.log("Test function 3");
+      commentElements[2].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      break;
+    case 4:
+      // Test function for number 4
+      console.log("Test function 4");
+      commentElements[3].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      break;
+    case 5:
+      // Test function for number 5
+      console.log("Test function 5");
+      commentElements[4].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      break;
+    default:
+      console.log("Invalid number");
+      break;
+  }
+}
+
+
+```

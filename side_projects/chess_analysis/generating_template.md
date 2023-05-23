@@ -27,14 +27,17 @@ with open("01.pgn") as f:
             to_square = move.to_square
             uci = chess.Move(from_square, to_square).uci()
             move_list.append(uci)
-            if count_ % 2 == 0:
-                string_html += f"{board.fen()}\nprev move: {move_list[i-1]}, move:{move_list[i]} \n\n"
+            #if count_ % 2 == 0:
+            #string_html += f"{board.fen()}\nprev move: {move_list[i-1]}, move:{move_list[i]} \n\n"
+            string_html += f"{board.fen()}\nmove:{move_list[i]} \n\n"
+
             board.push(move)
 
         # Print the final output string for the game
         print(string_html)
         print('\n')  # Print a new line after each game
         print(len(move_list))
+pyperclip.copy(string_html)
 ```
 
 The fen positions should look like: 
@@ -52,7 +55,7 @@ Insert that into the template string below:
 
 # convert chess template
 
-```html
+```python
 template="""r1bqr1k1/ppp2ppp/2np1n2/3P4/8/P1PBB3/P4PPP/R2QK1NR b - - 0 1
 prev move: , move:d4d5 
 
@@ -83,6 +86,7 @@ for line in template.split("\n\n"):
               for (var col = 1; col <= 8; col++) {{
                 var td = document.createElement('td');
                 td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13'); // Add custom attribute and assign value
                 tr.appendChild(td);
               }}
               tbody.appendChild(tr);
@@ -102,55 +106,44 @@ Insert tables into the webpage:
             <tbody></tbody>
             <tfoot><tr><td>r1bqr1k1/ppp2ppp/2np1n2/3P4/8/P1PBB3/P4PPP/R2QK1NR</td></tr></tfoot>
           </table>
-          
-          <script>
-            var tbody = document.querySelector('#chess1 tbody');
-            for (var row = 1; row <= 8; row++) {
-              var tr = document.createElement('tr');
-              for (var col = 1; col <= 8; col++) {
-                var td = document.createElement('td');
-                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
-                tr.appendChild(td);
-              }
-              tbody.appendChild(tr);
-            }
-          </script>
-          <p>prev move: , move:d4d5 </p>
-          <br><table id="chess2" class="chess-table pink">
-            <tbody></tbody>
-            <tfoot><tr><td>r1bqr1k1/ppp1nppp/3p1n2/3P4/2P5/P2BB3/P4PPP/R2QK1NR</td></tr></tfoot>
-          </table>
-          
-          <script>
-            var tbody = document.querySelector('#chess2 tbody');
-            for (var row = 1; row <= 8; row++) {
-              var tr = document.createElement('tr');
-              for (var col = 1; col <= 8; col++) {
-                var td = document.createElement('td');
-                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
-                tr.appendChild(td);
-              }
-              tbody.appendChild(tr);
-            }
-          </script>
-          <p>prev move: c6e7, move:c3c4 </p>
-          <br><table id="chess3" class="chess-table pink">
-            <tbody></tbody>
-            <tfoot><tr><td>r1bqr1k1/p1p1nppp/3p1n2/1P1P4/8/P2BB3/P4PPP/R2QK1NR</td></tr></tfoot>
-          </table>
-          
-          <script>
-            var tbody = document.querySelector('#chess3 tbody');
-            for (var row = 1; row <= 8; row++) {
-              var tr = document.createElement('tr');
-              for (var col = 1; col <= 8; col++) {
-                var td = document.createElement('td');
-                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
-                tr.appendChild(td);
-              }
-              tbody.appendChild(tr);
-            }
-          </script>
-          <p>prev move: b7b5, move:c4b5</p>
-          <br>
+... etc
 ```
+
+There are two other types of tables: a green table
+
+```html
+
+ <table id="chessA13" class="chess-line green">
+          <tbody></tbody>
+          <tfoot><tr><td>r1bq1rk1/ppp1ppbp/2np1np1/8/2BPP3/2N2N1P/PPP2PP1/R1BQ1RK1</td></tr></tfoot>
+        </table>
+        
+        <script>
+          var tbody = document.querySelector('#chessA13 tbody');
+          for (var row = 1; row <= 8; row++) {
+            var tr = document.createElement('tr');
+            for (var col = 1; col <= 8; col++) {
+              var td = document.createElement('td');
+              td.className = ((row + col) % 2 == 0) ? "white" : "green";
+              tr.appendChild(td);
+            }
+            tbody.appendChild(tr);
+          }
+        </script>
+        <p>black to move after white castled</p>
+
+```
+
+Rename the python code so that you change chess{i} to chessA{i}
+And for the first green table to change the number after the green table so that it will go to that board
+
+And for purple change:
+
+td.setAttribute('data-value', '13'); // Add custom attribute and assign value
+
+For the board
+
+And for comment, what you want to do is to use <span class="comment">comment:</span>
+
+and that will take you to place in the page that you want to go.
+
