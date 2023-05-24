@@ -311,7 +311,8 @@ $("body").keydown(function(e) {
   // Reset the counter to 0
       counter_ = 0;
   }
-  document.getElementById('forIndexOfList2').innerHTML = counter_
+   document.getElementById('forIndexOfList2').innerHTML = counter_
+   
 
    console.log(counter_)
    board.position(listOfFenPositions[counter_])
@@ -450,51 +451,89 @@ for (var i = 0; i < tables3.length; i++) {
 
 
 
+let chesstableElements = document.querySelectorAll('table.chess-table');
+var createBoardLink = document.getElementById('createBoardLink')
 
-// var createBoardLink = document.getElementById('createBoardLink')
+createBoardLink.addEventListener('click', function() {
+  chesstableElements[counter_].scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-// createBoardLink.addEventListener('click', function() {
-//   event.preventDefault();
-//   navigateToNextComment();
+})
 
-// })
+
+
+// function testFunction(number) {
+//   let commentElements = document.querySelectorAll('span.comment');
+
+//   // Handle different test functions based on the number parameter
+//   switch (number) {
+//     case 1:
+//       // Test function for number 1
+//       console.log("Test function 1");
+//       commentElements[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+//       break;
+//     case 2:
+//       // Test function for number 2
+//       console.log("Test function 2");
+//       commentElements[1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+//       break;
+//     case 3:
+//       // Test function for number 3
+//       console.log("Test function 3");
+//       commentElements[2].scrollIntoView({ behavior: 'smooth', block: 'center' });
+//       break;
+//     case 4:
+//       // Test function for number 4
+//       console.log("Test function 4");
+//       commentElements[3].scrollIntoView({ behavior: 'smooth', block: 'center' });
+//       break;
+//     case 5:
+//       // Test function for number 5
+//       console.log("Test function 5");
+//       commentElements[4].scrollIntoView({ behavior: 'smooth', block: 'center' });
+//       break;
+//     default:
+//       console.log("Invalid number");
+//       break;
+//   }
+// }
+
 
 
 
 function testFunction(number) {
   let commentElements = document.querySelectorAll('span.comment');
+  commentElements[number - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-  // Handle different test functions based on the number parameter
-  switch (number) {
-    case 1:
-      // Test function for number 1
-      console.log("Test function 1");
-      commentElements[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-      break;
-    case 2:
-      // Test function for number 2
-      console.log("Test function 2");
-      commentElements[1].scrollIntoView({ behavior: 'smooth', block: 'center' });
-      break;
-    case 3:
-      // Test function for number 3
-      console.log("Test function 3");
-      commentElements[2].scrollIntoView({ behavior: 'smooth', block: 'center' });
-      break;
-    case 4:
-      // Test function for number 4
-      console.log("Test function 4");
-      commentElements[3].scrollIntoView({ behavior: 'smooth', block: 'center' });
-      break;
-    case 5:
-      // Test function for number 5
-      console.log("Test function 5");
-      commentElements[4].scrollIntoView({ behavior: 'smooth', block: 'center' });
-      break;
-    default:
-      console.log("Invalid number");
-      break;
-  }
 }
 
 
+let listOfPurplePinkChanges = [];
+
+let chessTables = document.querySelectorAll('table.chess-table');
+Array.from(chessTables).forEach(table => {
+  const classList = Array.from(table.classList);
+  const color = classList[1];
+  listOfPurplePinkChanges.push(color);
+});
+
+function findColorChanges(list) {
+  const colorChanges = [];
+  
+  let previousElement = list[0]; // Initialize previousElement with the first element of the list
+
+  for (let i = 1; i < list.length; i++) {
+    const currentElement = list[i];
+    
+    if (previousElement !== currentElement) {
+      colorChanges.push(i);
+    }
+    
+    previousElement = currentElement; // Update previousElement with the current element
+  }
+  const spanElement = document.getElementById('colorChanges');
+  spanElement.innerHTML = colorChanges.join(', '); // Convert the array to a string with comma-separated values
+  
+  return colorChanges;
+}
+
+findColorChanges(listOfPurplePinkChanges);
