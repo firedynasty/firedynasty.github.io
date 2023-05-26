@@ -1,0 +1,128 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    width: 90%;
+    margin: 2em auto;
+    font: 1em/1.3 Arial, Helvetica, sans-serif;
+}
+
+a:link,
+a:visited {
+    color: #333;
+}
+
+nav ul,
+aside ul {
+    list-style: none;
+    padding: 0;
+}
+
+nav a:link,
+nav a:visited {
+    background-color: rgba(207, 232, 220, 0.2);
+    border: 2px solid rgb(79, 185, 227);
+    text-decoration: none;
+    display: block;
+    padding: 10px;
+    color: #333;
+    font-weight: bold;
+}
+
+nav a:hover {
+    background-color: rgba(207, 232, 220, 0.7);
+}
+
+.related {
+    background-color: rgba(79, 185, 227, 0.3);
+    border: 1px solid rgb(79, 185, 227);
+    padding: 10px;
+}
+
+.sidebar {
+    background-color: rgba(207, 232, 220, 0.5);
+    padding: 10px;
+}
+
+article {
+    margin-bottom: 1em;
+}
+
+
+@media screen and (min-width: 40em) {
+    article {
+      display: grid;
+      grid-template-columns: 3fr 1fr;
+      column-gap: 20px;
+    }
+  
+    nav ul {
+      display: flex;
+    }
+  
+    nav li {
+      flex: 1;
+    }
+  }
+
+
+  @media screen and (min-width: 70em) {
+    main {
+      display: grid;
+      grid-template-columns: 3fr 1fr 1fr; /* Add the third column */
+      column-gap: 20px;
+    }
+    
+    article {
+      margin-bottom: 0;
+    }
+    
+    .sidebar {
+      grid-column: 3; /* Specify the third column */
+    }
+  
+    footer {
+      border-top: 1px solid #ccc;
+      margin-top: 2em;
+    }
+  }
+  
+
+  /* Set font styles for table */
+#my-table-2 {
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+/* Set background color and border styles for table headers */
+#my-table-2 th {
+  background-color: #ddd;
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+/* Set border styles for table cells */
+#my-table-2 td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+/* Set alternate row background colors */
+#my-table-2 tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+.grayscale {
+  -webkit-filter: grayscale(100%); /* Chrome, Safari, Opera */
+	filter: grayscale(100%);
+  
+}
