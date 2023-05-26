@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<!-- saved from url=(0033)https://cdpn.io/pen/debug/KKxgbmv -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width" />
+  <title>Media Queries: a simple mobile first design, step 1</title>
+  <link href="style.css" rel="stylesheet" type="text/css" />
+
+<style>
+.board {
+    width: 400px;
+    margin: auto;
+}
+
+.info {
+    width: 400px;
+    margin: auto;
+}
+
+.move-history {
+    max-height: 100px;
+    overflow-y: scroll;
+}
+
+/*!
+ * chessboard.js $version$
+ *
+ * Copyright 2013 Chris Oakman
+ * Released under the MIT license
+ * https://github.com/oakmac/chessboardjs/blob/master/LICENSE
+ *
+ * Date: $date$
+ */
+
+/* clearfix */
+.clearfix-7da63 {
+  clear: both;
+}
+
+/* board */
+.board-b72b1 {
+  border: 2px solid #404040;
+  -moz-box-sizing: content-box;
+  box-sizing: content-box;
+}
+
+/* square */
+.square-55d63 {
+  float: left;
+  position: relative;
+
+  /* disable any native browser highlighting */
+  -webkit-touch-callout: none;
+    -webkit-user-select: none;
+     -khtml-user-select: none;
+       -moz-user-select: none;
+        -ms-user-select: none;
+            user-select: none;
+}
+
+/* white square */
+.white-1e1d7 {
+  background-color: #f0d9b5;
+  color: #b58863;
+}
+
+/* black square */
+.black-3c85d {
+  background-color: #b58863;
+  color: #f0d9b5;
+}
+
+/* highlighted square */
+.highlight1-32417, .highlight2-9c5d2 {
+  -webkit-box-shadow: inset 0 0 3px 3px yellow;
+  -moz-box-shadow: inset 0 0 3px 3px yellow;
+  box-shadow: inset 0 0 3px 3px yellow;
+}
+
+/* notation */
+.notation-322f9 {
+  cursor: default;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  position: absolute;
+}
+.alpha-d2270 {
+  bottom: 1px;
+  right: 3px;
+}
+.numeric-fc462 {
+  top: 2px;
+  left: 2px;
+}
+</style>
+
+  
+  
+  
+</head>
+
+<body>
+  <!-- Used to get images -->
+<!--<base href="https://chessboardjs.com/">-->
+<header id="header1">
+  <nav>
+    <ul>
+      <li><a href="#" onclick="scrollToHome()">Go Top</a></li>
+      <li>Go to Comments >Go to : <select id="tableDropComments">
+        <option value="">tableDropComments</option>
+        <option value="1">1.</option>
+        <option value="2">2.</option>
+        <option value="3">3.</option>
+        <option value="4">4.</option>
+        <option value="5">5.</option>
+      </select>&nbsp;&nbsp;</button>
+      </li>
+
+    </ul>
+  </nav>
+</header>
+<div class="wrapper">
+    
+  <main>
+      <div class="two-columns-grid">
+        <div>
+        <div id="storeBoard">
+          <input type="number" id="myInput"><br>
+        <div id="myBoard" class="board"><div class="chessboard-63f37"><div class="board-b72b1" style="width: 392px;"><div class="row-5277c"><div class="square-55d63 white-1e1d7 square-a8" style="width:49px;height:49px;" id="a8-eddf-193b-d265-5642-5411-4596-c778-3251" data-square="a8"><div class="notation-322f9 numeric-fc462">8</div><img src="./CodePen - Basic Chess_files/bR.png" alt="" class="piece-417db" data-piece="bR" style="width:49px;height:49px;"></div><div class="square-55d63 black-3c85d square-b8" style="width:49px;height:49px;" id="b8-b319-3c3c-ce2a-21fd-be9c-a78e-e1e8-5e4e" data-square="b8"><img src="./CodePen - Basic Chess_files/bN.png" alt="" class="piece-417db" data-piece="bN" style="width:49px;height:49px;"></div><div class="square-55d63 white-1e1d7 square-c8" style="width:49px;height:49px;" id="c8-ebfb-69d1-8169-e4bb-e419-5058-b828-86ba" data-square="c8"><img src="./CodePen - Basic Chess_files/bB.png" alt="" class="piece-417db" data-piece="bB" style="width:49px;height:49px;"></div><div class="square-55d63 black-3c85d square-d8" style="width:49px;height:49px;" id="d8-bf44-5293-1f4d-1e88-8c33-66f4-a0f7-c198" data-square="d8"><img src="./CodePen - Basic Chess_files/bQ.png" alt="" class="piece-417db" data-piece="bQ" style="width:49px;height:49px;"></div><div class="square-55d63 white-1e1d7 square-e8" style="width:49px;height:49px;" id="e8-3fa2-53b9-e441-3ce6-8437-db43-3578-0525" data-square="e8"><img src="./CodePen - Basic Chess_files/bK.png" alt="" class="piece-417db" data-piece="bK" style="width:49px;height:49px;"></div><div class="square-55d63 black-3c85d square-f8" style="width:49px;height:49px;" id="f8-2aae-74d9-cb12-f1f5-4366-235c-af00-2356" data-square="f8"><img src="./CodePen - Basic Chess_files/bB.png" alt="" class="piece-417db" data-piece="bB" style="width:49px;height:49px;"></div><div class="square-55d63 white-1e1d7 square-g8" style="width:49px;height:49px;" id="g8-784d-aeb3-cd2f-62cb-4c3b-3b56-534f-564d" data-square="g8"><img src="./CodePen - Basic Chess_files/bN.png" alt="" class="piece-417db" data-piece="bN" style="width:49px;height:49px;"></div><div class="square-55d63 black-3c85d square-h8" style="width:49px;height:49px;" id="h8-a845-7e1c-1704-dccd-39ef-0dfe-e679-da3a" data-square="h8"><img src="./CodePen - Basic Chess_files/bR.png" alt="" class="piece-417db" data-piece="bR" style="width:49px;height:49px;"></div><div class="clearfix-7da63"></div></div><div class="row-5277c"><div class="square-55d63 black-3c85d square-a7" style="width:49px;height:49px;" id="a7-9669-a819-cab2-e458-896d-b4e5-bc3a-357d" data-square="a7"><div class="notation-322f9 numeric-fc462">7</div><img src="./CodePen - Basic Chess_files/bP.png" alt="" class="piece-417db" data-piece="bP" style="width:49px;height:49px;"></div><div class="square-55d63 white-1e1d7 square-b7" style="width:49px;height:49px;" id="b7-a89d-037f-f35b-61bf-5cd9-f345-34f8-5480" data-square="b7"><img src="./CodePen - Basic Chess_files/bP.png" alt="" class="piece-417db" data-piece="bP" style="width:49px;height:49px;"></div><div class="square-55d63 black-3c85d square-c7" style="width:49px;height:49px;" id="c7-7e64-27dd-d286-a1e3-5bd6-2eed-7701-a322" data-square="c7"><img src="./CodePen - Basic Chess_files/bP.png" alt="" class="piece-417db" data-piece="bP" style="width:49px;height:49px;"></div><div class="square-55d63 white-1e1d7 square-d7" style="width:49px;height:49px;" id="d7-d9b0-894e-8c68-2f53-f230-5be4-feed-1ab6" data-square="d7"><img src="./CodePen - Basic Chess_files/bP.png" alt="" class="piece-417db" data-piece="bP" style="width:49px;height:49px;"></div><div class="square-55d63 black-3c85d square-e7" style="width:49px;height:49px;" id="e7-09dd-815d-9a8d-cd90-6488-86f1-64e0-6802" data-square="e7"><img src="./CodePen - Basic Chess_files/bP.png" alt="" class="piece-417db" data-piece="bP" style="width:49px;height:49px;"></div><div class="square-55d63 white-1e1d7 square-f7" style="width:49px;height:49px;" id="f7-1f92-f580-3921-bf19-881c-9863-7012-da99" data-square="f7"><img src="./CodePen - Basic Chess_files/bP.png" alt="" class="piece-417db" data-piece="bP" style="width:49px;height:49px;"></div><div class="square-55d63 black-3c85d square-g7" style="width:49px;height:49px;" id="g7-9c3e-563d-4130-a74e-7775-a91f-b626-323c" data-square="g7"><img src="./CodePen - Basic Chess_files/bP.png" alt="" class="piece-417db" data-piece="bP" style="width:49px;height:49px;"></div><div class="square-55d63 white-1e1d7 square-h7" style="width:49px;height:49px;" id="h7-ba0c-80e3-0919-15d8-253d-ac49-aa5d-bb7e" data-square="h7"><img src="./CodePen - Basic Chess_files/bP.png" alt="" class="piece-417db" data-piece="bP" style="width:49px;height:49px;"></div><div class="clearfix-7da63"></div></div><div class="row-5277c"><div class="square-55d63 white-1e1d7 square-a6" style="width:49px;height:49px;" id="a6-fa96-5101-1804-1576-7fd7-44a7-77c1-7c0e" data-square="a6"><div class="notation-322f9 numeric-fc462">6</div></div><div class="square-55d63 black-3c85d square-b6" style="width:49px;height:49px;" id="b6-7a6a-e127-71c3-c30c-a8ea-ad4a-c9a3-c590" data-square="b6"></div><div class="square-55d63 white-1e1d7 square-c6" style="width:49px;height:49px;" id="c6-ef48-4045-6be8-9ab0-cac2-831b-ae24-0ae2" data-square="c6"></div><div class="square-55d63 black-3c85d square-d6" style="width:49px;height:49px;" id="d6-a49a-717b-c9ab-fca4-5e9b-5c30-fada-67db" data-square="d6"></div><div class="square-55d63 white-1e1d7 square-e6" style="width:49px;height:49px;" id="e6-bfcd-2eb5-0e0d-6168-bf42-ed2b-a550-0e5d" data-square="e6"></div><div class="square-55d63 black-3c85d square-f6" style="width:49px;height:49px;" id="f6-1c74-1b3e-d429-bb07-f073-72ca-c951-8c7c" data-square="f6"></div><div class="square-55d63 white-1e1d7 square-g6" style="width:49px;height:49px;" id="g6-408b-4475-d845-cbf1-d574-f070-ea0c-b235" data-square="g6"></div><div class="square-55d63 black-3c85d square-h6" style="width:49px;height:49px;" id="h6-2753-fd89-0a8f-fb0b-c9e8-7188-c11e-28ba" data-square="h6"></div><div class="clearfix-7da63"></div></div><div class="row-5277c"><div class="square-55d63 black-3c85d square-a5" style="width:49px;height:49px;" id="a5-8478-7599-daae-4a2a-bbc9-bc24-0a15-dc82" data-square="a5"><div class="notation-322f9 numeric-fc462">5</div></div><div class="square-55d63 white-1e1d7 square-b5" style="width:49px;height:49px;" id="b5-38df-fe16-4264-05b4-4b48-9724-9a88-fa9c" data-square="b5"></div><div class="square-55d63 black-3c85d square-c5" style="width:49px;height:49px;" id="c5-66bf-062c-efc1-b19b-7605-bf8e-45eb-089c" data-square="c5"></div><div class="square-55d63 white-1e1d7 square-d5" style="width:49px;height:49px;" id="d5-4114-6d4e-b17c-bdc9-7421-ebb0-6c9c-d70b" data-square="d5"></div><div class="square-55d63 black-3c85d square-e5" style="width:49px;height:49px;" id="e5-bcf4-90d6-e813-51ee-dd7b-14d1-3d3a-df9d" data-square="e5"></div><div class="square-55d63 white-1e1d7 square-f5" style="width:49px;height:49px;" id="f5-e7c4-9375-08a4-c0b4-32e7-9212-d0e5-b72b" data-square="f5"></div><div class="square-55d63 black-3c85d square-g5" style="width:49px;height:49px;" id="g5-bd86-51c6-99a0-e2c1-0541-d754-e576-ca06" data-square="g5"></div><div class="square-55d63 white-1e1d7 square-h5" style="width:49px;height:49px;" id="h5-a23e-2819-1c11-388b-cb2e-71f3-1c3c-e0d7" data-square="h5"></div><div class="clearfix-7da63"></div></div><div class="row-5277c"><div class="square-55d63 white-1e1d7 square-a4" style="width:49px;height:49px;" id="a4-a769-0164-ce64-dc05-5613-9eb3-8397-dcbf" data-square="a4"><div class="notation-322f9 numeric-fc462">4</div></div><div class="square-55d63 black-3c85d square-b4" style="width:49px;height:49px;" id="b4-097c-48ef-630f-d477-e1d1-cfff-3494-101a" data-square="b4"></div><div class="square-55d63 white-1e1d7 square-c4" style="width:49px;height:49px;" id="c4-9ac7-f524-f0be-75b9-2a85-7e3f-28b2-c599" data-square="c4"></div><div class="square-55d63 black-3c85d square-d4" style="width:49px;height:49px;" id="d4-6adf-748c-e7d3-92b2-1fc5-719a-7174-c355" data-square="d4"></div><div class="square-55d63 white-1e1d7 square-e4" style="width:49px;height:49px;" id="e4-60b8-449a-09d1-e6a6-abb1-58b6-ac22-6260" data-square="e4"></div><div class="square-55d63 black-3c85d square-f4" style="width:49px;height:49px;" id="f4-e81f-7433-da69-99b5-7f02-0458-7dc0-64ed" data-square="f4"></div><div class="square-55d63 white-1e1d7 square-g4" style="width:49px;height:49px;" id="g4-89db-586b-86a5-1aed-08a0-e267-c1fe-94b5" data-square="g4"></div><div class="square-55d63 black-3c85d square-h4" style="width:49px;height:49px;" id="h4-8734-d255-032f-9094-820f-7651-7b41-2273" data-square="h4"></div><div class="clearfix-7da63"></div></div><div class="row-5277c"><div class="square-55d63 black-3c85d square-a3" style="width:49px;height:49px;" id="a3-488d-045c-8b7e-743d-687c-b35d-f062-6920" data-square="a3"><div class="notation-322f9 numeric-fc462">3</div></div><div class="square-55d63 white-1e1d7 square-b3" style="width:49px;height:49px;" id="b3-3256-1c62-dd3b-19a2-c303-a8cc-d87c-a17b" data-square="b3"></div><div class="square-55d63 black-3c85d square-c3" style="width:49px;height:49px;" id="c3-f1c1-521b-0002-f0e1-7192-0247-07e6-7078" data-square="c3"></div><div class="square-55d63 white-1e1d7 square-d3" style="width:49px;height:49px;" id="d3-bc3e-0c8a-0b1c-bbe3-2d5c-938d-3af9-4ee8" data-square="d3"></div><div class="square-55d63 black-3c85d square-e3" style="width:49px;height:49px;" id="e3-235f-37d7-c70c-8a81-e7c9-bb0b-9392-698c" data-square="e3"></div><div class="square-55d63 white-1e1d7 square-f3" style="width:49px;height:49px;" id="f3-da36-7109-4a9c-caef-e43d-802e-cb98-e26d" data-square="f3"></div><div class="square-55d63 black-3c85d square-g3" style="width:49px;height:49px;" id="g3-7a0f-5a11-1776-49f7-b816-6960-a884-60f5" data-square="g3"></div><div class="square-55d63 white-1e1d7 square-h3" style="width:49px;height:49px;" id="h3-b717-f45d-884d-d0d0-5e08-331a-30e0-d6bc" data-square="h3"></div><div class="clearfix-7da63"></div></div><div class="row-5277c"><div class="square-55d63 white-1e1d7 square-a2" style="width:49px;height:49px;" id="a2-d556-55f1-8278-fbcc-3834-8b3e-f7a3-1620" data-square="a2"><div class="notation-322f9 numeric-fc462">2</div><img src="./CodePen - Basic Chess_files/wP.png" alt="" class="piece-417db" data-piece="wP" style="width:49px;height:49px;"></div><div class="square-55d63 black-3c85d square-b2" style="width:49px;height:49px;" id="b2-1116-563b-25d1-cd37-1f5a-38cf-baad-9907" data-square="b2"><img src="./CodePen - Basic Chess_files/wP.png" alt="" class="piece-417db" data-piece="wP" style="width:49px;height:49px;"></div><div class="square-55d63 white-1e1d7 square-c2" style="width:49px;height:49px;" id="c2-d033-ee76-9ccc-cbae-6e77-07f3-efa6-4adf" data-square="c2"><img src="./CodePen - Basic Chess_files/wP.png" alt="" class="piece-417db" data-piece="wP" style="width:49px;height:49px;"></div><div class="square-55d63 black-3c85d square-d2" style="width:49px;height:49px;" id="d2-5735-f58f-e0bd-1250-a033-797f-3327-19af" data-square="d2"><img src="./CodePen - Basic Chess_files/wP.png" alt="" class="piece-417db" data-piece="wP" style="width:49px;height:49px;"></div><div class="square-55d63 white-1e1d7 square-e2" style="width:49px;height:49px;" id="e2-4f4a-192f-9a69-ea4b-e836-7ba9-60cb-357f" data-square="e2"><img src="./CodePen - Basic Chess_files/wP.png" alt="" class="piece-417db" data-piece="wP" style="width:49px;height:49px;"></div><div class="square-55d63 black-3c85d square-f2" style="width:49px;height:49px;" id="f2-cfed-d537-4a61-3995-1a03-adf1-ba0c-b7e9" data-square="f2"><img src="./CodePen - Basic Chess_files/wP.png" alt="" class="piece-417db" data-piece="wP" style="width:49px;height:49px;"></div><div class="square-55d63 white-1e1d7 square-g2" style="width:49px;height:49px;" id="g2-07bc-3e79-cb98-f554-3f42-bd79-bc10-58b4" data-square="g2"><img src="./CodePen - Basic Chess_files/wP.png" alt="" class="piece-417db" data-piece="wP" style="width:49px;height:49px;"></div><div class="square-55d63 black-3c85d square-h2" style="width:49px;height:49px;" id="h2-202f-8ce9-9a48-7c2d-eff4-acaa-ed86-6532" data-square="h2"><img src="./CodePen - Basic Chess_files/wP.png" alt="" class="piece-417db" data-piece="wP" style="width:49px;height:49px;"></div><div class="clearfix-7da63"></div></div><div class="row-5277c"><div class="square-55d63 black-3c85d square-a1" style="width:49px;height:49px;" id="a1-32da-6488-2e2a-52c9-f0e2-1d7e-05da-9724" data-square="a1"><div class="notation-322f9 alpha-d2270">a</div><div class="notation-322f9 numeric-fc462">1</div><img src="./CodePen - Basic Chess_files/wR.png" alt="" class="piece-417db" data-piece="wR" style="width:49px;height:49px;"></div><div class="square-55d63 white-1e1d7 square-b1" style="width:49px;height:49px;" id="b1-306d-74e3-b57a-a0f4-9981-85dc-368f-0bd5" data-square="b1"><div class="notation-322f9 alpha-d2270">b</div><img src="./CodePen - Basic Chess_files/wN.png" alt="" class="piece-417db" data-piece="wN" style="width:49px;height:49px;"></div><div class="square-55d63 black-3c85d square-c1" style="width:49px;height:49px;" id="c1-c3a5-f2ae-207b-28ef-f21d-93aa-a65e-c20a" data-square="c1"><div class="notation-322f9 alpha-d2270">c</div><img src="./CodePen - Basic Chess_files/wB.png" alt="" class="piece-417db" data-piece="wB" style="width:49px;height:49px;"></div><div class="square-55d63 white-1e1d7 square-d1" style="width:49px;height:49px;" id="d1-df32-6221-7e33-7821-83da-c4e8-52c5-4d49" data-square="d1"><div class="notation-322f9 alpha-d2270">d</div><img src="./CodePen - Basic Chess_files/wQ.png" alt="" class="piece-417db" data-piece="wQ" style="width:49px;height:49px;"></div><div class="square-55d63 black-3c85d square-e1" style="width:49px;height:49px;" id="e1-3376-4331-b57d-56ea-3614-7ed5-a272-7980" data-square="e1"><div class="notation-322f9 alpha-d2270">e</div><img src="./CodePen - Basic Chess_files/wK.png" alt="" class="piece-417db" data-piece="wK" style="width:49px;height:49px;"></div><div class="square-55d63 white-1e1d7 square-f1" style="width:49px;height:49px;" id="f1-1247-bcc6-0966-9b0f-afaa-6550-bee3-5650" data-square="f1"><div class="notation-322f9 alpha-d2270">f</div><img src="./CodePen - Basic Chess_files/wB.png" alt="" class="piece-417db" data-piece="wB" style="width:49px;height:49px;"></div><div class="square-55d63 black-3c85d square-g1" style="width:49px;height:49px;" id="g1-9778-5065-4899-67cc-48eb-9d5f-e628-6636" data-square="g1"><div class="notation-322f9 alpha-d2270">g</div><img src="./CodePen - Basic Chess_files/wN.png" alt="" class="piece-417db" data-piece="wN" style="width:49px;height:49px;"></div><div class="square-55d63 white-1e1d7 square-h1" style="width:49px;height:49px;" id="h1-c59d-8389-ad88-c95e-030b-a8db-65bc-873f" data-square="h1"><div class="notation-322f9 alpha-d2270">h</div><img src="./CodePen - Basic Chess_files/wR.png" alt="" class="piece-417db" data-piece="wR" style="width:49px;height:49px;"></div><div class="clearfix-7da63"></div></div></div></div></div>
+      <p style="text-align:center">Highlight the board for the board number: <span id="highlightBoard"></span></p>
+      <p id="createBoardLink">Go to board #<span id="forIndexOfList2"></span></p>
+      <p style="text-align:center">Board Color changes at: <span id="colorChanges"></span></p>
+      <p style="text-align:center">Go to : <select id="table_drop">
+        <option value="">table_drop</option>
+        <option value="10">10.</option>
+        <option value="20">20.</option>
+      </select>&nbsp;&nbsp;<a href="https://www.chess.com/blog/Rodgy/i-flew-to-new-york-to-play-hustlers" target="_blank">Link to game</a></p>
+
+      </div>
+          </div><div id="blogPost">
+        <br>
+<p>flip the board once only: <button id="renderButton">Flip Chessboard</button>
+  <button onclick="var element = document.getElementById('storeBoard'); if (element.style.display === 'none') { element.style.display = 'block'; } else { element.style.display = 'none'; }">Toggle Board</button>
+        </p>
+      </p>
+      <table id="chess1" class="chess-table purple">
+        <tbody>
+          <!-- First row of the checkerboard -->
+          <tr>
+            <td class="white"></td>
+            <td class="purple"></td>
+            <td class="white"></td>
+            <td class="purple"></td>
+            <td class="white"></td>
+            <td class="purple"></td>
+            <td class="white"></td>
+            <td class="purple"></td>
+          </tr>
+          <tr>
+            <td class="purple"></td>
+            <td class="white"></td>
+            <td class="purple"></td>
+            <td class="white"></td>
+            <td class="purple"></td>
+            <td class="white"></td>
+            <td class="purple"></td>
+            <td class="white"></td>
+          </tr>
+          <tr>
+            <td class="white"></td>
+            <td class="purple"></td>
+            <td class="white"></td>
+            <td class="purple"></td>
+            <td class="white"></td>
+            <td class="purple"></td>
+            <td class="white"></td>
+            <td class="purple"></td>
+          </tr>
+          <tr>
+            <td class="purple"></td>
+            <td class="white"></td>
+            <td class="purple"></td>
+            <td class="white"></td>
+            <td class="purple"></td>
+            <td class="white"></td>
+            <td class="purple"></td>
+            <td class="white"></td>
+          </tr>
+          <tr>
+            <td class="white"></td>
+            <td class="purple"></td>
+            <td class="white"></td>
+            <td class="purple"></td>
+            <td class="white"></td>
+            <td class="purple"></td>
+            <td class="white"></td>
+            <td class="purple"></td>
+          </tr>
+          <tr>
+            <td class="purple"></td>
+            <td class="white"></td>
+            <td class="purple"></td>
+            <td class="white"></td>
+            <td class="purple"></td>
+            <td class="white"></td>
+            <td class="purple"></td>
+            <td class="white"></td>
+          </tr>
+          <tr>
+            <td class="white"></td>
+            <td class="purple"></td>
+            <td class="white"></td>
+            <td class="purple"></td>
+            <td class="white"></td>
+            <td class="purple"></td>
+            <td class="white"></td>
+            <td class="purple"></td>
+          </tr>
+          <tr>
+            <td class="purple"></td>
+            <td class="white"></td>
+            <td class="purple"></td>
+            <td class="white"></td>
+            <td class="purple"></td>
+            <td class="white"></td>
+            <td class="purple"></td>
+            <td class="white"></td>
+          </tr>
+        </tbody>
+        <tfoot><tr><td>r1bq1rk1/pppn1pbp/3p1np1/4p3/3P4/1P2PN2/PBP1BPPP/RN1Q1RK1</td></tr></tfoot>
+      </table>
+    <p>white's move after black</p>
+    <button onclick="toggleAnswer()">Toggle Answer</button><br>
+    <p class="answer" style="display: none;">It's important to take or else position gets squeezed with pawn advance to e4</p><br>
+
+
+    <table id="chessb1" class="chess-table purple">
+      <tbody></tbody>
+      <tfoot><tr><td>rnbqk2r/ppp2pbp/3p1np1/4p3/3P4/3BPN2/PPP2PPP/RNBQK2R</td></tr></tfoot>
+    </table>
+    
+    <script>
+      var tbody = document.querySelector('#chessb1 tbody');
+      for (var row = 1; row <= 8; row++) {
+        var tr = document.createElement('tr');
+        for (var col = 1; col <= 8; col++) {
+          var td = document.createElement('td');
+          td.className = ((row + col) % 2 == 0) ? "white" : "purple";
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      }
+    </script>
+    <p>in this case: the issue is that if you had moved the bishop to d3 then it would be pushed back by the pawn with the knight support</p>
+    <table id="chess2" class="chess-table pink">
+      <tbody>
+        <!-- First row of the checkerboard -->
+        <tr>
+          <td class="white"></td>
+          <td class="pink"></td>
+          <td class="white"></td>
+          <td class="pink"></td>
+          <td class="white"></td>
+          <td class="pink"></td>
+          <td class="white"></td>
+          <td class="pink"></td>
+        </tr>
+        <tr>
+          <td class="pink"></td>
+          <td class="white"></td>
+          <td class="pink"></td>
+          <td class="white"></td>
+          <td class="pink"></td>
+          <td class="white"></td>
+          <td class="pink"></td>
+          <td class="white"></td>
+        </tr>
+        <tr>
+          <td class="white"></td>
+          <td class="pink"></td>
+          <td class="white"></td>
+          <td class="pink"></td>
+          <td class="white"></td>
+          <td class="pink"></td>
+          <td class="white"></td>
+          <td class="pink"></td>
+        </tr>
+        <tr>
+          <td class="pink"></td>
+          <td class="white"></td>
+          <td class="pink"></td>
+          <td class="white"></td>
+          <td class="pink"></td>
+          <td class="white"></td>
+          <td class="pink"></td>
+          <td class="white"></td>
+        </tr>
+        <tr>
+          <td class="white"></td>
+          <td class="pink"></td>
+          <td class="white"></td>
+          <td class="pink"></td>
+          <td class="white"></td>
+          <td class="pink"></td>
+          <td class="white"></td>
+          <td class="pink"></td>
+        </tr>
+        <tr>
+          <td class="pink"></td>
+          <td class="white"></td>
+          <td class="pink"></td>
+          <td class="white"></td>
+          <td class="pink"></td>
+          <td class="white"></td>
+          <td class="pink"></td>
+          <td class="white"></td>
+        </tr>
+        <tr>
+          <td class="white"></td>
+          <td class="pink"></td>
+          <td class="white"></td>
+          <td class="pink"></td>
+          <td class="white"></td>
+          <td class="pink"></td>
+          <td class="white"></td>
+          <td class="pink"></td>
+        </tr>
+        <tr>
+          <td class="pink"></td>
+          <td class="white"></td>
+          <td class="pink"></td>
+          <td class="white"></td>
+          <td class="pink"></td>
+          <td class="white"></td>
+          <td class="pink"></td>
+          <td class="white"></td>
+        </tr>
+      </tbody>
+      <tfoot><tr><td>r1bq1rk1/pppn1pbp/3p2p1/4P3/6n1/1P2PN2/PBP1BPPP/RN1Q1RK1</td></tr></tfoot>
+    </table>
+    <br>
+    <p>black cannot take with the pawn or will lose it</p>
+
+   
+    <p>white's move after black</p>
+    <button onclick="toggleAnswer()">Toggle Answer</button><br>
+    <p class="answer" style="display: none;">dont send your pawns to the middle where there are a pack of three at d4</p><br>
+   
+    <p>best move: is black takes e4 and white takes back on e4 <a href="https://www.chess.com/game/live/77496087527?username=alansf649" target="_blank">link</a></p>
+    <table id="chess3" class="chess-table purple">
+      <tbody></tbody>
+      <tfoot><tr><td>r1bq1rk1/pppn1pbp/3p2p1/4n3/2P5/1P2PN2/PB2BPPP/RN1Q1RK1</td></tr></tfoot>
+    </table>
+    
+    <script>
+      var tbody = document.querySelector('#chess3 tbody');
+      for (var row = 1; row <= 8; row++) {
+        var tr = document.createElement('tr');
+        for (var col = 1; col <= 8; col++) {
+          var td = document.createElement('td');
+          td.className = ((row + col) % 2 == 0) ? "white" : "purple";
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      }
+    </script>
+  <p>outcome there: made a c4 move black takes back the pawn </p>
+  <button onclick="toggleAnswer()">Toggle Answer</button><br>
+  <p class="answer" style="display: none;">only move is to take the knight with white because if not then will force the knight back when the knight goes again see next slide</p><br>    
+  <p>now white to move:</p>
+  
+  <table id="chess4" class="chess-table">
+    <tbody></tbody>
+    <tfoot><tr><td>r1bq1rk1/ppp2pbp/3p2p1/4n3/2P5/1P2P3/PB2BPPP/RN1Q1RK1</td></tr></tfoot>
+  </table>
+  
+  <script>
+    var tbody = document.querySelector('#chess4 tbody');
+    for (var row = 1; row <= 8; row++) {
+      var tr = document.createElement('tr');
+      for (var col = 1; col <= 8; col++) {
+        var td = document.createElement('td');
+        td.className = ((row + col) % 2 == 0) ? "white" : "purple";
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+  </script>
+  <p>move the queen to the second rank to guard against the bishop</p>
+  <table id="chess5" class="chess-table pink">
+    <tbody></tbody>
+    <tfoot><tr><td>r4rk1/pppq1pbp/3pb1p1/4n3/2P5/1PN1P3/PB1QBPPP/R4RK1</td></tr></tfoot>
+  </table>
+  
+  <script>
+    var tbody = document.querySelector('#chess5 tbody');
+    for (var row = 1; row <= 8; row++) {
+      var tr = document.createElement('tr');
+      for (var col = 1; col <= 8; col++) {
+        var td = document.createElement('td');
+        td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+  </script>
+  <p>purple, move the e pawn forward</p>
+  <br><table id="chess6" class="chess-table pink">
+    <tbody></tbody>
+    <tfoot><tr><td>r4rk1/1ppq1pbp/3pb1p1/p3n3/2P1P3/1PN5/PB1QBPPP/R4RK1</td></tr></tfoot>
+  </table>
+  
+  <script>
+    var tbody = document.querySelector('#chess6 tbody');
+    for (var row = 1; row <= 8; row++) {
+      var tr = document.createElement('tr');
+      for (var col = 1; col <= 8; col++) {
+        var td = document.createElement('td');
+        td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+  </script>
+  <p>f5-f6 ideas</p>
+  <br><table id="chess7" class="chess-table pink">
+    <tbody></tbody>
+    <tfoot><tr><td>4rrk1/1ppq1pbp/3p4/p2N1b2/2P3n1/1P6/PB1QB1PP/R4RK1</td></tr></tfoot>
+  </table>
+  
+  <script>
+    var tbody = document.querySelector('#chess7 tbody');
+    for (var row = 1; row <= 8; row++) {
+      var tr = document.createElement('tr');
+      for (var col = 1; col <= 8; col++) {
+        var td = document.createElement('td');
+        td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+  </script>
+  <p>you want access to the f6 square</p>
+  <br><table id="chess8" class="chess-table pink">
+    <tbody></tbody>
+    <tfoot><tr><td>4rrk1/1ppq1pbp/3p4/p2N4/2P3b1/1P6/PB1Q2PP/R4RK1</td></tr></tfoot>
+  </table>
+  
+  <script>
+    var tbody = document.querySelector('#chess8 tbody');
+    for (var row = 1; row <= 8; row++) {
+      var tr = document.createElement('tr');
+      for (var col = 1; col <= 8; col++) {
+        var td = document.createElement('td');
+        td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+  </script>
+  <p>white to move</p>
+  <br><table id="chess9" class="chess-table pink">
+    <tbody></tbody>
+    <tfoot><tr><td>4rrk1/1pp2p1p/3p1B1Q/p6b/2P3q1/1P6/P5PP/R4RK1</td></tr></tfoot>
+  </table>
+  
+  <script>
+    var tbody = document.querySelector('#chess9 tbody');
+    for (var row = 1; row <= 8; row++) {
+      var tr = document.createElement('tr');
+      for (var col = 1; col <= 8; col++) {
+        var td = document.createElement('td');
+        td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+  </script>
+  <p>this is met by g4 from the queen</p>
+  <br><table id="chess10" class="chess-table pink">
+    <tbody></tbody>
+    <tfoot><tr><td>4rrk1/1ppq1p1p/3p1B2/p6b/2P5/1P6/P2Q2PP/R4RK1</td></tr></tfoot>
+  </table>
+  
+  <script>
+    var tbody = document.querySelector('#chess10 tbody');
+    for (var row = 1; row <= 8; row++) {
+      var tr = document.createElement('tr');
+      for (var col = 1; col <= 8; col++) {
+        var td = document.createElement('td');
+        td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+  </script>
+  <p>white to move</p>
+  <br>
+  <table id="chess11" class="chess-table pink">
+    <tbody></tbody>
+    <tfoot><tr><td>rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR</td></tr></tfoot>
+  </table>
+  
+  <script>
+    var tbody = document.querySelector('#chess11 tbody');
+    for (var row = 1; row <= 8; row++) {
+      var tr = document.createElement('tr');
+      for (var col = 1; col <= 8; col++) {
+        var td = document.createElement('td');
+        td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+  </script>
+  <p>prev move: , move:d2d4 </p>
+  <br><table id="chess12" class="chess-table pink">
+    <tbody></tbody>
+    <tfoot><tr><td>rnbqkbnr/pppppp1p/6p1/8/3P4/4P3/PPP2PPP/RNBQKBNR</td></tr></tfoot>
+  </table>
+  
+  <script>
+    var tbody = document.querySelector('#chess12 tbody');
+    for (var row = 1; row <= 8; row++) {
+      var tr = document.createElement('tr');
+      for (var col = 1; col <= 8; col++) {
+        var td = document.createElement('td');
+        td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+  </script>
+  <p>prev move: g7g6, move:e2e3 </p>
+  <br><table id="chess13" class="chess-table pink">
+    <tbody></tbody>
+    <tfoot><tr><td>rnbqk1nr/ppppppbp/6p1/8/3P4/4PN2/PPP2PPP/RNBQKB1R</td></tr></tfoot>
+  </table>
+  
+  <script>
+    var tbody = document.querySelector('#chess13 tbody');
+    for (var row = 1; row <= 8; row++) {
+      var tr = document.createElement('tr');
+      for (var col = 1; col <= 8; col++) {
+        var td = document.createElement('td');
+        td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+  </script>
+  <p>prev move: f8g7, move:g1f3 </p>
+  <br><table id="chess14" class="chess-table pink">
+    <tbody></tbody>
+    <tfoot><tr><td>rnbqk2r/ppppppbp/5np1/8/3P4/4PN2/PPP1BPPP/RNBQK2R</td></tr></tfoot>
+  </table>
+  
+  <script>
+    var tbody = document.querySelector('#chess14 tbody');
+    for (var row = 1; row <= 8; row++) {
+      var tr = document.createElement('tr');
+      for (var col = 1; col <= 8; col++) {
+        var td = document.createElement('td');
+        td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+  </script>
+  <p>prev move: g8f6, move:f1e2 </p>
+  <br><table id="chess15" class="chess-table pink">
+    <tbody></tbody>
+    <tfoot><tr><td>rnbq1rk1/ppppppbp/5np1/8/3P4/4PN2/PPP1BPPP/RNBQ1RK1</td></tr></tfoot>
+  </table>
+  
+  <script>
+    var tbody = document.querySelector('#chess15 tbody');
+    for (var row = 1; row <= 8; row++) {
+      var tr = document.createElement('tr');
+      for (var col = 1; col <= 8; col++) {
+        var td = document.createElement('td');
+        td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+  </script>
+  <p>prev move: e8g8, move:e1g1 </p>
+  <br><table id="chess16" class="chess-table pink">
+    <tbody></tbody>
+    <tfoot><tr><td>rnbq1rk1/ppp1ppbp/3p1np1/8/3P4/1P2PN2/P1P1BPPP/RNBQ1RK1</td></tr></tfoot>
+  </table>
+  
+  <script>
+    var tbody = document.querySelector('#chess16 tbody');
+    for (var row = 1; row <= 8; row++) {
+      var tr = document.createElement('tr');
+      for (var col = 1; col <= 8; col++) {
+        var td = document.createElement('td');
+        td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+  </script>
+  <p>prev move: d7d6, move:b2b3 </p>
+  <br><table id="chess17" class="chess-table pink">
+    <tbody></tbody>
+    <tfoot><tr><td>r1bq1rk1/pppnppbp/3p1np1/8/3P4/1P2PN2/PBP1BPPP/RN1Q1RK1</td></tr></tfoot>
+  </table>
+  
+  <script>
+    var tbody = document.querySelector('#chess17 tbody');
+    for (var row = 1; row <= 8; row++) {
+      var tr = document.createElement('tr');
+      for (var col = 1; col <= 8; col++) {
+        var td = document.createElement('td');
+        td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+  </script>
+  <p>prev move: b8d7, move:c1b2 </p>
+  <br><table id="chess18" class="chess-table pink">
+    <tbody></tbody>
+    <tfoot><tr><td>r1bq1rk1/pppn1pbp/3p1np1/4P3/8/1P2PN2/PBP1BPPP/RN1Q1RK1</td></tr></tfoot>
+  </table>
+  
+  <script>
+    var tbody = document.querySelector('#chess18 tbody');
+    for (var row = 1; row <= 8; row++) {
+      var tr = document.createElement('tr');
+      for (var col = 1; col <= 8; col++) {
+        var td = document.createElement('td');
+        td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+  </script>
+  <p>prev move: e7e5, move:d4e5 </p>
+  <br><table id="chess19" class="chess-table pink">
+    <tbody></tbody>
+    <tfoot><tr><td>r1bq1rk1/pppn1pbp/3p2p1/4P3/2P3n1/1P2PN2/PB2BPPP/RN1Q1RK1</td></tr></tfoot>
+  </table>
+  
+  <script>
+    var tbody = document.querySelector('#chess19 tbody');
+    for (var row = 1; row <= 8; row++) {
+      var tr = document.createElement('tr');
+      for (var col = 1; col <= 8; col++) {
+        var td = document.createElement('td');
+        td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+  </script>
+  <p>prev move: f6g4, move:c2c4 </p>
+  <br><table id="chess20" class="chess-table pink">
+    <tbody></tbody>
+    <tfoot><tr><td>r1bq1rk1/pppn1pbp/3p2p1/4N3/2P5/1P2P3/PB2BPPP/RN1Q1RK1</td></tr></tfoot>
+  </table>
+  
+  <script>
+    var tbody = document.querySelector('#chess20 tbody');
+    for (var row = 1; row <= 8; row++) {
+      var tr = document.createElement('tr');
+      for (var col = 1; col <= 8; col++) {
+        var td = document.createElement('td');
+        td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+  </script>
+  <p>prev move: g4e5, move:f3e5 </p> 
+  <p>required to take the knight here or else I will lose a tempo because the knight will come attack the bishop after knight takes. </p>
+  <p>the g4 square is at stake.</p>
+  <br><table id="chess21" class="chess-table pink">
+    <tbody></tbody>
+    <tfoot><tr><td>r1bq1rk1/ppp2pbp/3p2p1/4n3/2P5/1P2P3/PB1QBPPP/RN3RK1</td></tr></tfoot>
+  </table>
+  
+  <script>
+    var tbody = document.querySelector('#chess21 tbody');
+    for (var row = 1; row <= 8; row++) {
+      var tr = document.createElement('tr');
+      for (var col = 1; col <= 8; col++) {
+        var td = document.createElement('td');
+        td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+  </script>
+  <p>prev move: d7e5, move:d1d2 </p>
+  <br><table id="chess22" class="chess-table pink">
+    <tbody></tbody>
+    <tfoot><tr><td>r2q1rk1/ppp2pbp/3pb1p1/4n3/2P1P3/1P6/PB1QBPPP/RN3RK1</td></tr></tfoot>
+  </table>
+  
+  <script>
+    var tbody = document.querySelector('#chess22 tbody');
+    for (var row = 1; row <= 8; row++) {
+      var tr = document.createElement('tr');
+      for (var col = 1; col <= 8; col++) {
+        var td = document.createElement('td');
+        td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+  </script>
+  <p>prev move: c8e6, move:e3e4 </p>
+  <br><table id="chess23" class="chess-table pink">
+    <tbody></tbody>
+    <tfoot><tr><td>r4rk1/pppq1pbp/3pb1p1/4n3/2P1P3/1PN5/PB1QBPPP/R4RK1</td></tr></tfoot>
+  </table>
+  
+  <script>
+    var tbody = document.querySelector('#chess23 tbody');
+    for (var row = 1; row <= 8; row++) {
+      var tr = document.createElement('tr');
+      for (var col = 1; col <= 8; col++) {
+        var td = document.createElement('td');
+        td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+  </script>
+  <p>prev move: d8d7, move:b1c3 </p>
+  <br><table id="chess24" class="chess-table pink">
+    <tbody></tbody>
+    <tfoot><tr><td>r4rk1/1ppq1pbp/3pb1p1/p3n3/2P1PP2/1PN5/PB1QB1PP/R4RK1</td></tr></tfoot>
+  </table>
+  
+  <script>
+    var tbody = document.querySelector('#chess24 tbody');
+    for (var row = 1; row <= 8; row++) {
+      var tr = document.createElement('tr');
+      for (var col = 1; col <= 8; col++) {
+        var td = document.createElement('td');
+        td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+  </script>
+  <p>prev move: a7a5, move:f2f4 </p>
+  <br><table id="chess25" class="chess-table pink">
+    <tbody></tbody>
+    <tfoot><tr><td>r4rk1/1ppq1pbp/3pb1p1/p4P2/2P1P1n1/1PN5/PB1QB1PP/R4RK1</td></tr></tfoot>
+  </table>
+  
+  <script>
+    var tbody = document.querySelector('#chess25 tbody');
+    for (var row = 1; row <= 8; row++) {
+      var tr = document.createElement('tr');
+      for (var col = 1; col <= 8; col++) {
+        var td = document.createElement('td');
+        td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+  </script>
+  <p>prev move: e5g4, move:f4f5 </p>
+  <br><table id="chess26" class="chess-table pink">
+    <tbody></tbody>
+    <tfoot><tr><td>r4rk1/1ppq1pbp/3pb3/p4P2/2P3n1/1PN5/PB1QB1PP/R4RK1</td></tr></tfoot>
+  </table>
+  
+  <script>
+    var tbody = document.querySelector('#chess26 tbody');
+    for (var row = 1; row <= 8; row++) {
+      var tr = document.createElement('tr');
+      for (var col = 1; col <= 8; col++) {
+        var td = document.createElement('td');
+        td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+  </script>
+  <p>prev move: g6f5, move:e4f5 </p>
+  <br><table id="chess27" class="chess-table pink">
+    <tbody></tbody>
+    <tfoot><tr><td>r4rk1/1ppq1pbp/3p4/p2N1b2/2P3n1/1P6/PB1QB1PP/R4RK1</td></tr></tfoot>
+  </table>
+  
+  <script>
+    var tbody = document.querySelector('#chess27 tbody');
+    for (var row = 1; row <= 8; row++) {
+      var tr = document.createElement('tr');
+      for (var col = 1; col <= 8; col++) {
+        var td = document.createElement('td');
+        td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+  </script>
+  <p>prev move: e6f5, move:c3d5 </p>
+  <br><table id="chess28" class="chess-table pink">
+    <tbody></tbody>
+    <tfoot><tr><td>r4rkb/1ppq1p1p/3p4/p2N1b2/2P3B1/1P6/PB1Q2PP/R4RK1</td></tr></tfoot>
+  </table>
+  
+  <script>
+    var tbody = document.querySelector('#chess28 tbody');
+    for (var row = 1; row <= 8; row++) {
+      var tr = document.createElement('tr');
+      for (var col = 1; col <= 8; col++) {
+        var td = document.createElement('td');
+        td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+  </script>
+  <p>prev move: g7h8, move:e2g4 </p>
+  <br><table id="chess29" class="chess-table pink">
+    <tbody></tbody>
+    <tfoot><tr><td>r4rkb/1ppq1p1p/3p1N2/p7/2P3b1/1P6/PB1Q2PP/R4RK1</td></tr></tfoot>
+  </table>
+  
+  <script>
+    var tbody = document.querySelector('#chess29 tbody');
+    for (var row = 1; row <= 8; row++) {
+      var tr = document.createElement('tr');
+      for (var col = 1; col <= 8; col++) {
+        var td = document.createElement('td');
+        td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+  </script>
+  <p>prev move: f5g4, move:d5f6 </p>
+  <br><table id="chess30" class="chess-table pink">
+    <tbody></tbody>
+    <tfoot><tr><td>r4rk1/1ppq1p1p/3p1B2/p7/2P3b1/1P6/P2Q2PP/R4RK1</td></tr></tfoot>
+  </table>
+  
+  <script>
+    var tbody = document.querySelector('#chess30 tbody');
+    for (var row = 1; row <= 8; row++) {
+      var tr = document.createElement('tr');
+      for (var col = 1; col <= 8; col++) {
+        var td = document.createElement('td');
+        td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+  </script>
+  <p>prev move: h8f6, move:b2f6 </p>
+  <br><table id="chess31" class="chess-table pink">
+    <tbody></tbody>
+    <tfoot><tr><td>r4rk1/1ppq1p1p/3p1B2/p5Qb/2P5/1P6/P5PP/R4RK1</td></tr></tfoot>
+  </table>
+  
+  <script>
+    var tbody = document.querySelector('#chess31 tbody');
+    for (var row = 1; row <= 8; row++) {
+      var tr = document.createElement('tr');
+      for (var col = 1; col <= 8; col++) {
+        var td = document.createElement('td');
+        td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+  </script>
+  <p>prev move: g4h5, move:d2g5</p>
+       
+        <br>
+        <br>
+        <br>
+        <br>
+     
+        <br>
+        <br>
+        </div>
+        
+  </div>
+
+    <aside class="sidebar">
+      <p>other links</p>
+    </aside>
+   
+    <p>move:g8h8</p>
+    <br>
+
+  </main>
+
+  <footer>
+    <p>&copy;2019</p>
+  </footer>
+</div>
+
+
+  
+  <script src="./CodePen - Basic Chess_files/jquery-2.2.4.min.js"></script>
+<script src="./CodePen - Basic Chess_files/chessboard.js"></script>
+<script src="./CodePen - Basic Chess_files/papaparse.min.js"></script>
+<script src="./CodePen - Basic Chess_files/chess.js"></script>
+
+<script id="rendered-js">
+var board = Chessboard('myBoard', {
+  draggable: true,
+  dropOffBoard: 'snapback',
+  position: 'start',
+  snapbackSpeed: 500,
+  snapSpeed: 100,
+  onDragStart: function(source, piece, position, orientation) {
+    // Prevent default browser behavior during drag and drop
+    event.preventDefault();
+  },
+  onDrop: function(source, target, piece, newPos, oldPos, orientation) {
+    // Log the new board position
+    console.log('New position:', Chessboard.objToFen(newPos));
+
+    // Update the FEN position in the DOM
+    //document.getElementById('fenposition_1').innerHTML = Chessboard.objToFen(newPos);
+  }
+});
+
+
+
+  
+
+//if
+
+
+    </script>
+    
+    <script src="script.js"></script>
+
+    <img src="./CodePen - Basic Chess_files/wP.png" id="e015-ea01-83ab-457a-7cb0-3f1b-1540-ced4" alt="" class="piece-417db" data-piece="wP" style="width: 49px; height: 49px; display: none;">
+
+  
+
+
+</body></html>

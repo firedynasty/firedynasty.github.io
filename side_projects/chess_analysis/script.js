@@ -169,10 +169,7 @@ window.onload = function () {
         }
       }
       odd_count++;
-      var radio1 = document.getElementById("r1");
-      var radio2 = document.getElementById("r2");
-      radio1.checked = false;
-      radio2.checked = true;
+
       board.flip(); // and flip the board
     } else {
       odd_count++;
@@ -256,7 +253,6 @@ for (var i = 0; i < tables.length; i++) {
     if (tfootTd) {
       var content = tfootTd.textContent;
       board.position(content)
-      document.getElementById("fenposition_1").innerHTML = content
       console.log(content);
       //return index of the list
       counter_ = listOfFenPositions.indexOf(content)
@@ -327,7 +323,6 @@ $("body").keydown(function(e) {
      function repopulate_table_drop() {
       // Get the table and the dropdown menu
     
-      var table = document.getElementById("my-table");
       var dropdown = document.getElementById("table_drop");
     
       // Clear existing options from the dropdown menu
@@ -379,7 +374,6 @@ table_drop_choice.addEventListener("change", function () {
     if (tfootTd) {
       var content = tfootTd.textContent;
       board.position(content)
-      document.getElementById("fenposition_1").innerHTML = content
       console.log(content);
     //return index of the list
       counter_ = listOfFenPositions.indexOf(content)
@@ -507,14 +501,30 @@ function testFunction(number) {
 }
 
 
-let listOfPurplePinkChanges = [];
+var tableDropComments = document.getElementById("tableDropComments");
+tableDropComments.addEventListener("change", function () {
+    console.log('hello world')
+    first_var = parseInt($('#tableDropComments').val())
+    console.log(first_var)
+    event.preventDefault();
+    let commentElements = document.querySelectorAll('span.comment');
+    commentElements[first_var - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    //set adding_info to none
+})
 
-let chessTables = document.querySelectorAll('table.chess-table');
-Array.from(chessTables).forEach(table => {
-  const classList = Array.from(table.classList);
-  const color = classList[1];
-  listOfPurplePinkChanges.push(color);
+
+
+let listOfPurplePinkChanges1 = [];
+
+let chessTable1 = document.querySelectorAll('table');
+
+chessTable1.forEach(table => {
+  let classNames = Array.from(table.classList);
+  const color = classNames[1];
+  listOfPurplePinkChanges1.push(color);
 });
+
+
 
 function findColorChanges(list) {
   const colorChanges = [];
@@ -536,4 +546,145 @@ function findColorChanges(list) {
   return colorChanges;
 }
 
-findColorChanges(listOfPurplePinkChanges);
+
+function getRepeatingNumbers() {
+  let tablePositions = [];
+  let chessTable2 = document.querySelectorAll('table');
+  let countOfClass = 0;
+
+  chessTable2.forEach(table => {
+    let classNames = Array.from(table.classList);
+    const color = classNames[1];
+
+    if (color === 'pink') {
+      tablePositions.push(countOfClass);
+      countOfClass++;
+    } else {
+      tablePositions.push(countOfClass - 1);
+    }
+  });
+
+  let occurrences = {};
+  let repeatingNumbers = [];
+
+  for (let number of tablePositions) {
+    if (occurrences[number]) {
+      occurrences[number]++;
+    } else {
+      occurrences[number] = 1;
+    }
+  }
+
+  for (let key in occurrences) {
+    if (occurrences[key] > 1) {
+      repeatingNumbers.push(key);
+    }
+  }
+
+  const spanElement = document.getElementById('colorChanges');
+  spanElement.innerHTML = repeatingNumbers.join(', ');
+
+  return repeatingNumbers;
+}
+
+
+
+let chessTable3 = document.querySelectorAll('table');
+
+let hasChessTableClass = false;
+let hasChessLineClass = false;
+
+chessTable3.forEach(table => {
+  if (table.classList.contains('chess-table')) {
+    hasChessTableClass = true;
+  }
+  if (table.classList.contains('chess-line')) {
+    hasChessLineClass = true;
+  }
+});
+
+if (hasChessTableClass && hasChessLineClass) {
+  console.log("Both 'chess-table' and 'chess-line' classes appear.");
+  getRepeatingNumbers();
+
+} else if (hasChessTableClass) {
+  console.log("Only 'chess-table' class appears.");
+  findColorChanges(listOfPurplePinkChanges1);
+} else {
+  console.log("Neither 'chess-table' nor 'chess-line' classes appear.");
+}
+
+
+
+// create a javascript function called "repopulate_table_drop"
+function repopulateTableDropComments() {
+  // Get the table and the dropdown menu
+
+  var dropdown = document.getElementById("tableDropComments");
+
+  // Clear existing options from the dropdown menu
+  dropdown.innerHTML = "";
+
+  let commentElements2 = document.querySelectorAll('span.comment');
+  var addOne = commentElements2.length + 1
+
+  // Loop through the rows of the table and add options to the dropdown menu
+  for (var i = 0; i < addOne; i++) {
+      // Create a new option element
+      var option = document.createElement("option");
+
+      // Set the value of the option to the index times 10
+      option.value = i;
+
+      // Set the text of the option to the index plus a period
+      option.text = i + ".";
+
+      // Add the option to the dropdown menu
+      dropdown.add(option);
+  }
+
+}
+
+setTimeout(repopulateTableDropComments, 2000);
+
+
+var inputElement = document.getElementById("myInput");
+
+
+
+
+if (inputElement !== null) {
+  // The element with ID "myInput" exists in the document
+  document.getElementById('blogPost').style.display = 'none';
+  document.getElementById('myInput').addEventListener('keypress', function (e) {
+    if (e.which == 13) {
+      // Enter key pressed
+      // Clear the paragraph
+      // Check value of text_chess
+  
+      var first_var = parseInt(document.getElementById('myInput').value);
+      console.log('pressed!')
+      console.log(first_var)
+      document.getElementById('myInput').value = '';
+
+      if (!isNaN(first_var) && first_var > 1000000 && isPrime(first_var)) {
+        // Value is a number greater than 1,000,000, even, and prime
+        document.getElementById('blogPost').style.display = 'block';
+      }
+
+      function isPrime(num) {
+        if (num < 2) return false;
+        for (var i = 2; i <= Math.sqrt(num); i++) {
+          if (num % i === 0) return false;
+        }
+        return true;
+      }
+    
+
+    }
+  });
+} else {
+  // The element with ID "myInput" does not exist in the document
+  console.log("Element not found!");
+}
+

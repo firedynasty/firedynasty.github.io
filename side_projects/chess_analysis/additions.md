@@ -930,3 +930,155 @@ function testFunction(number) {
 
 
 ```
+
+
+
+
+      commentElements[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+
+rewrite chesstableElements so that it takes table.chess-table
+```
+  let chesstableElements = document.querySelectorAll('table.chess-table');
+  <table id="chess27" class="chess-table pink">
+```
+
+
+Adding a place where it detects the color changes
+
+```js
+
+
+let listOfPurplePinkChanges = [];
+
+let chessTables = document.querySelectorAll('table.chess-table');
+Array.from(chessTables).forEach(table => {
+  const classList = Array.from(table.classList);
+  const color = classList[1];
+  listOfPurplePinkChanges.push(color);
+});
+
+function findColorChanges(list) {
+  const colorChanges = [];
+  
+  let previousElement = list[0]; // Initialize previousElement with the first element of the list
+
+  for (let i = 1; i < list.length; i++) {
+    const currentElement = list[i];
+    
+    if (previousElement !== currentElement) {
+      colorChanges.push(i);
+    }
+    
+    previousElement = currentElement; // Update previousElement with the current element
+  }
+  const spanElement = document.getElementById('colorChanges');
+  spanElement.innerHTML = colorChanges.join(', '); // Convert the array to a string with comma-separated values
+  
+  return colorChanges;
+}
+
+findColorChanges(listOfPurplePinkChanges);
+```
+
+
+
+Dealing with two separate .html files
+
+I have two tables, one with chess-table and another is chess-line
+
+when I have gothamchess.html I want "chess-table pink" and "chess-table purple"
+
+when I have jansen.html I want to have "chess-line purple" with "chess-table pink" so that the board stays the same. 
+
+In this first case for jansen.html 
+
+```js
+
+function getRepeatingNumbers() {
+  let tablePositions = [];
+  let chessTable2 = document.querySelectorAll('table');
+  let countOfClass = 0;
+
+  chessTable2.forEach(table => {
+    let classNames = Array.from(table.classList);
+    const color = classNames[1];
+
+    if (color === 'pink') {
+      tablePositions.push(countOfClass);
+      countOfClass++;
+    } else {
+      tablePositions.push(countOfClass - 1);
+    }
+  });
+  //tablePositions is returned as [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 13, 13, 13, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 42, 42, 42, 43, 43, 43, 43, 43, 43, 43, 43, 43, 43, 43, 43, 43, 43, 43, 43, 43, 43, 43];
+
+  //each tablePosition has the board # notice how after 24, it gets repeated because of the line that I have inserted.
+
+  let occurrences = {};
+  let repeatingNumbers = [];
+
+  for (let number of tablePositions) {
+    if (occurrences[number]) {
+      occurrences[number]++;
+    } else {
+      occurrences[number] = 1;
+    }
+  }
+
+  for (let key in occurrences) {
+    if (occurrences[key] > 1) {
+      repeatingNumbers.push(key);
+    }
+  }
+  // now I need to find out which numbers get repeated
+
+  const spanElement = document.getElementById('colorChanges');
+  spanElement.innerHTML = repeatingNumbers.join(', ');
+
+  return repeatingNumbers;
+}
+
+// Example usage
+let repeatingNumbers = getRepeatingNumbers();
+console.log(repeatingNumbers);
+
+
+```
+
+Then, I need to determine which function to use:
+
+because if I only have "chess-table pink" and "chess-table purple" then I will want to show where the board color changes,
+
+however if I have "chess-line purple" and "chess-table pink" then I need to show where the lines come in.
+
+```js
+
+
+let chessTable3 = document.querySelectorAll('table');
+
+let hasChessTableClass = false;
+let hasChessLineClass = false;
+
+chessTable3.forEach(table => {
+  if (table.classList.contains('chess-table')) {
+    hasChessTableClass = true;
+  }
+  if (table.classList.contains('chess-line')) {
+    hasChessLineClass = true;
+  }
+});
+
+if (hasChessTableClass && hasChessLineClass) {
+  console.log("Both 'chess-table' and 'chess-line' classes appear.");
+  getRepeatingNumbers();
+
+} else if (hasChessTableClass) {
+  console.log("Only 'chess-table' class appears.");
+  findColorChanges(listOfPurplePinkChanges1);
+} else {
+  console.log("Neither 'chess-table' nor 'chess-line' classes appear.");
+}
+
+```
+
