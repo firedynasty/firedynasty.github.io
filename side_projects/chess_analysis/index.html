@@ -147,13 +147,26 @@
 <p style="display:none;">flip the board once only: <button id="renderButton">Flip Chessboard</button>
         </p>
 
-        <li><a href="chessnews1.html">First page of chess news analysis</a></li>
-        <li><a href="jansen.html">Jansen's game</a></li>
-        <li><a href="gothamchess.html">Gotham Chess</a></li>
+        <a href="78092083185.html">78092083185.html</a><br>
+        <a href="78646873375.html">78646873375.html</a><br>
+        <a href="78694316111.html">78694316111.html</a><br>
+        <a href="78870680593.html">78870680593.html</a><br>
+        <a href="78956516771.html">78956516771.html</a><br>
+        <a href="78960056293.html">78960056293.html</a><br>
+<a href="additions.md">additions.md</a>
+<a href="blank.html">blank.html</a>
+<a href="cheesecake_2.html">cheesecake_2.html</a>
+<a href="cheesecake1.html">cheesecake1.html</a>
+<a href="chessnews1.html">chessnews1.html</a>
+
+<a href="gothamchess.html">gothamchess.html</a>
+<a href="jansen.html">jansen.html</a>
+
         <br>
      
         <br>
         <br>
+        <div id="table-container"></div>
         </div>
         
   </div>
@@ -204,6 +217,58 @@ var board = Chessboard('myBoard', {
     </script>
     
     <script src="script.js"></script>
+    <script>
+
+var tableData = [
+  { opening: 'Pircs Defense', file: '78092083185.html' },
+  { opening: 'Indian Colle', file: '78646873375.html' },
+  { opening: 'Kings Pawn', file: '78694316111.html' },
+  { opening: 'Queens Pawn', file: '78870680593.html' },
+  { opening: 'Queens Pawn', file: '78956516771.html' },
+  { opening: 'Italian Fried Liver', file: '78960056293.html' }
+
+  // Add more objects for additional openings and files
+];// Assuming you have a table element in your HTML with the id 'table-container'
+// Assuming you have a table element in your HTML with the id 'table-container'
+var tableContainer = document.getElementById('table-container');
+
+// Sort tableData by the "opening" column
+tableData.sort(function(a, b) {
+  var openingA = a.opening.trim().toLowerCase();
+  var openingB = b.opening.trim().toLowerCase();
+  return openingA.localeCompare(openingB);
+});
+
+// Create the table element
+var table = document.createElement('table');
+
+// Create the table headers
+var headers = Object.keys(tableData[0]);
+var headerRow = document.createElement('tr');
+headers.forEach(function (header) {
+  var th = document.createElement('th');
+  th.textContent = header;
+  headerRow.appendChild(th);
+});
+table.appendChild(headerRow);
+
+// Create the table rows
+tableData.forEach(function (row) {
+  var tr = document.createElement('tr');
+  Object.values(row).forEach(function (value) {
+    var td = document.createElement('td');
+    td.textContent = value;
+    tr.appendChild(td);
+  });
+  table.appendChild(tr);
+});
+
+// Append the table to the container
+tableContainer.appendChild(table);
+
+
+
+    </script>
 
     <img src="./CodePen - Basic Chess_files/wP.png" id="e015-ea01-83ab-457a-7cb0-3f1b-1540-ced4" alt="" class="piece-417db" data-piece="wP" style="width: 49px; height: 49px; display: none;">
 

@@ -125,6 +125,7 @@ window.onload = function () {
       if (td) {
         const fen = td.textContent;
         listOfFenPositions.push(fen);
+        console.log("fen is" + fen)
         listOfBoardIds.push(table.id);
         renderChessboard(fen, table.id);
         console.log(table.id);
@@ -178,7 +179,52 @@ window.onload = function () {
     }
    
   });
-  
+
+ 
+function getSelectedText_to_gotoHighlightedLink() {
+  var selectedText = '';
+  if (window.getSelection) {
+      selectedText = window.getSelection();
+  }
+  else if (document.getSelection) {
+      selectedText = document.getSelection();
+  }
+  else if (document.selection) {
+      selectedText = document.selection.createRange().text;
+  } else return;
+  console.log(selectedText.toString().trim());
+  board.position(selectedText.toString().trim());
+ 
+}
+
+
+setBoard.addEventListener('click', function() {
+  getSelectedText_to_gotoHighlightedLink();
+});
+
+
+arrStrSplit = [];
+
+convertTextarea.addEventListener('click', function() {
+  console.log('hello world')
+  var arrStr = textarea.value
+  arrStrSplit = arrStr.split('\n');
+  console.log(arrStrSplit)
+});
+
+boardIndex = 0;
+
+resetBoardIndex.addEventListener('click', function() {
+  boardIndex=0;
+  console.log("board index : " + boardIndex)
+});
+
+currentIndexPosition.addEventListener('click', function() {
+  board.position(arrStrSplit[boardIndex])
+  boardIndex=boardIndex +1
+  console.log("New Board Position" + boardIndex)
+});
+
   gotoId = 'myBoard'
   
   function toggleBoard(argument) {

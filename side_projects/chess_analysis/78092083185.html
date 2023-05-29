@@ -1,0 +1,1637 @@
+<!DOCTYPE html>
+
+<!-- saved from url=(0033)https://cdpn.io/pen/debug/KKxgbmv -->
+<html lang="en"><head><meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+<head>
+<meta charset="utf-8">
+<meta content="width=device-width" name="viewport"/>
+<title>Media Queries: a simple mobile first design, step 1</title>
+<link href="style.css" rel="stylesheet" type="text/css"/>
+<style>
+.board {
+    width: 400px;
+    margin: auto;
+}
+
+.info {
+    width: 400px;
+    margin: auto;
+}
+
+.move-history {
+    max-height: 100px;
+    overflow-y: scroll;
+}
+
+/*!
+ * chessboard.js $version$
+ *
+ * Copyright 2013 Chris Oakman
+ * Released under the MIT license
+ * https://github.com/oakmac/chessboardjs/blob/master/LICENSE
+ *
+ * Date: $date$
+ */
+
+/* clearfix */
+.clearfix-7da63 {
+  clear: both;
+}
+
+/* board */
+.board-b72b1 {
+  border: 2px solid #404040;
+  -moz-box-sizing: content-box;
+  box-sizing: content-box;
+}
+
+/* square */
+.square-55d63 {
+  float: left;
+  position: relative;
+
+  /* disable any native browser highlighting */
+  -webkit-touch-callout: none;
+    -webkit-user-select: none;
+     -khtml-user-select: none;
+       -moz-user-select: none;
+        -ms-user-select: none;
+            user-select: none;
+}
+
+/* white square */
+.white-1e1d7 {
+  background-color: #f0d9b5;
+  color: #b58863;
+}
+
+/* black square */
+.black-3c85d {
+  background-color: #b58863;
+  color: #f0d9b5;
+}
+
+/* highlighted square */
+.highlight1-32417, .highlight2-9c5d2 {
+  -webkit-box-shadow: inset 0 0 3px 3px yellow;
+  -moz-box-shadow: inset 0 0 3px 3px yellow;
+  box-shadow: inset 0 0 3px 3px yellow;
+}
+
+/* notation */
+.notation-322f9 {
+  cursor: default;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  position: absolute;
+}
+.alpha-d2270 {
+  bottom: 1px;
+  right: 3px;
+}
+.numeric-fc462 {
+  top: 2px;
+  left: 2px;
+}
+</style>
+</meta></head>
+<body>
+<!-- Used to get images -->
+<!--<base href="https://chessboardjs.com/">-->
+<header id="header1">
+<nav>
+<ul>
+<li><a href="#" onclick="scrollToHome()">Go Top</a></li>
+<li>Go to Comments &gt;Go to : <select id="tableDropComments">
+<option value="">tableDropComments</option>
+<option value="1">1.</option>
+<option value="2">2.</option>
+<option value="3">3.</option>
+<option value="4">4.</option>
+<option value="5">5.</option>
+</select>  
+</li>
+</ul>
+</nav>
+</header>
+<div class="wrapper">
+<main>
+<div class="two-columns-grid">
+<div>
+<div id="storeBoard">
+<!-- <input type="number" id="myInput"><br> -->
+<div class="board" id="myBoard"><div class="chessboard-63f37"><div class="board-b72b1" style="width: 392px;"><div class="row-5277c"><div class="square-55d63 white-1e1d7 square-a8" data-square="a8" id="a8-eddf-193b-d265-5642-5411-4596-c778-3251" style="width:49px;height:49px;"><div class="notation-322f9 numeric-fc462">8</div><img alt="" class="piece-417db" data-piece="bR" src="./CodePen - Basic Chess_files/bR.png" style="width:49px;height:49px;"/></div><div class="square-55d63 black-3c85d square-b8" data-square="b8" id="b8-b319-3c3c-ce2a-21fd-be9c-a78e-e1e8-5e4e" style="width:49px;height:49px;"><img alt="" class="piece-417db" data-piece="bN" src="./CodePen - Basic Chess_files/bN.png" style="width:49px;height:49px;"/></div><div class="square-55d63 white-1e1d7 square-c8" data-square="c8" id="c8-ebfb-69d1-8169-e4bb-e419-5058-b828-86ba" style="width:49px;height:49px;"><img alt="" class="piece-417db" data-piece="bB" src="./CodePen - Basic Chess_files/bB.png" style="width:49px;height:49px;"/></div><div class="square-55d63 black-3c85d square-d8" data-square="d8" id="d8-bf44-5293-1f4d-1e88-8c33-66f4-a0f7-c198" style="width:49px;height:49px;"><img alt="" class="piece-417db" data-piece="bQ" src="./CodePen - Basic Chess_files/bQ.png" style="width:49px;height:49px;"/></div><div class="square-55d63 white-1e1d7 square-e8" data-square="e8" id="e8-3fa2-53b9-e441-3ce6-8437-db43-3578-0525" style="width:49px;height:49px;"><img alt="" class="piece-417db" data-piece="bK" src="./CodePen - Basic Chess_files/bK.png" style="width:49px;height:49px;"/></div><div class="square-55d63 black-3c85d square-f8" data-square="f8" id="f8-2aae-74d9-cb12-f1f5-4366-235c-af00-2356" style="width:49px;height:49px;"><img alt="" class="piece-417db" data-piece="bB" src="./CodePen - Basic Chess_files/bB.png" style="width:49px;height:49px;"/></div><div class="square-55d63 white-1e1d7 square-g8" data-square="g8" id="g8-784d-aeb3-cd2f-62cb-4c3b-3b56-534f-564d" style="width:49px;height:49px;"><img alt="" class="piece-417db" data-piece="bN" src="./CodePen - Basic Chess_files/bN.png" style="width:49px;height:49px;"/></div><div class="square-55d63 black-3c85d square-h8" data-square="h8" id="h8-a845-7e1c-1704-dccd-39ef-0dfe-e679-da3a" style="width:49px;height:49px;"><img alt="" class="piece-417db" data-piece="bR" src="./CodePen - Basic Chess_files/bR.png" style="width:49px;height:49px;"/></div><div class="clearfix-7da63"></div></div><div class="row-5277c"><div class="square-55d63 black-3c85d square-a7" data-square="a7" id="a7-9669-a819-cab2-e458-896d-b4e5-bc3a-357d" style="width:49px;height:49px;"><div class="notation-322f9 numeric-fc462">7</div><img alt="" class="piece-417db" data-piece="bP" src="./CodePen - Basic Chess_files/bP.png" style="width:49px;height:49px;"/></div><div class="square-55d63 white-1e1d7 square-b7" data-square="b7" id="b7-a89d-037f-f35b-61bf-5cd9-f345-34f8-5480" style="width:49px;height:49px;"><img alt="" class="piece-417db" data-piece="bP" src="./CodePen - Basic Chess_files/bP.png" style="width:49px;height:49px;"/></div><div class="square-55d63 black-3c85d square-c7" data-square="c7" id="c7-7e64-27dd-d286-a1e3-5bd6-2eed-7701-a322" style="width:49px;height:49px;"><img alt="" class="piece-417db" data-piece="bP" src="./CodePen - Basic Chess_files/bP.png" style="width:49px;height:49px;"/></div><div class="square-55d63 white-1e1d7 square-d7" data-square="d7" id="d7-d9b0-894e-8c68-2f53-f230-5be4-feed-1ab6" style="width:49px;height:49px;"><img alt="" class="piece-417db" data-piece="bP" src="./CodePen - Basic Chess_files/bP.png" style="width:49px;height:49px;"/></div><div class="square-55d63 black-3c85d square-e7" data-square="e7" id="e7-09dd-815d-9a8d-cd90-6488-86f1-64e0-6802" style="width:49px;height:49px;"><img alt="" class="piece-417db" data-piece="bP" src="./CodePen - Basic Chess_files/bP.png" style="width:49px;height:49px;"/></div><div class="square-55d63 white-1e1d7 square-f7" data-square="f7" id="f7-1f92-f580-3921-bf19-881c-9863-7012-da99" style="width:49px;height:49px;"><img alt="" class="piece-417db" data-piece="bP" src="./CodePen - Basic Chess_files/bP.png" style="width:49px;height:49px;"/></div><div class="square-55d63 black-3c85d square-g7" data-square="g7" id="g7-9c3e-563d-4130-a74e-7775-a91f-b626-323c" style="width:49px;height:49px;"><img alt="" class="piece-417db" data-piece="bP" src="./CodePen - Basic Chess_files/bP.png" style="width:49px;height:49px;"/></div><div class="square-55d63 white-1e1d7 square-h7" data-square="h7" id="h7-ba0c-80e3-0919-15d8-253d-ac49-aa5d-bb7e" style="width:49px;height:49px;"><img alt="" class="piece-417db" data-piece="bP" src="./CodePen - Basic Chess_files/bP.png" style="width:49px;height:49px;"/></div><div class="clearfix-7da63"></div></div><div class="row-5277c"><div class="square-55d63 white-1e1d7 square-a6" data-square="a6" id="a6-fa96-5101-1804-1576-7fd7-44a7-77c1-7c0e" style="width:49px;height:49px;"><div class="notation-322f9 numeric-fc462">6</div></div><div class="square-55d63 black-3c85d square-b6" data-square="b6" id="b6-7a6a-e127-71c3-c30c-a8ea-ad4a-c9a3-c590" style="width:49px;height:49px;"></div><div class="square-55d63 white-1e1d7 square-c6" data-square="c6" id="c6-ef48-4045-6be8-9ab0-cac2-831b-ae24-0ae2" style="width:49px;height:49px;"></div><div class="square-55d63 black-3c85d square-d6" data-square="d6" id="d6-a49a-717b-c9ab-fca4-5e9b-5c30-fada-67db" style="width:49px;height:49px;"></div><div class="square-55d63 white-1e1d7 square-e6" data-square="e6" id="e6-bfcd-2eb5-0e0d-6168-bf42-ed2b-a550-0e5d" style="width:49px;height:49px;"></div><div class="square-55d63 black-3c85d square-f6" data-square="f6" id="f6-1c74-1b3e-d429-bb07-f073-72ca-c951-8c7c" style="width:49px;height:49px;"></div><div class="square-55d63 white-1e1d7 square-g6" data-square="g6" id="g6-408b-4475-d845-cbf1-d574-f070-ea0c-b235" style="width:49px;height:49px;"></div><div class="square-55d63 black-3c85d square-h6" data-square="h6" id="h6-2753-fd89-0a8f-fb0b-c9e8-7188-c11e-28ba" style="width:49px;height:49px;"></div><div class="clearfix-7da63"></div></div><div class="row-5277c"><div class="square-55d63 black-3c85d square-a5" data-square="a5" id="a5-8478-7599-daae-4a2a-bbc9-bc24-0a15-dc82" style="width:49px;height:49px;"><div class="notation-322f9 numeric-fc462">5</div></div><div class="square-55d63 white-1e1d7 square-b5" data-square="b5" id="b5-38df-fe16-4264-05b4-4b48-9724-9a88-fa9c" style="width:49px;height:49px;"></div><div class="square-55d63 black-3c85d square-c5" data-square="c5" id="c5-66bf-062c-efc1-b19b-7605-bf8e-45eb-089c" style="width:49px;height:49px;"></div><div class="square-55d63 white-1e1d7 square-d5" data-square="d5" id="d5-4114-6d4e-b17c-bdc9-7421-ebb0-6c9c-d70b" style="width:49px;height:49px;"></div><div class="square-55d63 black-3c85d square-e5" data-square="e5" id="e5-bcf4-90d6-e813-51ee-dd7b-14d1-3d3a-df9d" style="width:49px;height:49px;"></div><div class="square-55d63 white-1e1d7 square-f5" data-square="f5" id="f5-e7c4-9375-08a4-c0b4-32e7-9212-d0e5-b72b" style="width:49px;height:49px;"></div><div class="square-55d63 black-3c85d square-g5" data-square="g5" id="g5-bd86-51c6-99a0-e2c1-0541-d754-e576-ca06" style="width:49px;height:49px;"></div><div class="square-55d63 white-1e1d7 square-h5" data-square="h5" id="h5-a23e-2819-1c11-388b-cb2e-71f3-1c3c-e0d7" style="width:49px;height:49px;"></div><div class="clearfix-7da63"></div></div><div class="row-5277c"><div class="square-55d63 white-1e1d7 square-a4" data-square="a4" id="a4-a769-0164-ce64-dc05-5613-9eb3-8397-dcbf" style="width:49px;height:49px;"><div class="notation-322f9 numeric-fc462">4</div></div><div class="square-55d63 black-3c85d square-b4" data-square="b4" id="b4-097c-48ef-630f-d477-e1d1-cfff-3494-101a" style="width:49px;height:49px;"></div><div class="square-55d63 white-1e1d7 square-c4" data-square="c4" id="c4-9ac7-f524-f0be-75b9-2a85-7e3f-28b2-c599" style="width:49px;height:49px;"></div><div class="square-55d63 black-3c85d square-d4" data-square="d4" id="d4-6adf-748c-e7d3-92b2-1fc5-719a-7174-c355" style="width:49px;height:49px;"></div><div class="square-55d63 white-1e1d7 square-e4" data-square="e4" id="e4-60b8-449a-09d1-e6a6-abb1-58b6-ac22-6260" style="width:49px;height:49px;"></div><div class="square-55d63 black-3c85d square-f4" data-square="f4" id="f4-e81f-7433-da69-99b5-7f02-0458-7dc0-64ed" style="width:49px;height:49px;"></div><div class="square-55d63 white-1e1d7 square-g4" data-square="g4" id="g4-89db-586b-86a5-1aed-08a0-e267-c1fe-94b5" style="width:49px;height:49px;"></div><div class="square-55d63 black-3c85d square-h4" data-square="h4" id="h4-8734-d255-032f-9094-820f-7651-7b41-2273" style="width:49px;height:49px;"></div><div class="clearfix-7da63"></div></div><div class="row-5277c"><div class="square-55d63 black-3c85d square-a3" data-square="a3" id="a3-488d-045c-8b7e-743d-687c-b35d-f062-6920" style="width:49px;height:49px;"><div class="notation-322f9 numeric-fc462">3</div></div><div class="square-55d63 white-1e1d7 square-b3" data-square="b3" id="b3-3256-1c62-dd3b-19a2-c303-a8cc-d87c-a17b" style="width:49px;height:49px;"></div><div class="square-55d63 black-3c85d square-c3" data-square="c3" id="c3-f1c1-521b-0002-f0e1-7192-0247-07e6-7078" style="width:49px;height:49px;"></div><div class="square-55d63 white-1e1d7 square-d3" data-square="d3" id="d3-bc3e-0c8a-0b1c-bbe3-2d5c-938d-3af9-4ee8" style="width:49px;height:49px;"></div><div class="square-55d63 black-3c85d square-e3" data-square="e3" id="e3-235f-37d7-c70c-8a81-e7c9-bb0b-9392-698c" style="width:49px;height:49px;"></div><div class="square-55d63 white-1e1d7 square-f3" data-square="f3" id="f3-da36-7109-4a9c-caef-e43d-802e-cb98-e26d" style="width:49px;height:49px;"></div><div class="square-55d63 black-3c85d square-g3" data-square="g3" id="g3-7a0f-5a11-1776-49f7-b816-6960-a884-60f5" style="width:49px;height:49px;"></div><div class="square-55d63 white-1e1d7 square-h3" data-square="h3" id="h3-b717-f45d-884d-d0d0-5e08-331a-30e0-d6bc" style="width:49px;height:49px;"></div><div class="clearfix-7da63"></div></div><div class="row-5277c"><div class="square-55d63 white-1e1d7 square-a2" data-square="a2" id="a2-d556-55f1-8278-fbcc-3834-8b3e-f7a3-1620" style="width:49px;height:49px;"><div class="notation-322f9 numeric-fc462">2</div><img alt="" class="piece-417db" data-piece="wP" src="./CodePen - Basic Chess_files/wP.png" style="width:49px;height:49px;"/></div><div class="square-55d63 black-3c85d square-b2" data-square="b2" id="b2-1116-563b-25d1-cd37-1f5a-38cf-baad-9907" style="width:49px;height:49px;"><img alt="" class="piece-417db" data-piece="wP" src="./CodePen - Basic Chess_files/wP.png" style="width:49px;height:49px;"/></div><div class="square-55d63 white-1e1d7 square-c2" data-square="c2" id="c2-d033-ee76-9ccc-cbae-6e77-07f3-efa6-4adf" style="width:49px;height:49px;"><img alt="" class="piece-417db" data-piece="wP" src="./CodePen - Basic Chess_files/wP.png" style="width:49px;height:49px;"/></div><div class="square-55d63 black-3c85d square-d2" data-square="d2" id="d2-5735-f58f-e0bd-1250-a033-797f-3327-19af" style="width:49px;height:49px;"><img alt="" class="piece-417db" data-piece="wP" src="./CodePen - Basic Chess_files/wP.png" style="width:49px;height:49px;"/></div><div class="square-55d63 white-1e1d7 square-e2" data-square="e2" id="e2-4f4a-192f-9a69-ea4b-e836-7ba9-60cb-357f" style="width:49px;height:49px;"><img alt="" class="piece-417db" data-piece="wP" src="./CodePen - Basic Chess_files/wP.png" style="width:49px;height:49px;"/></div><div class="square-55d63 black-3c85d square-f2" data-square="f2" id="f2-cfed-d537-4a61-3995-1a03-adf1-ba0c-b7e9" style="width:49px;height:49px;"><img alt="" class="piece-417db" data-piece="wP" src="./CodePen - Basic Chess_files/wP.png" style="width:49px;height:49px;"/></div><div class="square-55d63 white-1e1d7 square-g2" data-square="g2" id="g2-07bc-3e79-cb98-f554-3f42-bd79-bc10-58b4" style="width:49px;height:49px;"><img alt="" class="piece-417db" data-piece="wP" src="./CodePen - Basic Chess_files/wP.png" style="width:49px;height:49px;"/></div><div class="square-55d63 black-3c85d square-h2" data-square="h2" id="h2-202f-8ce9-9a48-7c2d-eff4-acaa-ed86-6532" style="width:49px;height:49px;"><img alt="" class="piece-417db" data-piece="wP" src="./CodePen - Basic Chess_files/wP.png" style="width:49px;height:49px;"/></div><div class="clearfix-7da63"></div></div><div class="row-5277c"><div class="square-55d63 black-3c85d square-a1" data-square="a1" id="a1-32da-6488-2e2a-52c9-f0e2-1d7e-05da-9724" style="width:49px;height:49px;"><div class="notation-322f9 alpha-d2270">a</div><div class="notation-322f9 numeric-fc462">1</div><img alt="" class="piece-417db" data-piece="wR" src="./CodePen - Basic Chess_files/wR.png" style="width:49px;height:49px;"/></div><div class="square-55d63 white-1e1d7 square-b1" data-square="b1" id="b1-306d-74e3-b57a-a0f4-9981-85dc-368f-0bd5" style="width:49px;height:49px;"><div class="notation-322f9 alpha-d2270">b</div><img alt="" class="piece-417db" data-piece="wN" src="./CodePen - Basic Chess_files/wN.png" style="width:49px;height:49px;"/></div><div class="square-55d63 black-3c85d square-c1" data-square="c1" id="c1-c3a5-f2ae-207b-28ef-f21d-93aa-a65e-c20a" style="width:49px;height:49px;"><div class="notation-322f9 alpha-d2270">c</div><img alt="" class="piece-417db" data-piece="wB" src="./CodePen - Basic Chess_files/wB.png" style="width:49px;height:49px;"/></div><div class="square-55d63 white-1e1d7 square-d1" data-square="d1" id="d1-df32-6221-7e33-7821-83da-c4e8-52c5-4d49" style="width:49px;height:49px;"><div class="notation-322f9 alpha-d2270">d</div><img alt="" class="piece-417db" data-piece="wQ" src="./CodePen - Basic Chess_files/wQ.png" style="width:49px;height:49px;"/></div><div class="square-55d63 black-3c85d square-e1" data-square="e1" id="e1-3376-4331-b57d-56ea-3614-7ed5-a272-7980" style="width:49px;height:49px;"><div class="notation-322f9 alpha-d2270">e</div><img alt="" class="piece-417db" data-piece="wK" src="./CodePen - Basic Chess_files/wK.png" style="width:49px;height:49px;"/></div><div class="square-55d63 white-1e1d7 square-f1" data-square="f1" id="f1-1247-bcc6-0966-9b0f-afaa-6550-bee3-5650" style="width:49px;height:49px;"><div class="notation-322f9 alpha-d2270">f</div><img alt="" class="piece-417db" data-piece="wB" src="./CodePen - Basic Chess_files/wB.png" style="width:49px;height:49px;"/></div><div class="square-55d63 black-3c85d square-g1" data-square="g1" id="g1-9778-5065-4899-67cc-48eb-9d5f-e628-6636" style="width:49px;height:49px;"><div class="notation-322f9 alpha-d2270">g</div><img alt="" class="piece-417db" data-piece="wN" src="./CodePen - Basic Chess_files/wN.png" style="width:49px;height:49px;"/></div><div class="square-55d63 white-1e1d7 square-h1" data-square="h1" id="h1-c59d-8389-ad88-c95e-030b-a8db-65bc-873f" style="width:49px;height:49px;"><div class="notation-322f9 alpha-d2270">h</div><img alt="" class="piece-417db" data-piece="wR" src="./CodePen - Basic Chess_files/wR.png" style="width:49px;height:49px;"/></div><div class="clearfix-7da63"></div></div></div></div></div>
+<p style="text-align:center">Highlight the board for the board number: <span id="highlightBoard"></span></p>
+<p id="createBoardLink">Go to board #<span id="forIndexOfList2"></span></p>
+<p style="text-align:center">Board Color changes at: <span id="colorChanges"></span></p>
+<p style="text-align:center">Go to : <select id="table_drop">
+<option value="">table_drop</option>
+<option value="10">10.</option>
+<option value="20">20.</option>
+</select>  <a href="https://www.chess.com/analysis/game/live/78092083185?tab=analysis" target="_blank">Link to game</a></p>
+</div>
+</div><div id="blogPost">
+<br/>
+<p>flip the board once only: <button id="renderButton">Flip Chessboard</button>
+<button onclick="var element = document.getElementById('storeBoard'); if (element.style.display === 'none') { element.style.display = 'block'; } else { element.style.display = 'none'; }">Toggle Board</button>
+<div id="forContent">
+<div>
+<table class="chess-table pink" id="chess1">
+<tbody></tbody>
+<tfoot><tr><td>rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess1 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:e2e4 </p>
+<br/><table class="chess-table pink" id="chess2">
+<tbody></tbody>
+<tfoot><tr><td>rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess2 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:d7d6 </p>
+<br/><table class="chess-table pink" id="chess3">
+<tbody></tbody>
+<tfoot><tr><td>rnbqkbnr/ppp1pppp/3p4/8/4P3/8/PPPP1PPP/RNBQKBNR</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess3 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:f2f4 </p>
+<br/><table class="chess-table pink" id="chess4">
+<tbody></tbody>
+<tfoot><tr><td>rnbqkbnr/ppp1pppp/3p4/8/4PP2/8/PPPP2PP/RNBQKBNR</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess4 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:f7f6 </p>
+<br/><table class="chess-table pink" id="chess5">
+<tbody></tbody>
+<tfoot><tr><td>rnbqkbnr/ppp1p1pp/3p1p2/8/4PP2/8/PPPP2PP/RNBQKBNR</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess5 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:d2d3 </p>
+<br/><table class="chess-table pink" id="chess6">
+<tbody></tbody>
+<tfoot><tr><td>rnbqkbnr/ppp1p1pp/3p1p2/8/4PP2/3P4/PPP3PP/RNBQKBNR</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess6 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:e7e5 </p>
+<br/><table class="chess-table pink" id="chess7">
+<tbody></tbody>
+<tfoot><tr><td>rnbqkbnr/ppp3pp/3p1p2/4p3/4PP2/3P4/PPP3PP/RNBQKBNR</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess7 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:f4f5 </p>
+<br/><table class="chess-table pink" id="chess8">
+<tbody></tbody>
+<tfoot><tr><td>rnbqkbnr/ppp3pp/3p1p2/4pP2/4P3/3P4/PPP3PP/RNBQKBNR</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess8 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:g7g6 </p>
+<br/><table class="chess-table pink" id="chess9">
+<tbody></tbody>
+<tfoot><tr><td>rnbqkbnr/ppp4p/3p1pp1/4pP2/4P3/3P4/PPP3PP/RNBQKBNR</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess9 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:f5g6 </p>
+<br/><table class="chess-table pink" id="chess10">
+<tbody></tbody>
+<tfoot><tr><td>rnbqkbnr/ppp4p/3p1pP1/4p3/4P3/3P4/PPP3PP/RNBQKBNR</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess10 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:h7g6 </p>
+<br/><table class="chess-table pink" id="chess11">
+<tbody></tbody>
+<tfoot><tr><td>rnbqkbnr/ppp5/3p1pp1/4p3/4P3/3P4/PPP3PP/RNBQKBNR</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess11 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:b1c3 </p>
+<br/><table class="chess-table pink" id="chess12">
+<tbody></tbody>
+<tfoot><tr><td>rnbqkbnr/ppp5/3p1pp1/4p3/4P3/2NP4/PPP3PP/R1BQKBNR</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess12 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:c8e6 </p>
+<br/><table class="chess-table pink" id="chess13">
+<tbody></tbody>
+<tfoot><tr><td>rn1qkbnr/ppp5/3pbpp1/4p3/4P3/2NP4/PPP3PP/R1BQKBNR</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess13 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:c1e3 </p>
+<br/><table class="chess-table pink" id="chess14">
+<tbody></tbody>
+<tfoot><tr><td>rn1qkbnr/ppp5/3pbpp1/4p3/4P3/2NPB3/PPP3PP/R2QKBNR</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess14 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:b8c6 </p>
+<br/><table class="chess-table pink" id="chess15">
+<tbody></tbody>
+<tfoot><tr><td>r2qkbnr/ppp5/2npbpp1/4p3/4P3/2NPB3/PPP3PP/R2QKBNR</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess15 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:d1d2 </p>
+<br/><table class="chess-table pink" id="chess16">
+<tbody></tbody>
+<tfoot><tr><td>r2qkbnr/ppp5/2npbpp1/4p3/4P3/2NPB3/PPPQ2PP/R3KBNR</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess16 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:f6f5 </p>
+<br/><table class="chess-table pink" id="chess17">
+<tbody></tbody>
+<tfoot><tr><td>r2qkbnr/ppp5/2npb1p1/4pp2/4P3/2NPB3/PPPQ2PP/R3KBNR</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess17 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:g1f3 </p>
+<br/><table class="chess-table pink" id="chess18">
+<tbody></tbody>
+<tfoot><tr><td>r2qkbnr/ppp5/2npb1p1/4pp2/4P3/2NPBN2/PPPQ2PP/R3KB1R</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess18 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:f5e4 </p>
+<br/><table class="chess-table pink" id="chess19">
+<tbody></tbody>
+<tfoot><tr><td>r2qkbnr/ppp5/2npb1p1/4p3/4p3/2NPBN2/PPPQ2PP/R3KB1R</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess19 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:d3e4 </p>
+<br/><table class="chess-table pink" id="chess20">
+<tbody></tbody>
+<tfoot><tr><td>r2qkbnr/ppp5/2npb1p1/4p3/4P3/2N1BN2/PPPQ2PP/R3KB1R</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess20 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:d8f6 </p>
+<br/><table class="chess-table pink" id="chess21">
+<tbody></tbody>
+<tfoot><tr><td>r3kbnr/ppp5/2npbqp1/4p3/4P3/2N1BN2/PPPQ2PP/R3KB1R</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess21 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:c3d5 </p>
+<br/><table class="chess-table pink" id="chess22">
+<tbody></tbody>
+<tfoot><tr><td>r3kbnr/ppp5/2npbqp1/3Np3/4P3/4BN2/PPPQ2PP/R3KB1R</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess22 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:f6f7 </p>
+<br/><table class="chess-table pink" id="chess23">
+<tbody></tbody>
+<tfoot><tr><td>r3kbnr/ppp2q2/2npb1p1/3Np3/4P3/4BN2/PPPQ2PP/R3KB1R</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess23 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:f3g5 </p>
+<br/><table class="chess-table pink" id="chess24">
+<tbody></tbody>
+<tfoot><tr><td>r3kbnr/ppp2q2/2npb1p1/3Np1N1/4P3/4B3/PPPQ2PP/R3KB1R</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess24 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:f7d7 </p>
+<br/><table class="chess-table pink" id="chess25">
+<tbody></tbody>
+<tfoot><tr><td>r3kbnr/pppq4/2npb1p1/3Np1N1/4P3/4B3/PPPQ2PP/R3KB1R</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess25 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:g5e6 </p>
+<br/><table class="chess-table pink" id="chess26">
+<tbody></tbody>
+<tfoot><tr><td>r3kbnr/pppq4/2npN1p1/3Np3/4P3/4B3/PPPQ2PP/R3KB1R</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess26 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:f8h6 </p>
+<br/><table class="chess-table pink" id="chess27">
+<tbody></tbody>
+<tfoot><tr><td>r3k1nr/pppq4/2npN1pb/3Np3/4P3/4B3/PPPQ2PP/R3KB1R</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess27 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:e3h6 </p>
+<br/><table class="chess-table pink" id="chess28">
+<tbody></tbody>
+<tfoot><tr><td>r3k1nr/pppq4/2npN1pB/3Np3/4P3/8/PPPQ2PP/R3KB1R</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess28 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:a8c8 </p>
+<br/><table class="chess-table pink" id="chess29">
+<tbody></tbody>
+<tfoot><tr><td>2r1k1nr/pppq4/2npN1pB/3Np3/4P3/8/PPPQ2PP/R3KB1R</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess29 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:e6f8 </p>
+<br/><table class="chess-table pink" id="chess30">
+<tbody></tbody>
+<tfoot><tr><td>2r1kNnr/pppq4/2np2pB/3Np3/4P3/8/PPPQ2PP/R3KB1R</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess30 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:d7f7 </p>
+<br/><table class="chess-table pink" id="chess31">
+<tbody></tbody>
+<tfoot><tr><td>2r1kNnr/ppp2q2/2np2pB/3Np3/4P3/8/PPPQ2PP/R3KB1R</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess31 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:e1c1 </p>
+<br/><table class="chess-table pink" id="chess32">
+<tbody></tbody>
+<tfoot><tr><td>2r1kNnr/ppp2q2/2np2pB/3Np3/4P3/8/PPPQ2PP/2KR1B1R</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess32 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:g8h6 </p>
+<br/><table class="chess-table pink" id="chess33">
+<tbody></tbody>
+<tfoot><tr><td>2r1kN1r/ppp2q2/2np2pn/3Np3/4P3/8/PPPQ2PP/2KR1B1R</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess33 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:f1b5 </p>
+<br/><table class="chess-table pink" id="chess34">
+<tbody></tbody>
+<tfoot><tr><td>2r1kN1r/ppp2q2/2np2pn/1B1Np3/4P3/8/PPPQ2PP/2KR3R</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess34 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:f7f8 </p>
+<br/><table class="chess-table pink" id="chess35">
+<tbody></tbody>
+<tfoot><tr><td>2r1kq1r/ppp5/2np2pn/1B1Np3/4P3/8/PPPQ2PP/2KR3R</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess35 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:b5c6 </p>
+<br/><table class="chess-table pink" id="chess36">
+<tbody></tbody>
+<tfoot><tr><td>2r1kq1r/ppp5/2Bp2pn/3Np3/4P3/8/PPPQ2PP/2KR3R</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess36 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:b7c6 </p>
+<br/><table class="chess-table pink" id="chess37">
+<tbody></tbody>
+<tfoot><tr><td>2r1kq1r/p1p5/2pp2pn/3Np3/4P3/8/PPPQ2PP/2KR3R</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess37 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:h1f1 </p>
+<br/><table class="chess-table pink" id="chess38">
+<tbody></tbody>
+<tfoot><tr><td>2r1kq1r/p1p5/2pp2pn/3Np3/4P3/8/PPPQ2PP/2KR1R2</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess38 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:f8g7 </p>
+<br/><table class="chess-table pink" id="chess39">
+<tbody></tbody>
+<tfoot><tr><td>2r1k2r/p1p3q1/2pp2pn/3Np3/4P3/8/PPPQ2PP/2KR1R2</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess39 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:d5f6 </p>
+<br/><table class="chess-table pink" id="chess40">
+<tbody></tbody>
+<tfoot><tr><td>2r1k2r/p1p3q1/2pp1Npn/4p3/4P3/8/PPPQ2PP/2KR1R2</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess40 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:e8e7 </p>
+<br/><table class="chess-table pink" id="chess41">
+<tbody></tbody>
+<tfoot><tr><td>2r4r/p1p1k1q1/2pp1Npn/4p3/4P3/8/PPPQ2PP/2KR1R2</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess41 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:d2g5 </p>
+<br/><table class="chess-table pink" id="chess42">
+<tbody></tbody>
+<tfoot><tr><td>2r4r/p1p1k1q1/2pp1Npn/4p1Q1/4P3/8/PPP3PP/2KR1R2</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess42 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:e7e6 </p>
+<br/><table class="chess-table pink" id="chess43">
+<tbody></tbody>
+<tfoot><tr><td>2r4r/p1p3q1/2ppkNpn/4p1Q1/4P3/8/PPP3PP/2KR1R2</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess43 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:f6g4 </p>
+<br/><table class="chess-table pink" id="chess44">
+<tbody></tbody>
+<tfoot><tr><td>2r4r/p1p3q1/2ppk1pn/4p1Q1/4P1N1/8/PPP3PP/2KR1R2</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess44 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:c8f8 </p>
+<br/><table class="chess-table pink" id="chess45">
+<tbody></tbody>
+<tfoot><tr><td>5r1r/p1p3q1/2ppk1pn/4p1Q1/4P1N1/8/PPP3PP/2KR1R2</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess45 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:f1f8 </p>
+<br/><table class="chess-table pink" id="chess46">
+<tbody></tbody>
+<tfoot><tr><td>5R1r/p1p3q1/2ppk1pn/4p1Q1/4P1N1/8/PPP3PP/2KR4</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess46 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:g7f8 </p>
+<br/><table class="chess-table pink" id="chess47">
+<tbody></tbody>
+<tfoot><tr><td>5q1r/p1p5/2ppk1pn/4p1Q1/4P1N1/8/PPP3PP/2KR4</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess47 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:g4h6 </p>
+<br/><table class="chess-table pink" id="chess48">
+<tbody></tbody>
+<tfoot><tr><td>5q1r/p1p5/2ppk1pN/4p1Q1/4P3/8/PPP3PP/2KR4</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess48 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:h8h6 </p>
+<br/><table class="chess-table pink" id="chess49">
+<tbody></tbody>
+<tfoot><tr><td>5q2/p1p5/2ppk1pr/4p1Q1/4P3/8/PPP3PP/2KR4</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess49 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:g5g4 </p>
+<br/><table class="chess-table pink" id="chess50">
+<tbody></tbody>
+<tfoot><tr><td>5q2/p1p5/2ppk1pr/4p3/4P1Q1/8/PPP3PP/2KR4</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess50 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:e6e7 </p>
+<br/><table class="chess-table pink" id="chess51">
+<tbody></tbody>
+<tfoot><tr><td>5q2/p1p1k3/2pp2pr/4p3/4P1Q1/8/PPP3PP/2KR4</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess51 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:g4g5 </p>
+<br/><table class="chess-table pink" id="chess52">
+<tbody></tbody>
+<tfoot><tr><td>5q2/p1p1k3/2pp2pr/4p1Q1/4P3/8/PPP3PP/2KR4</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess52 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:e7e8 </p>
+<br/><table class="chess-table pink" id="chess53">
+<tbody></tbody>
+<tfoot><tr><td>4kq2/p1p5/2pp2pr/4p1Q1/4P3/8/PPP3PP/2KR4</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess53 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:g5g4 </p>
+<br/><table class="chess-table pink" id="chess54">
+<tbody></tbody>
+<tfoot><tr><td>4kq2/p1p5/2pp2pr/4p3/4P1Q1/8/PPP3PP/2KR4</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess54 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:a7a5 </p>
+<br/><table class="chess-table pink" id="chess55">
+<tbody></tbody>
+<tfoot><tr><td>4kq2/2p5/2pp2pr/p3p3/4P1Q1/8/PPP3PP/2KR4</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess55 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:g4c8 </p>
+<br/><table class="chess-table pink" id="chess56">
+<tbody></tbody>
+<tfoot><tr><td>2Q1kq2/2p5/2pp2pr/p3p3/4P3/8/PPP3PP/2KR4</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess56 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:e8e7 </p>
+<br/><table class="chess-table pink" id="chess57">
+<tbody></tbody>
+<tfoot><tr><td>2Q2q2/2p1k3/2pp2pr/p3p3/4P3/8/PPP3PP/2KR4</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess57 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:c8c7 </p>
+<br/><table class="chess-table pink" id="chess58">
+<tbody></tbody>
+<tfoot><tr><td>5q2/2Q1k3/2pp2pr/p3p3/4P3/8/PPP3PP/2KR4</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess58 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:e7e6 </p>
+<br/><table class="chess-table pink" id="chess59">
+<tbody></tbody>
+<tfoot><tr><td>5q2/2Q5/2ppk1pr/p3p3/4P3/8/PPP3PP/2KR4</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess59 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:c7c6 </p>
+<br/><table class="chess-table pink" id="chess60">
+<tbody></tbody>
+<tfoot><tr><td>5q2/8/2Qpk1pr/p3p3/4P3/8/PPP3PP/2KR4</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess60 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:h6h2 </p>
+<br/><table class="chess-table pink" id="chess61">
+<tbody></tbody>
+<tfoot><tr><td>5q2/8/2Qpk1p1/p3p3/4P3/8/PPP3Pr/2KR4</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess61 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:c6d5 </p>
+<br/><table class="chess-table pink" id="chess62">
+<tbody></tbody>
+<tfoot><tr><td>5q2/8/3pk1p1/p2Qp3/4P3/8/PPP3Pr/2KR4</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess62 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:e6d7 </p>
+<br/><table class="chess-table pink" id="chess63">
+<tbody></tbody>
+<tfoot><tr><td>5q2/3k4/3p2p1/p2Qp3/4P3/8/PPP3Pr/2KR4</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess63 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:d5b5 </p>
+<br/><table class="chess-table pink" id="chess64">
+<tbody></tbody>
+<tfoot><tr><td>5q2/3k4/3p2p1/pQ2p3/4P3/8/PPP3Pr/2KR4</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess64 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:d7e6 </p>
+<br/><table class="chess-table pink" id="chess65">
+<tbody></tbody>
+<tfoot><tr><td>5q2/8/3pk1p1/pQ2p3/4P3/8/PPP3Pr/2KR4</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess65 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:b5a5 </p>
+<br/><table class="chess-table pink" id="chess66">
+<tbody></tbody>
+<tfoot><tr><td>5q2/8/3pk1p1/Q3p3/4P3/8/PPP3Pr/2KR4</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess66 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:h2g2 </p>
+<br/><table class="chess-table pink" id="chess67">
+<tbody></tbody>
+<tfoot><tr><td>5q2/8/3pk1p1/Q3p3/4P3/8/PPP3r1/2KR4</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess67 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:a5d5 </p>
+<br/><table class="chess-table pink" id="chess68">
+<tbody></tbody>
+<tfoot><tr><td>5q2/8/3pk1p1/3Qp3/4P3/8/PPP3r1/2KR4</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess68 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:e6d7 </p>
+<br/><table class="chess-table pink" id="chess69">
+<tbody></tbody>
+<tfoot><tr><td>5q2/3k4/3p2p1/3Qp3/4P3/8/PPP3r1/2KR4</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess69 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:d5b5 </p>
+<br/><table class="chess-table pink" id="chess70">
+<tbody></tbody>
+<tfoot><tr><td>5q2/3k4/3p2p1/1Q2p3/4P3/8/PPP3r1/2KR4</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess70 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:d7e6 </p>
+<br/><table class="chess-table pink" id="chess71">
+<tbody></tbody>
+<tfoot><tr><td>5q2/8/3pk1p1/1Q2p3/4P3/8/PPP3r1/2KR4</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess71 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:b5d5 </p>
+<br/><table class="chess-table pink" id="chess72">
+<tbody></tbody>
+<tfoot><tr><td>5q2/8/3pk1p1/3Qp3/4P3/8/PPP3r1/2KR4</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess72 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:e6d7 </p>
+<br/><table class="chess-table pink" id="chess73">
+<tbody></tbody>
+<tfoot><tr><td>5q2/3k4/3p2p1/3Qp3/4P3/8/PPP3r1/2KR4</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess73 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:c2c4 </p>
+<br/><table class="chess-table pink" id="chess74">
+<tbody></tbody>
+<tfoot><tr><td>5q2/3k4/3p2p1/3Qp3/2P1P3/8/PP4r1/2KR4</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess74 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:g2f2 </p>
+<br/><table class="chess-table pink" id="chess75">
+<tbody></tbody>
+<tfoot><tr><td>5q2/3k4/3p2p1/3Qp3/2P1P3/8/PP3r2/2KR4</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess75 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:c4c5 </p>
+<br/><table class="chess-table pink" id="chess76">
+<tbody></tbody>
+<tfoot><tr><td>5q2/3k4/3p2p1/2PQp3/4P3/8/PP3r2/2KR4</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess76 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:f2f1 </p>
+<br/><table class="chess-table pink" id="chess77">
+<tbody></tbody>
+<tfoot><tr><td>5q2/3k4/3p2p1/2PQp3/4P3/8/PP6/2KR1r2</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess77 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:c5c6 </p>
+<br/><table class="chess-table pink" id="chess78">
+<tbody></tbody>
+<tfoot><tr><td>5q2/3k4/2Pp2p1/3Qp3/4P3/8/PP6/2KR1r2</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess78 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:d7c7 </p>
+<br/><table class="chess-table pink" id="chess79">
+<tbody></tbody>
+<tfoot><tr><td>5q2/2k5/2Pp2p1/3Qp3/4P3/8/PP6/2KR1r2</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess79 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:d5a5 </p>
+<br/><table class="chess-table pink" id="chess80">
+<tbody></tbody>
+<tfoot><tr><td>5q2/2k5/2Pp2p1/Q3p3/4P3/8/PP6/2KR1r2</td></tr></tfoot>
+</table>
+<script>
+            var tbody = document.querySelector('#chess80 tbody');
+            for (var row = 1; row <= 8; row++) {
+              var tr = document.createElement('tr');
+              for (var col = 1; col <= 8; col++) {
+                var td = document.createElement('td');
+                td.className = ((row + col) % 2 == 0) ? "white" : "pink";
+                td.setAttribute('data-value', '13');
+                tr.appendChild(td);
+              }
+              tbody.appendChild(tr);
+            }
+          </script>
+<p>move:c7c6</p>
+<br/><p><span class="comment">comment: fxe4 move 9 why did I take $2  <br/>Nd5 lands I need to take it with bishop<br>
+  Ng4 is a missed win Nh5 e7 23. Qxg6+ Kd7 24. Nf6+ Kd8 25. Rd3 Ra8 26. Rh3
+</span></p></div>
+</div></p>
+<p></p>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+</div>
+</div>
+</main></div>
+<aside class="sidebar">
+<p>other links</p>
+</aside>
+<p>move:g8h8</p>
+<br/>
+
+<footer>
+<p>©2019</p>
+</footer>
+
+<script src="./CodePen - Basic Chess_files/jquery-2.2.4.min.js"></script>
+<script src="./CodePen - Basic Chess_files/chessboard.js"></script>
+<script src="./CodePen - Basic Chess_files/papaparse.min.js"></script>
+<script src="./CodePen - Basic Chess_files/chess.js"></script>
+<script id="rendered-js">
+var board = Chessboard('myBoard', {
+  draggable: true,
+  dropOffBoard: 'snapback',
+  position: 'start',
+  snapbackSpeed: 500,
+  snapSpeed: 100,
+  onDragStart: function(source, piece, position, orientation) {
+    // Prevent default browser behavior during drag and drop
+    event.preventDefault();
+  },
+  onDrop: function(source, target, piece, newPos, oldPos, orientation) {
+    // Log the new board position
+    console.log('New position:', Chessboard.objToFen(newPos));
+
+    // Update the FEN position in the DOM
+    //document.getElementById('fenposition_1').innerHTML = Chessboard.objToFen(newPos);
+  }
+});
+
+
+
+  
+
+//if
+
+
+    </script>
+<script src="script.js"></script>
+<img alt="" class="piece-417db" data-piece="wP" id="e015-ea01-83ab-457a-7cb0-3f1b-1540-ced4" src="./CodePen - Basic Chess_files/wP.png" style="width: 49px; height: 49px; display: none;"/>
+</body></head></html>

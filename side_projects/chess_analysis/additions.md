@@ -1082,3 +1082,31 @@ if (hasChessTableClass && hasChessLineClass) {
 
 ```
 
+Adding highlights to the textarea so I can go through positions and stuff like that so I can play out those positions
+
+```JS
+
+function getSelectedText_to_gotoHighlightedLink() {
+    var selectedText = '';
+    if (window.getSelection) {
+        selectedText = window.getSelection();
+    }
+    else if (document.getSelection) {
+        selectedText = document.getSelection();
+    }
+    else if (document.selection) {
+        selectedText = document.selection.createRange().text;
+    } else return;
+    console.log(selectedText.toString().trim());
+    board.position(selectedText.toString().trim());
+   
+}
+
+
+setBoard.addEventListener('click', function() {
+    getSelectedText_to_gotoHighlightedLink();
+});
+```
+
+And simple things like manipulating buttons to move a board to a certain position.
+

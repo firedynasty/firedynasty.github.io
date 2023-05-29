@@ -1,5 +1,6 @@
 # print fen positions
 
+
 Using Ipython access a pgn file to get the fen positions.
 
 ```python
@@ -147,3 +148,17 @@ And for comment, what you want to do is to use <span class="comment">comment:</s
 
 and that will take you to place in the page that you want to go.
 
+Logic in the index.html file that you will build a table using a dictionary like object to build and locate which openings are which.
+
+tableData = 
+
+var tableData = [
+  { opening: 'Pircs Defense', file: '78092083185.html' },
+  { opening: 'Indian Colle', file: '78646873375.html' },
+  { opening: 'Kings Pawn', file: '78694316111.html' },
+  { opening: 'Queens Pawn', file: '78870680593.html' },
+  { opening: 'Queens Pawn', file: '78956516771.html' },
+  { opening: 'Italian Fried Liver', file: '78960056293.html' }
+
+  // Add more objects for additional openings and files
+];
