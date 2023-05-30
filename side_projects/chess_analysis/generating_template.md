@@ -162,3 +162,29 @@ var tableData = [
 
   // Add more objects for additional openings and files
 ];
+
+
+
+And working with an object
+
+```JS
+
+//obtain the values from the textarea
+
+    const notesObj = { 'first': 'rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR\nrnbqkbnr/ppp1pppp/8/3p4/3P4/8/PPP1PPPP/RNBQKBNR\nrnbqkbnr/ppp1pppp/8/3p4/3P4/4P3/PPP2PPP/RNBQKBNR\nrnbqkbnr/ppp2ppp/4p3/3p4/3P4/4P3/PPP2PPP/RNBQKBNR\n...' };
+
+
+var tabledropnotesChoice = document.getElementById("tabledropforNotes");
+tabledropnotesChoice.addEventListener("change", function () {
+    console.log('hello world')
+    //first_var = parseInt($('#table_drop').val())
+    second_var = $('#tabledropforNotes').val()
+    console.log(second_var)
+    event.preventDefault();
+    console.log('value of the select drop:\n' + notesObj[second_var]); // output: 'first'
+    //set adding_info to none
+    textarea.value = notesObj[second_var];
+   // add the button convert textarea
+   
+});
+```

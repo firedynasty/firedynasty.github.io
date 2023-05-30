@@ -734,3 +734,45 @@ if (inputElement !== null) {
   console.log("Element not found!");
 }
 
+
+
+reduceDuplicates.addEventListener('click', function() {
+  console.log('hello world')
+  var textareaValue = textarea.value
+  // Split the string into an array of lines
+  var lines = textareaValue.split('\n');
+  // Use an object to keep track of duplicate lines
+  var uniqueLines = {};
+
+// Loop over the lines and add them to the uniqueLines object
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i].trim(); // Trim any leading/trailing spaces
+  
+    if (line !== '') {
+      uniqueLines[line] = true; // Add the line to the uniqueLines object
+    }
+  }
+
+// Convert the uniqueLines object back to an array of lines
+  var uniqueLinesArray = Object.keys(uniqueLines);
+
+  var result = uniqueLinesArray.join('\n');
+
+  textarea.value = result;
+  console.log(result)
+});
+
+
+
+var tabledropnotesChoice = document.getElementById("tabledropforNotes");
+tabledropnotesChoice.addEventListener("change", function () {
+    console.log('hello world')
+    //first_var = parseInt($('#table_drop').val())
+    second_var = $('#tabledropforNotes').val()
+    console.log(second_var)
+    event.preventDefault();
+    console.log('value of the select drop:\n' + notesObj[second_var]); // output: 'first'
+    //set adding_info to none
+    textarea.value = notesObj[second_var];
+    arrStrSplit = notesObj[second_var].split('\n');
+});

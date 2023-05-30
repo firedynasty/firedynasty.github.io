@@ -128,7 +128,9 @@
 <option value="">table_drop</option>
 <option value="10">10.</option>
 <option value="20">20.</option>
-</select>  <a href="https://www.chess.com/blog/Rodgy/i-flew-to-new-york-to-play-hustlers" target="_blank">Link to game</a></p>
+</select>  
+
+<a href="https://www.chess.com/blog/Rodgy/i-flew-to-new-york-to-play-hustlers" target="_blank">Link to game</a></p>
 </div>
 </div><div id="blogPost">
 <br/>
@@ -136,11 +138,58 @@
 <button onclick="var element = document.getElementById('storeBoard'); if (element.style.display === 'none') { element.style.display = 'block'; } else { element.style.display = 'none'; }">Toggle Board</button>
 <br><br>
 <textarea id="myTextArea" rows="10" cols="50"></textarea>
+</p><p>Reduce Duplicates from Textarea:<button id="reduceDuplicates">Here:</button></p>
+
 <p>Highlight to Board: <button id="setBoard">Set Board</button><br><br>Convert Textarea:
 <button id="convertTextarea">Convert Textarea</button><br><br>
 Reset Board Index: <button id="resetBoardIndex">Reset Board Index</button><br><br>
-Current Index Position: <button id="currentIndexPosition">Current Index Position</button>
-</p>
+Current Index Position: <button id="currentIndexPosition">Current Index Position</button><br><br>
+  Change the Textarea to :<select id="tabledropforNotes">
+  <option value="">table drop notes</option>
+  <option value="10">10.</option>
+  <option value="20">20.</option>
+  </select> </p>
+  <script>
+
+    const notesObj = { 'first': 'rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR\nrnbqkbnr/ppp1pppp/8/3p4/3P4/8/PPP1PPPP/RNBQKBNR\nrnbqkbnr/ppp1pppp/8/3p4/3P4/4P3/PPP2PPP/RNBQKBNR\nrnbqkbnr/ppp2ppp/4p3/3p4/3P4/4P3/PPP2PPP/RNBQKBNR\nrnbqkbnr/ppp2ppp/4p3/3p4/3P4/4P3/PPPN1PPP/R1BQKBNR\nrnbqkbnr/pp3ppp/4p3/2pp4/3P4/4P3/PPPN1PPP/R1BQKBNR\nrnbqkbnr/pp3ppp/4p3/2pp4/3P4/2P1P3/PP1N1PPP/R1BQKBNR\nr1bqkbnr/pp3ppp/2n1p3/2pp4/3P4/2P1P3/PP1N1PPP/R1BQKBNR\nr1bqkbnr/pp3ppp/2n1p3/2pp4/3P1P2/2P1P3/PP1N2PP/R1BQKBNR\nr1bqk1nr/pp3ppp/2nbp3/2pp4/3P1P2/2P1P3/PP1N2PP/R1BQKBNR\nr1bqk1nr/pp3ppp/2nbp3/2pp4/3P1P2/2P1PN2/PP1N2PP/R1BQKB1R\nr1bqk2r/pp3ppp/2nbpn2/2pp4/3P1P2/2P1PN2/PP1N2PP/R1BQKB1R\nr1bq2kr/pp3ppp/2nbpn2/2pp4/3P1P2/2P1PN2/PP1N2PP/R1BQKB1R\nr1bq1rk1/pp3ppp/2nbpn2/2pp4/3P1P2/2P1PN2/PP1N2PP/R1BQKB1R\nr1bq1rk1/pp3ppp/2nbpn2/2pp4/3P1P2/2PBPN2/PP1N2PP/R1BQK2R\nr1bq1rk1/pp3ppp/2nbpn2/2pp4/3P1P2/2PBPN2/PP1N2PP/R1BQ2KR\nr1bq1rk1/pp3ppp/2nbpn2/2pp4/3P1P2/2PBPN2/PP1N2PP/R1BQ1RK1\nr1bq1rk1/pp3ppp/2nbpn2/2ppN3/3P1P2/2PBP3/PP1N2PP/R1BQ1RK1\nr2q1rk1/pp1b1ppp/2nbpn2/2ppN3/3P1P2/2PBP3/PP1N2PP/R1BQ1RK1\nr2q1rk1/pp1b1ppp/2nbpn2/2ppN3/3P1P2/2PBPQ2/PP1N2PP/R1B2RK1\n2rq1rk1/pp1b1ppp/2nbpn2/2ppN3/3P1P2/2PBPQ2/PP1N2PP/R1B2RK1\n2rq1rk1/pp1b1ppp/2nbpn2/2ppN3/3P1PP1/2PBPQ2/PP1N3P/R1B2RK1\n2rqnrk1/pp1b1ppp/2nbp3/2ppN3/3P1PP1/2PBPQ2/PP1N3P/R1B2RK1\n2rqnrk1/pp1b1ppp/2nbp3/2ppN1P1/3P1P2/2PBPQ2/PP1N3P/R1B2RK1\n2rqnrk1/pp1b2pp/2nbpp2/2ppN1P1/3P1P2/2PBPQ2/PP1N3P/R1B2RK1\n2rqnrk1/pp1b2pB/2nbpp2/2ppN1P1/3P1P2/2P1PQ2/PP1N3P/R1B2RK1\n2rqnr2/pp1b2pk/2nbpp2/2ppN1P1/3P1P2/2P1PQ2/PP1N3P/R1B2RK1\n2rqnr2/pp1b2pk/2nbpp2/2ppN1PQ/3P1P2/2P1P3/PP1N3P/R1B2RK1\n2rqnrk1/pp1b2p1/2nbpp2/2ppN1PQ/3P1P2/2P1P3/PP1N3P/R1B2RK1\n2rqnrk1/pp1b2p1/2nbppP1/2ppN2Q/3P1P2/2P1P3/PP1N3P/R1B2RK1\n2rqnrk1/pp1b2p1/2nbp1P1/2ppp2Q/3P1P2/2P1P3/PP1N3P/R1B2RK1\n2rqnrkQ/pp1b2p1/2nbp1P1/2ppp3/3P1P2/2P1P3/PP1N3P/R1B2RK1\n2rqnrkQ/pp1b2p1/2nbp1P1/2ppp3/3P1P2/2P1P2P/PP1N4/R1B2RK1' };
+    
+function repopulate_tabledropforNotes() {
+    // Get the table and the dropdown menu
+  
+    var dropdown = document.getElementById("tabledropforNotes");
+  
+    // Clear existing options from the dropdown menu
+    dropdown.innerHTML = "";
+    var newOption = document.createElement("option");
+    newOption.value = "";
+    newOption.text = "Blank";
+    dropdown.add(newOption);
+
+    //console.log(listOfFenPositions.length)
+    const numKeys = Object.keys(notesObj).length;
+    const keys = Object.keys(notesObj);
+
+    // Loop through the rows of the table and add options to the dropdown menu
+    //for (var i = 0; i < listOfFenPositions.length; i++) {
+    for (var i = 0; i < Object.keys(notesObj).length; i++) {
+      // Create a new option element
+      var option = document.createElement("option");
+    
+      // Set the value of the option to the index times 10
+      option.value = keys[i];
+      //option.value = i
+
+      // Set the text of the option to the index plus a period
+      //option.text = i + ".";
+      option.text = keys[i];
+      // Add the option to the dropdown menu
+      dropdown.add(option);
+      }
+  
+  }
+  setTimeout(repopulate_tabledropforNotes, 2000);
+    
+  </script>
 <div id="forContent">
 <div>
 <table class="chess-table pink" id="chess1">
