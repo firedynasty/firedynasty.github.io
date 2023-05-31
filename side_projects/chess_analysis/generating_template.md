@@ -188,3 +188,7 @@ tabledropnotesChoice.addEventListener("change", function () {
    
 });
 ```
+
+
+You pull from a dictionary of values so that the board position does not need to be converted from and get the chess steps.
+
