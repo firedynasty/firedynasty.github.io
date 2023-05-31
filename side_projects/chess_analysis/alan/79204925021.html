@@ -143,12 +143,13 @@
 <p>Highlight to Board: <button id="setBoard">Set Board</button><br><br>Convert Textarea:
 <button id="convertTextarea">Convert Textarea</button><br><br>
 Reset Board Index: <button id="resetBoardIndex">Reset Board Index</button><br><br>
-Current Index Position: <button id="currentIndexPosition">Current Index Position</button><br><br>
+Current Index Position: <button id="currentIndexPosition">Move to Current Index Position</button><br><br>
   Change the Textarea to :<select id="tabledropforNotes">
   <option value="">table drop notes</option>
   <option value="10">10.</option>
   <option value="20">20.</option>
-  </select> </p>
+  </select></p>
+  <p> Choose a dropdown item in Change the Textarea to to set the line. See comments below. <u>Move to Current Index Position</u> will get the next position in that line.<ol><li>You can highlight one line to <u>set the board</u> to that FEN</li><li><u>convert Textarea (to String) </u>the Fen Positions will be set to the array</li><li>Current Index Position is how you can scroll through the separate line</li><li><u>Reset Board Index</u> resets the variable boardindex so that you can rescroll</li><li>moving pieces on the board writes the FEN position to the textarea</li></ol></p>
   <script>
 
     const notesObj = { 'seven': 'r2qkb1r/pppb2pp/2npNp1n/4p3/2B1P3/3P1Q2/PPP2PPP/RNB1K2R\nr2qkb1r/ppp3pp/2npbp1n/4p3/2B1P3/3P1Q2/PPP2PPP/RNB1K2R\nr2qkb1r/ppp3pp/2npBp1n/4p3/4P3/3P1Q2/PPP2PPP/RNB1K2R\nr2qkb1r/ppp3pp/3pBp1n/4p3/3nP3/3P1Q2/PPP2PPP/RNB1K2R\nr2qkb1r/ppp3pp/3pBp1n/4p3/3nP3/3P3Q/PPP2PPP/RNB1K2R\nr2qkb1r/ppp2npp/3pBp2/4p3/3nP3/3P3Q/PPP2PPP/RNB1K2R\nr2qkb1r/ppp2npp/3p1p2/4p3/3nP3/1B1P3Q/PPP2PPP/RNB1K2R\nr2qk2r/ppp1bnpp/3p1p2/4p3/3nP3/1B1P3Q/PPP2PPP/RNB1K2R\n',
