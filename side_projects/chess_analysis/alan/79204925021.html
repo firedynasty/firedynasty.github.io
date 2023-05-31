@@ -151,7 +151,11 @@ Current Index Position: <button id="currentIndexPosition">Current Index Position
   </select> </p>
   <script>
 
-    const notesObj = { 'seven': 'r2qkb1r/pppb2pp/2npNp1n/4p3/2B1P3/3P1Q2/PPP2PPP/RNB1K2R\nr2qkb1r/ppp3pp/2npbp1n/4p3/2B1P3/3P1Q2/PPP2PPP/RNB1K2R\nr2qkb1r/ppp3pp/2npBp1n/4p3/4P3/3P1Q2/PPP2PPP/RNB1K2R\nr2qkb1r/ppp3pp/3pBp1n/4p3/3nP3/3P1Q2/PPP2PPP/RNB1K2R\nr2qkb1r/ppp3pp/3pBp1n/4p3/3nP3/3P3Q/PPP2PPP/RNB1K2R\nr2qkb1r/ppp2npp/3pBp2/4p3/3nP3/3P3Q/PPP2PPP/RNB1K2R\nr2qkb1r/ppp2npp/3p1p2/4p3/3nP3/1B1P3Q/PPP2PPP/RNB1K2R\nr2qk2r/ppp1bnpp/3p1p2/4p3/3nP3/1B1P3Q/PPP2PPP/RNB1K2R\n' } 
+    const notesObj = { 'seven': 'r2qkb1r/pppb2pp/2npNp1n/4p3/2B1P3/3P1Q2/PPP2PPP/RNB1K2R\nr2qkb1r/ppp3pp/2npbp1n/4p3/2B1P3/3P1Q2/PPP2PPP/RNB1K2R\nr2qkb1r/ppp3pp/2npBp1n/4p3/4P3/3P1Q2/PPP2PPP/RNB1K2R\nr2qkb1r/ppp3pp/3pBp1n/4p3/3nP3/3P1Q2/PPP2PPP/RNB1K2R\nr2qkb1r/ppp3pp/3pBp1n/4p3/3nP3/3P3Q/PPP2PPP/RNB1K2R\nr2qkb1r/ppp2npp/3pBp2/4p3/3nP3/3P3Q/PPP2PPP/RNB1K2R\nr2qkb1r/ppp2npp/3p1p2/4p3/3nP3/1B1P3Q/PPP2PPP/RNB1K2R\nr2qk2r/ppp1bnpp/3p1p2/4p3/3nP3/1B1P3Q/PPP2PPP/RNB1K2R\n',
+                       'fourteen' : 'N2k1b1r/pp1bq3/3p1p1n/3Np1pp/2BnP3/3P3P/PPP2PP1/R1BQ1RK1\nN2k1b1r/pp1bq3/3p1p1n/3Np1pp/2BnP3/3PB2P/PPP2PP1/R2Q1RK1\nN2k1b1r/pp1b2q1/3p1p1n/3Np1pp/2BnP3/3PB2P/PPP2PP1/R2Q1RK1\nN2k1b1r/pp1b2q1/3p1p1n/3Np1pp/2BBP3/3P3P/PPP2PP1/R2Q1RK1\nN2k1b1r/pp1b2q1/3p1p1n/3N2pp/2BpP3/3P3P/PPP2PP1/R2Q1RK1\nN2k1b1r/pp1b2q1/3p1p1n/3N2pp/2BpP3/3P3P/PPP2PP1/R3QRK1\nN2k1b1r/p2b2q1/1p1p1p1n/3N2pp/2BpP3/3P3P/PPP2PP1/R3QRK1\n3k1b1r/p1Nb2q1/1p1p1p1n/3N2pp/2BpP3/3P3P/PPP2PP1/R3QRK1\n3k1b1r/p1Nb2q1/1p1p1p1n/3N2p1/2BpP2p/3P3P/PPP2PP1/R3QRK1\n3k1b1r/p1Nb2q1/1p1p1p1n/3N2p1/2BpP2p/3P1P1P/PPP3P1/R3QRK1\n3k1b1r/p1Nb2q1/1p1p3n/3N1pp1/2BpP2p/3P1P1P/PPP3P1/R3QRK1\n3k1b1r/p1Nb2q1/1p1p3n/1B1N1pp1/3pP2p/3P1P1P/PPP3P1/R3QRK1\n3k1b1r/p1N3q1/1p1p3n/1b1N1pp1/3pP2p/3P1P1P/PPP3P1/R3QRK1\n3k1b1r/p5q1/1p1pN2n/1b1N1pp1/3pP2p/3P1P1P/PPP3P1/R3QRK1\n5b1r/p2k2q1/1p1pN2n/1b1N1pp1/3pP2p/3P1P1P/PPP3P1/R3QRK1\n5b1r/p2k2N1/1p1p3n/1b1N1pp1/3pP2p/3P1P1P/PPP3P1/R3QRK1\n',
+                        'thirteen' : 'N2k1b1r/pp1bq1p1/3p1p1n/4p2p/2BnP3/2PP3P/PP3PP1/RNBQ1RK1\nN2k1b1r/pp1bq1p1/2np1p1n/4p2p/2B1P3/2PP3P/PP3PP1/RNBQ1RK1\nN1k2b1r/pp1bq1p1/2np1p1n/4p2p/2B1P3/2PP3P/PP3PP1/RNBQ1RK1\nN1k2b1r/pp1bq1p1/2np1p1n/4p2p/P1B1P3/2PP3P/1P3PP1/RNBQ1RK1\nNk3b1r/pp1bq1p1/2np1p1n/4p2p/P1B1P3/2PP3P/1P3PP1/RNBQ1RK1\nNk3b1r/pp1bq1p1/2np1p1n/P3p2p/2B1P3/2PP3P/1P3PP1/RNBQ1RK1\nk4b1r/pp1bq1p1/2np1p1n/P3p2p/2B1P3/2PP3P/1P3PP1/RNBQ1RK1\nk4b1r/pp1bq1p1/P1np1p1n/4p2p/2B1P3/2PP3P/1P3PP1/RNBQ1RK1\nk4b1r/p2bq1p1/Ppnp1p1n/4p2p/2B1P3/2PP3P/1P3PP1/RNBQ1RK1',
+                      'twenty': '3k1b1r/pp3nq1/3p2p1/3Npb1p/2B5/2PPQ2P/PP3PP1/R1B2RK1\n3k1b1r/p4nq1/1p1p2p1/3Npb1p/2B5/2PPQ2P/PP3PP1/R1B2RK1\n3k1b1r/p4nq1/1p1p2p1/3Npb1p/P1B5/2PPQ2P/1P3PP1/R1B2RK1\n3k1b1r/p4nq1/1p1p2p1/3Npb1p/P1B5/2PPQ2P/1P3PP1/R1B2RK1\n3k3r/p3bnq1/1p1p2p1/3Npb1p/P1B5/2PPQ2P/1P3PP1/R1B2RK1\n',
+                      'twenty-one': '3k1b2/pp3nq1/3p2p1/3Npb2/2B3Pr/2PP1Q2/PP3P2/R1B2RK1\n3k1b2/pp3nq1/3p2p1/3NpP2/2B4r/2PP1Q2/PP3P2/R1B2RK1\n3k1b2/pp3nq1/3p4/3Npp2/2B4r/2PP1Q2/PP3P2/R1B2RK1\n3k1b2/pp3nq1/3p4/3Npp2/2B4r/2PP2Q1/PP3P2/R1B2RK1\n3k1b2/pp3nq1/3p4/3Npp2/2B3r1/2PP2Q1/PP3P2/R1B2RK1\n3k1b2/pp3nq1/3p4/3Npp2/2B3r1/2PP2Q1/PP3PK1/R1B2R2\n3k4/pp2bnq1/3p4/3Npp2/2B3r1/2PP2Q1/PP3PK1/R1B2R2\n3k4/pp2bnq1/3p4/3Npp2/2B3r1/2PP2Q1/PP3PK1/R1B4R\n3k4/pp2bnq1/3p4/3Npp2/2B5/2PP2r1/PP3PK1/R1B4R\n3k4/pp2bnq1/3p4/3Npp2/2B5/2PP2P1/PP4K1/R1B4R\n'} 
 
     function repopulate_tabledropforNotes() {
     // Get the table and the dropdown menu
@@ -192,6 +196,8 @@ Current Index Position: <button id="currentIndexPosition">Current Index Position
   </script>
 <div id="forContent">
   <div>
+    <div style="display: none;">This element will not be displayed.
+
 <table id="chess1" class="chess-table pink">
             <tbody></tbody>
             <tfoot><tr><td>rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR</td></tr></tfoot>
@@ -1104,6 +1110,39 @@ Current Index Position: <button id="currentIndexPosition">Current Index Position
             }
           </script>
           <p>move:d6d5</p>
+          </div>
+          <p>Board 0: Move 1<br>
+Board 1: Second move of Move 1<br>
+Board 2: Move 2<br>
+Board 3: Second move of Move 2<br>
+Board 4: Move 3<br>
+Board 5: Second move of Move 3<br>
+Board 6: Move 4<br>
+Board 7: Second move of Move 4<br>
+Board 8: Move 5<br>
+Board 9: Second move of Move 5<br>
+Board 10: Move 6<br>
+Board 11: Second move of Move 6<br>
+Board 12: Move 7<br>
+Board 13: Second move of Move 7<br>
+Board 14: Move 8<br>
+Board 15: Second move of Move 8<br>
+Board 16: Move 9<br>
+Board 17: Second move of Move 9<br>
+Board 18: Move 10<br>
+Board 19: Second move of Move 10<br>
+Board 20: Move 11<br>
+Board 21: Second move of Move 11<br>
+Board 22: Move 12<br>
+Board 23: Second move of Move 12<br>
+Board 24: Move 13 (24 / 2 + 1)<br>
+Board 25: Second move of Move 13 (25-1/2 + 1)<br>
+Board 26: Move 14 (26 / 2 + 1)<br>
+Board 27: Second move of Move 14<br>
+Board 28: Move 15 (28 / 2 + 1)<br>
+Board 29: Second move of Move 15<br>
+Board 30: Move 16 (30 / 2 + 1)
+</p>
           <br><p>1. e4 e5 2. Nf3 Nc6 3. Bc4 d6 4. d3 Bd7 5. Ng5 Nh6 6. Qf3 f6 7. Ne6 Qe7 8. Nxc7+ Kd8 { Alan is black after 7.. Bxe7 8. Bxe6 Nd4 Qh3 Nf7 B3 Be7 } 9. Nxa8 Ng4 10. O-O Nd4 11. Qd1 h5 12. h3 Nh6 13. Nc3 g6 { opportunity to win a knight 13. c3 Nc6 Nd2 Kc8 a4 Kb8 a5 f4 Nb6 axb6 axb6 Qd8 Nf3 Qxb6 b4 g5 d4 Bh6 } 14. Nd5 Qg7 { make an outpost for knight 13... g5 14. Be3 Qg7 Bxd4 ex4 Nd5 Ng4 Qe1 b6 Qb4 Ne5 Qb5 Qc8 Qxd4 g4 } 15. Nac7 Nf7 16. c3 Ne6 17. Nxe6+ Bxe6 18. Qf3 f5 19. exf5 Bxf5 20. g4 hxg4 { g4 is a mistake by white instead should go Qe3 threaten to win a pawn, b6 a4 Nh6 Qe2 Bb3 Be6 } 21. hxg4 Qh7 { Qh7 is a missed win instead should go Rh4 gxf5 gxf5+ Qg3 Rg4 Kg2 Qg6 a3 Rxg3+ fxg3 } 22. Qg2 Bxg4 23. Nf6 Qh4 24. Nxg4 d5 1-0</p><p><span class="comment">comment: Alan is black after 7.. Bxe7 8. Bxe6 Nd4 Qh3 Nf7 B3 Be7  <br>opportunity to win a knight 13. c3 Nc6 Nd2 Kc8 a4 Kb8 a5 f4 Nb6 axb6 axb6 Qd8 Nf3 Qxb6 b4 g5 d4 Bh6  <br>make an outpost for knight 13... g5 14. Be3 Qg7 Bxd4 ex4 Nd5 Ng4 Qe1 b6 Qb4 Ne5 Qb5 Qc8 Qxd4 g4  <br>g4 is a mistake by white instead should go Qe3 threaten to win a pawn, b6 a4 Nh6 Qe2 Bb3 Be6  <br>Qh7 is a missed win instead should go Rh4 gxf5 gxf5+ Qg3 Rg4 Kg2 Qg6 a3 Rxg3+ fxg3</span></p></div>
 
 <div>
