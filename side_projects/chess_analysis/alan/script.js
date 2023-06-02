@@ -914,3 +914,11 @@ tabledropnotesChoice.addEventListener("change", function () {
     boardIndex=0;
 
 });
+
+
+var file_path = window.location.pathname;
+  var file_name = file_path.substring(file_path.lastIndexOf('/') + 1);
+  var file_name_without_extension = file_name.split('.').slice(0, -1).join('.');
+
+  var url = 'https://www.chess.com/analysis/game/live/' + file_name_without_extension + '?tab=review';
+  document.getElementById('urlhere').innerHTML = '<a href="' + url + '" target="_blank">Link to game</a>';
