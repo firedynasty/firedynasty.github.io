@@ -43,10 +43,31 @@ footer {
     color: #fff;
 }
 
-article {
-    margin-bottom: 20px;
-    padding: 10px;
+.about-section {
     background: #fff;
-    border-radius: 5px;
+    padding: 20px;
+    border-radius: 10px;
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.about-section h2 {
+    background: #fff;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.about-section p, .about-section ul {
+    background: #fff;
+    padding: 10px;
+    border-radius: 5px;
+    margin: 10px 0;
+}
+
+.about-section ul {
+    list-style: none;
+    padding: 0;
+}
+
+.about-section ul li {
+    margin-bottom: 10px;
 }
