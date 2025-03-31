@@ -1,21 +1,7 @@
+// /Users/stanleytan/Documents/25-technical/01-github/firedynasty.github.io/bible_cross_reference/src/BibleApp.js
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Book, MessageSquare, Send, Link, ChevronRight, History } from 'lucide-react';
-
-// Helper function to handle base URL for different environments
-const getBaseUrl = () => {
-  // For GitHub Pages, use the repository name as base URL
-  // For local development with path that includes '/bible_cross_reference', use that path
-  const isGitHubPages = 
-    window.location.hostname.includes('github.io') || 
-    window.location.hostname.includes('firedynasty.github.io');
-  
-  // If running on GitHub Pages or the path already includes the repo name
-  if (isGitHubPages || window.location.pathname.includes('/bible_cross_reference')) {
-    return '/bible_cross_reference';
-  }
-  
-  return '';
-};
 
 // Navigation Placeholder Component
 const NavigationPlaceholder = ({ book, chapter, getBookName, onNavigate }) => {
@@ -130,24 +116,12 @@ const BibleApp = () => {
       try {
         setLoading(true);
         
-        const baseUrl = getBaseUrl();
-        console.log("Using base URL:", baseUrl);
-        console.log("Current hostname:", window.location.hostname);
-        console.log("Current pathname:", window.location.pathname);
-        
         // Load Bible data
-        console.log("Attempting to load Bible data from", `${baseUrl}/en_kjv.json`);
-        const bibleResponse = await fetch(`${baseUrl}/en_kjv.json`);
-        console.log("Bible data response status:", bibleResponse.status);
-        
+        const bibleResponse = await fetch('/en_kjv.json');
         if (!bibleResponse.ok) {
-          const errorText = await bibleResponse.text();
-          console.error("Bible data error response:", errorText.substring(0, 200));
           throw new Error(`HTTP error! Status: ${bibleResponse.status}`);
         }
-        
         const bibleData = await bibleResponse.json();
-        console.log("Bible data loaded successfully, first book:", bibleData[0]?.abbrev);
         setBibleData(bibleData);
         
         // Set default selected book to Genesis (first book)
@@ -160,12 +134,12 @@ const BibleApp = () => {
         }
         
         // Load cross-references from the JSON file
-        await loadCrossReferences(baseUrl);
+        await loadCrossReferences();
         
         setLoading(false);
       } catch (err) {
         console.error("Failed to load data:", err);
-        setError(`Failed to load Bible data: ${err.message}. Make sure the en_kjv.json file exists in the public folder.`);
+        setError("Failed to load Bible data. Please try again later.");
         setLoading(false);
       }
     };
@@ -174,17 +148,12 @@ const BibleApp = () => {
   }, []);
 
   // Load cross references from external JSON file
-  const loadCrossReferences = async (baseUrl) => {
+  const loadCrossReferences = async () => {
     try {
-      const url = `${baseUrl}/crossRefs.json`;
-      console.log("Attempting to load cross references from", url);
-      const response = await fetch(url);
-      
-      console.log("Cross references response status:", response.status);
+      console.log("Attempting to load cross references from /crossRefs.json");
+      const response = await fetch('/crossRefs.json');
       
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Cross references error response:", errorText.substring(0, 200));
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
       
@@ -324,32 +293,10 @@ const BibleApp = () => {
   // If there was an error
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-red-100 p-4">
-        <div className="text-center text-red-600 max-w-2xl">
+      <div className="flex items-center justify-center h-screen bg-red-100">
+        <div className="text-center text-red-600">
           <div className="text-2xl font-bold mb-4">Error</div>
-          <div className="mb-4">{error}</div>
-          
-          {/* Add debugging information */}
-          <div className="text-left mt-4 p-4 bg-white rounded-md shadow border border-red-200">
-            <h3 className="font-bold mb-2">Debugging Information:</h3>
-            <p>Current hostname: {window.location.hostname}</p>
-            <p>Current path: {window.location.pathname}</p>
-            <p>Base URL used: {getBaseUrl()}</p>
-            <p>Expected Bible data URL: {getBaseUrl()}/en_kjv.json</p>
-            <p className="mt-2 text-sm">
-              This could be caused by missing data files. Make sure your Bible data files
-              (en_kjv.json and crossRefs.json) are in the correct location for the current 
-              environment (local or GitHub Pages).
-            </p>
-          </div>
-          
-          {/* Retry button */}
-          <button 
-            onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-          >
-            Retry Loading
-          </button>
+          <div>{error}</div>
         </div>
       </div>
     );
@@ -612,3 +559,185 @@ const BibleApp = () => {
 };
 
 export default BibleApp;
+
+
+// /Users/stanleytan/Documents/25-technical/01-github/firedynasty.github.io/bible_cross_reference/src/app.js
+
+import React from 'react';
+import BibleApp from './BibleApp';
+import './App.css';
+
+function App() {
+  return (
+    <div className="App">
+      <BibleApp />
+    </div>
+  );
+}
+
+export default App;
+
+// /Users/stanleytan/Documents/25-technical/01-github/firedynasty.github.io/bible_cross_reference/src/index.js
+
+// index.js
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+import App from './App';
+import reportWebVitals from './reportWebVitals';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+
+reportWebVitals();
+
+// /Users/stanleytan/Documents/25-technical/01-github/firedynasty.github.io/bible_cross_reference/package.json
+
+{
+  "name": "from-claude",
+  "version": "0.1.0",
+  "private": true,
+  "homepage": "https://firedynasty.github.io/bible_cross_reference",
+  "dependencies": {
+    "@radix-ui/react-slider": "^1.2.3",
+    "@radix-ui/react-slot": "^1.1.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "cra-template": "1.2.0",
+    "express": "^4.18.2",
+    "lucide-react": "^0.475.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "^5.0.1",
+    "recharts": "^2.15.0",
+    "tailwind-merge": "^3.0.1",
+    "web-vitals": "^4.2.4"
+  },
+  "scripts": {
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build",
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "server": "node server.js",
+    "dev-server": "node server.js"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.5.1",
+    "tailwindcss": "^3.4.17"
+  }
+}
+
+
+// /Users/stanleytan/Documents/25-technical/01-github/firedynasty.github.io/bible_cross_reference/server.js
+
+const express = require('express');
+const path = require('path');
+const app = express();
+
+// Get port from command line argument or fall back to default
+const args = process.argv.slice(2);
+const PORT = args[0] || process.env.PORT || 3001;  // Default to 3001 to avoid conflict with React's 3000
+const SERVER_NAME = args[1] || `Dev-Server-${PORT}`;
+
+// Serve static files from the public directory
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Serve files from src directory
+app.use('/src', express.static(path.join(__dirname, 'src')));
+
+// Add CORS headers to allow development server access
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+});
+
+// Basic route for API testing
+app.get('/api/test', (req, res) => {
+  res.json({ message: `Hello from ${SERVER_NAME}!` });
+});
+
+// Serve the crossRefs.json file (assume it's in the public directory)
+app.get('/crossRefs.json', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'crossRefs.json'));
+});
+
+app.listen(PORT, () => {
+  console.log(`🚀 ${SERVER_NAME} is running at http://localhost:${PORT}`);
+  console.log(`Main React development server should be running on port 3000`);
+  console.log(`To stop this server, press Ctrl+C`);
+});
+
+<!-- /Users/stanleytan/Documents/25-technical/01-github/firedynasty.github.io/bible_cross_reference/public/index.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <meta
+      name="description"
+      content="Web site created using create-react-app"
+    />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <!--
+      manifest.json provides metadata used when your web app is installed on a
+      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
+    -->
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <!--
+      Notice the use of %PUBLIC_URL% in the tags above.
+      It will be replaced with the URL of the `public` folder during the build.
+      Only files inside the `public` folder can be referenced from the HTML.
+
+      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
+      work correctly both with client-side routing and a non-root public URL.
+      Learn how to configure a non-root public URL by running `npm run build`.
+    -->
+    <title>React App</title>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <!--
+      This HTML file is a template.
+      If you open it directly in the browser, you will see an empty page.
+
+      You can add webfonts, meta tags, or analytics to this file.
+      The build step will place the bundled scripts into the <body> tag.
+
+      To begin the development, run `npm start` or `yarn start`.
+      To create a production bundle, use `npm run build` or `yarn build`.
+    -->
+  </body>
+</html>
+
+
