@@ -1,7 +1,6 @@
-// App.js
 import React from 'react';
-import './App.css';
 import BibleApp from './BibleApp';
+import './App.css';
 
 function App() {
   return (
