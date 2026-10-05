@@ -38,7 +38,7 @@
 
   <div id="racer">
     <div id="hud">
-      <span id="speed"            class="hud"><span id="speed_value" class="value">0</span> mph</span>
+      <span id="speed"            class="hud"><span id="brakeLight" title="Brake light: on while braking"></span><span id="speed_value" class="value">0</span> mph<span id="speedBar"><span id="speedFill"></span></span></span>
       <span id="current_lap_time" class="hud">Time: <span id="current_lap_time_value" class="value">0.0</span></span> 
       <span id="last_lap_time"    class="hud">Last Lap: <span id="last_lap_time_value" class="value">0.0</span></span>
       <span id="fast_lap_time"    class="hud">Fastest Lap: <span id="fast_lap_time_value" class="value">0.0</span></span>
@@ -55,7 +55,7 @@
         <span onclick="toggleInfo()" style="cursor:pointer; font-size:1.3em;">&times;</span>
       </div>
       <p style="margin:6px 0;">A retro pseudo-3D racing game, based on Jake Gordon's JavaScript Racer.</p>
-      <p style="margin:6px 0;">Touch screens: touch the left or right side to steer (the gas is automatic) and hold BRAKE to slow down.</p>
+      <p style="margin:6px 0;">The gas is automatic. Steer with the left and right arrows (or A and D), or touch the left or right side of the screen. Hold Down, S or Space, or touch and hold the car, to brake.</p>
       <div><a href="https://github.com/yauhahu/pixelracingcc" target="_blank" rel="noopener" style="color:#7cc4ff;">Source code on GitHub</a></div>
       <div><a href="https://jakesgordon.com/writing/javascript-racer/" target="_blank" rel="noopener" style="color:#7cc4ff;">Original JavaScript Racer by Jake Gordon</a></div>
       <div style="margin-top:8px;"><b>More games</b></div>
@@ -66,7 +66,7 @@
     </div>
     <div id="pauseOverlay" onclick="togglePause()" style="display:none; position:absolute; z-index:2; left:0; right:0; top:40%; text-align:center; font-size:4em; color:#fff; text-shadow:0 0 8px #000; cursor:pointer;">PAUSED<div style="font-size:0.3em;">press Esc to resume</div></div>
     <div id="demoBanner" style="display:none; position:absolute; z-index:2; left:0; right:0; bottom:8%; text-align:center; font-size:1.6em; color:#fff; text-shadow:0 0 6px #000; pointer-events:none;">DEMO &mdash; press an arrow key or T to take over</div>
-    <div id="brake" style="display:none; position:fixed; z-index:2; left:14px; bottom:14px; padding:14px 26px; font-size:1.6em; font-weight:bold; color:#fff; background:rgba(200,30,30,0.85); border:2px solid #fff; border-radius:12px; opacity:0.6; user-select:none; -webkit-user-select:none; touch-action:none;">BRAKE</div>
+    <div id="brake" title="Tap and hold the car to brake" style="position:fixed; z-index:2; left:50%; bottom:0; transform:translateX(-50%); width:30%; min-width:140px; height:20%; min-height:90px; border-radius:16px; background:transparent; user-select:none; -webkit-user-select:none; touch-action:none; cursor:pointer;"></div>
     <canvas id="canvas">
       Sorry, cannot run because your browser does not support &lt;canvas&gt; element
     </canvas></div>
@@ -127,17 +127,16 @@
 
 	  }
 	  
-	  // on-screen BRAKE button for touch screens: hold it to slow down (gas is automatic while touching)
+	  // the car is the brake button (mouse or touch): hold your finger on it to slow down
 	  var touchBrake = false;
 	  (function() {
 	  	var btn = Dom.get('brake');
-	  	if (!('ontouchstart' in window) && !(navigator.maxTouchPoints > 0)) return;   // only show on touch screens
-	  	btn.style.display = 'block';
-	  	var press   = function(e) { e.preventDefault(); e.stopPropagation(); touchBrake = true;  btn.style.opacity = 1; };
-	  	var release = function(e) { e.preventDefault(); e.stopPropagation(); touchBrake = false; btn.style.opacity = 0.6; if (!keyFaster) keySlower = false; };
-	  	btn.addEventListener('touchstart', press, false);
-	  	btn.addEventListener('touchend', release, false);
-	  	btn.addEventListener('touchcancel', release, false);
+	  	var press   = function(e) { e.preventDefault(); e.stopPropagation(); touchBrake = true;  btn.style.background = 'rgba(255,0,0,0.3)'; if (btn.setPointerCapture) { try { btn.setPointerCapture(e.pointerId); } catch(err) {} } };
+	  	var release = function(e) { e.preventDefault(); e.stopPropagation(); touchBrake = false; btn.style.background = 'transparent'; if (!keyFaster) keySlower = false; };
+	  	btn.addEventListener('pointerdown', press, false);
+	  	btn.addEventListener('pointerup', release, false);
+	  	btn.addEventListener('pointercancel', release, false);
+	  	btn.addEventListener('contextmenu', function(e) { e.preventDefault(); }, false);   // no long-press menu on phones
 	  })();
 
 	  var touch = new TouchControl(document.getElementsByTagName("canvas")[0]);
@@ -258,7 +257,8 @@
 
       playerX = playerX - (dx * speedPercent * playerSegment.curve * centrifugal);
 
-      if (keyFaster)
+      // the gas is automatic: the car accelerates unless a brake is held (the demo drives the gas itself)
+      if (demo ? keyFaster : (keyFaster || !keySlower))
         speed = Util.accelerate(speed, accel, dt);
       else if (keySlower)
         speed = Util.accelerate(speed, breaking, dt);
@@ -324,6 +324,17 @@
       }
 
       updateHud('speed',            5 * Math.round(speed/500));
+      var pct = Math.round(100 * speed / maxSpeed);                       // speedometer bar: green, then yellow, then red near top speed
+      if (pct !== lastSpeedPct) {
+        lastSpeedPct = pct;
+        speedFill.style.width = pct + '%';
+        speedFill.style.backgroundColor = pct < 50 ? '#2ecc40' : (pct < 80 ? '#ffdc00' : '#ff4136');
+      }
+      var braking = keySlower && !keyFaster;                              // brake light: on while any brake is pressed
+      if (braking !== lastBraking) {
+        lastBraking = braking;
+        brakeLight.className = braking ? 'on' : '';
+      }
       updateHud('current_lap_time', formatTime(currentLapTime));
     }
 
@@ -392,6 +403,8 @@
     }
 
     //-------------------------------------------------------------------------
+
+    var speedFill = Dom.get('speedFill'), brakeLight = Dom.get('brakeLight'), lastSpeedPct = -1, lastBraking = null;
 
     function updateHud(key, value) { // accessing DOM can be slow, so only do it if value has changed
       if (hud[key].value !== value) {
