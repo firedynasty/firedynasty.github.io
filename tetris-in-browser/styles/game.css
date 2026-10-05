@@ -85,7 +85,7 @@ body {
     font-size: 7vh;
 }
 
-#btn-pause, #btn-info {
+#btn-pause, #btn-info, #btn-demo {
     display: block;
     margin: 2vh auto;
     padding: 0.5vh 2vh;
@@ -98,7 +98,7 @@ body {
     cursor: pointer;
 }
 
-#btn-pause:hover, #btn-info:hover {
+#btn-pause:hover, #btn-info:hover, #btn-demo:hover {
     color: lightgrey;
     border-color: lightgrey;
 }
@@ -165,4 +165,18 @@ body {
     cursor: pointer;
     font-size: 1.4em;
     line-height: 1;
+}
+
+#demo-banner {
+    display: none;
+    position: absolute;
+    z-index: 2;
+    left: 0;
+    right: 0;
+    bottom: 2vh;
+    text-align: center;
+    color: white;
+    font-size: 2.4vh;
+    text-shadow: 0 0 6px black;
+    pointer-events: none;
 }

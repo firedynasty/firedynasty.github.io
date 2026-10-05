@@ -674,6 +674,126 @@ window.addEventListener("keydown",
     }
 )
 
+// ---- demo mode: a simple AI that plays by sending the same key presses a player would ----
+let demo = false;
+let demoTimer;
+let demoPieceTried;     // piece the "rotation is blocked" counter belongs to
+let demoRotateFails = 0;
+
+function pressKey(key) {
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: key }));
+}
+
+// score how good the board looks after dropping a piece: fewer holes/bumps, lower stack, more lines
+function evaluatePlacement(matrix, x) {
+    if (!isValidMove(0, x, matrix)) return null;
+    let y = 0;
+    while (isValidMove(y + 1, x, matrix)) y++;
+
+    const board = playfieldMatrix.map(row => row.slice());
+    for (let r = 0; r < matrix.length; r++) {
+        for (let c = 0; c < matrix[r].length; c++) {
+            if (matrix[r][c]) board[y + r][x + c] = 1;
+        }
+    }
+
+    let lines = 0;
+    for (let r = 0; r < board.length; r++) {
+        if (board[r].every(v => v)) lines++;
+    }
+
+    const heights = [];
+    let holes = 0;
+    for (let c = 0; c < gridColumns; c++) {
+        let top = board.length;
+        for (let r = 0; r < board.length; r++) {
+            if (board[r][c]) { top = r; break; }
+        }
+        heights.push(board.length - top);
+        for (let r = top + 1; r < board.length; r++) {
+            if (!board[r][c]) holes++;
+        }
+    }
+    let bumpiness = 0;
+    for (let c = 0; c < gridColumns - 1; c++) bumpiness += Math.abs(heights[c] - heights[c + 1]);
+    const aggregateHeight = heights.reduce((a, b) => a + b, 0);
+
+    return -0.51 * aggregateHeight + 0.76 * lines - 0.36 * holes - 0.18 * bumpiness;
+}
+
+// pick the best (rotation, column) for the current piece
+function planMove() {
+    let best = null;
+    let matrix = activeTetromino.matrix;
+    const maxRotations = (demoRotateFails >= 2) ? 1 : 4;
+    for (let rotations = 0; rotations < maxRotations; rotations++) {
+        for (let x = -3; x < gridColumns; x++) {
+            const score = evaluatePlacement(matrix, x);
+            if (score !== null && (best === null || score > best.score)) {
+                best = { score: score, rotations: rotations, x: x };
+            }
+        }
+        matrix = rotate(matrix);
+    }
+    return best;
+}
+
+function demoStep() {
+    if (!demo) return;
+
+    if (gameOver) {
+        // start a new game a moment after the old one ends
+        demoTimer = setTimeout(() => { if (demo && gameOver) resetGame(); demoStep(); }, 2000);
+        return;
+    }
+
+    if (!gamePaused && activeTetromino && !activeTetromino.lock) {
+        if (demoPieceTried !== activeTetromino) { demoPieceTried = activeTetromino; demoRotateFails = 0; }
+        const plan = planMove();
+        if (plan) {
+            if (plan.rotations > 0) {
+                const before = activeTetromino.matrix;
+                pressKey("ArrowUp");
+                if (activeTetromino.matrix === before) demoRotateFails++;
+            }
+            else if (plan.x < activeTetromino.x) pressKey("ArrowLeft");
+            else if (plan.x > activeTetromino.x) pressKey("ArrowRight");
+            else if (isValidMove(activeTetromino.y + 1)) {
+                pressKey("ArrowDown");   // soft drop, one row per step (no hard drop)
+            }
+        }
+    }
+    demoTimer = setTimeout(demoStep, Math.max(40, Math.min(90, fallingSpeed / 5)));
+}
+
+function startDemo() {
+    if (demo) return;
+    demo = true;
+    document.getElementById("demo-banner").style.display = "block";
+    document.getElementById("btn-demo").textContent = "DEMO ON";
+    demoStep();
+}
+
+function stopDemo() {
+    if (!demo) return;
+    demo = false;
+    clearTimeout(demoTimer);
+    document.getElementById("demo-banner").style.display = "none";
+    document.getElementById("btn-demo").textContent = "DEMO";
+}
+
+document.getElementById("btn-demo").addEventListener("click", (event) => {
+    event.currentTarget.blur();
+    if (demo) stopDemo(); else startDemo();
+});
+
+// a real key press (not one sent by the demo) hands control back to the player
+window.addEventListener("keydown", (event) => {
+    if (event.isTrusted && demo && event.key != "Escape") stopDemo();
+});
+
+if (/[?&]demo=1/.test(location.search)) startDemo();   // game.html?demo=1 starts in demo mode
+
 animation = requestAnimationFrame(gameloop);
 
 })
