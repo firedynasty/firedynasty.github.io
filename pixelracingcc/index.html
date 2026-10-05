@@ -44,7 +44,7 @@
       <span id="fast_lap_time"    class="hud">Fastest Lap: <span id="fast_lap_time_value" class="value">0.0</span></span>
     </div>
     <div id="modeControls" style="position:absolute; z-index:2; right:10px; top:70px; display:flex; gap:8px;">
-      <button id="pause" onclick="togglePause(); this.blur();" title="Pause (Space or Esc)" style="font-size:1.4em;">&#10074;&#10074; Pause</button>
+      <button id="pause" onclick="togglePause(); this.blur();" title="Pause (Esc)" style="font-size:1.4em;">&#10074;&#10074; Pause</button>
       <button id="info" onclick="toggleInfo(); this.blur();" title="About this game" style="font-size:1.4em;">&#9432; Info</button>
       <button id="daynight" onclick="manualToggle(); this.blur();" style="font-size:1.4em;"></button>
     </div>
@@ -58,7 +58,7 @@
       <div><a href="https://jakesgordon.com/writing/javascript-racer/" target="_blank" rel="noopener" style="color:#7cc4ff;">Original JavaScript Racer by Jake Gordon</a></div>
       <div style="font-size:0.8em; opacity:0.7; margin-top:8px;">Billboard photos from Unsplash. MIT license.</div>
     </div>
-    <div id="pauseOverlay" onclick="togglePause()" style="display:none; position:absolute; z-index:2; left:0; right:0; top:40%; text-align:center; font-size:4em; color:#fff; text-shadow:0 0 8px #000; cursor:pointer;">PAUSED<div style="font-size:0.3em;">press Space or Esc to resume</div></div>
+    <div id="pauseOverlay" onclick="togglePause()" style="display:none; position:absolute; z-index:2; left:0; right:0; top:40%; text-align:center; font-size:4em; color:#fff; text-shadow:0 0 8px #000; cursor:pointer;">PAUSED<div style="font-size:0.3em;">press Esc to resume</div></div>
     <canvas id="canvas">
       Sorry, cannot run because your browser does not support &lt;canvas&gt; element
     </canvas></div>
@@ -680,8 +680,8 @@
         { keys: [KEY.UP,    KEY.W], mode: 'up',   action: function() { keyFaster = false; } },
         { keys: [KEY.DOWN,  KEY.S], mode: 'up',   action: function() { keySlower = false; } },
         { keys: [KEY.N],            mode: 'down', action: function() { toggleMode(); } },
-        { keys: [KEY.SPACE, KEY.ESC, KEY.P], mode: 'down', action: function() { if (!pauseLatch) { pauseLatch = true; togglePause(); } } },
-        { keys: [KEY.SPACE, KEY.ESC, KEY.P], mode: 'up',   action: function() { pauseLatch = false; } }
+        { keys: [KEY.ESC], mode: 'down', action: function() { if (!pauseLatch) { pauseLatch = true; togglePause(); } } },
+        { keys: [KEY.ESC], mode: 'up',   action: function() { pauseLatch = false; } }
       ],
       ready: function(images) {
         backgrounds = { night: images[0], day: images[2] };
