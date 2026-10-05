@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Tetris in Browser</title>
+        <link rel="stylesheet" href="styles/game.css"></link>
+        <script src="scripts/app.js"></script>
+    </head>
+    <body>
+        <audio id="background-music" loop autoplay>
+            <source src="assets/music.mp3">
+        </audio>
+
+        <!-- centering and layering canvas: https://stackoverflow.com/a/17349259-->
+        <div class="left-panel">
+            <div id="icon"><img src="assets/icon.png"/></div>
+
+            <div id="instructions">
+                <p><b>Controls</b></p>
+                <p>Up: Rotate</p>
+                <p>Down: Soft drop</p>
+                <p>Left: Move left</p>
+                <p>Right: Move right</p>
+                <p>Space: Hard drop</p>
+                <p>C/Shift: Hold</p>
+                <p>Esc: Pause game</p>
+            </div>
+
+            <div id="scores">
+                <p><span>Level: </span><span id="level">1</span></p>
+                <p><span>Lines cleared: </span><span id="lines-cleared">0</span></p>
+                <p><span>Time elapsed: </span><p><span id="time-elapsed">0</span></p></p>
+            </div>
+
+            <button id="btn-pause">PAUSE</button>
+            <button id="btn-info">INFO</button>
+        </div>
+
+        <div class="center">
+            <canvas id="grids"></canvas>
+            <canvas id="playfield"></canvas>
+        </div>
+
+        <div class="right-panel">
+            <p class="text" id="txt-hold">HOLD</p>
+            <canvas id="hold-queue"></canvas>
+            <p class="text" id="txt-next">NEXT</p>
+            <canvas id="preview-pane"></canvas>
+        </div>
+
+        <div id="info-modal">
+            <p><b>About this game</b> <span id="info-close">&times;</span></p>
+            <p>Tetris in Browser, originally made by invzfnc. I got it from:</p>
+            <p><a href="https://github.com/invzfnc/tetris-in-browser" target="_blank" rel="noopener">github.com/invzfnc/tetris-in-browser</a></p>
+            <p class="small">MIT license.</p>
+        </div>
+
+        <div class="screen" id="pause-screen">
+            <div class="menu" id="pause-menu">
+                <p>PAUSED</p>
+                <button class="button" id="btn-resume">RESUME</button>
+                <button class="button" id="btn-restart">RESTART</button>
+                <button class="button" id="btn-quit">QUIT TO TITLE</button>
+            </div>
+        </div>
+
+        <div class="screen" id="game-over-screen">
+            <div class="menu" id="game-over-menu">
+                <p>GAME OVER</p>
+                <button class="button" id="btn-restart1">RESTART</button>
+                <button class="button" id="btn-quit1">QUIT TO TITLE</button>
+            </div>
+        </div>
+    </body>
+</html>

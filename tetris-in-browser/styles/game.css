@@ -1,0 +1,164 @@
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    background-color: rgb(20, 20, 20);
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 2vmin;
+    color: white;
+}
+
+.center {
+    border: 0.2vh solid rgb(100, 100, 100);
+}
+
+.left-panel {
+    float: right;
+}
+
+.right-panel {
+    float: left;
+}
+
+.left-panel, .right-panel {
+    padding: 2vw;
+}
+
+#icon,
+#instructions,
+#scores,
+#hold-queue,
+#preview-pane {
+    box-sizing: border-box;
+    padding: 2.5vh;
+    border: 0.2vh solid rgb(100, 100, 100);
+}
+
+#icon {
+    height: 8vh;
+    padding: 0;
+}
+
+#icon img {
+    height: 100%;
+    width: 100%;
+}
+
+#instructions {
+    height: 42vh;
+    margin-top: 2vh;
+    margin-bottom: 2vh;
+} 
+
+#scores {
+    height: 26vh;
+}
+
+#time-elapsed {
+    font-size: 3.5vh;
+}
+
+#playfield {
+    z-index: 1;
+}
+
+#grids {
+    position: absolute;
+    z-index: 0;
+}
+
+.screen {
+    display: none;
+    position: absolute;
+    z-index: 2;
+    height: 100%;
+    width: 100%;
+    background-color: rgba(30, 30, 20, 0.6);
+    /* responsive font size */
+    /* https://css-tricks.com/viewport-sized-typography */
+    text-align: center;
+    font-size: 7vh;
+}
+
+#btn-pause, #btn-info {
+    display: block;
+    margin: 2vh auto;
+    padding: 0.5vh 2vh;
+    border: 2px solid white;
+    border-radius: 6px;
+    background-color: transparent;
+    color: white;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 3vh;
+    cursor: pointer;
+}
+
+#btn-pause:hover, #btn-info:hover {
+    color: lightgrey;
+    border-color: lightgrey;
+}
+
+.menu {
+    position: relative;
+    top: 23vh;
+    margin: auto;
+}
+
+.text {
+    text-align: center;
+}
+
+.button {
+    display: block;
+    margin: 3vh auto;
+    border: none;
+    background-color: transparent;
+    color: white;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 3.5vh;
+}
+
+.menu button:hover {
+    color: lightgrey;
+}
+
+::selection {
+    background: transparent;
+}
+#info-modal {
+    display: none;
+    position: absolute;
+    z-index: 3;
+    left: 2vh;
+    bottom: 2vh;
+    width: 38vh;
+    padding: 1.5vh 2vh;
+    background-color: rgba(20, 20, 30, 0.95);
+    border: 2px solid white;
+    border-radius: 8px;
+    color: white;
+    font-size: 2.2vh;
+    line-height: 1.4;
+}
+
+#info-modal a {
+    color: #7cc4ff;
+    word-break: break-all;
+}
+
+#info-modal .small {
+    font-size: 0.8em;
+    opacity: 0.7;
+}
+
+#info-close {
+    float: right;
+    cursor: pointer;
+    font-size: 1.4em;
+    line-height: 1;
+}
