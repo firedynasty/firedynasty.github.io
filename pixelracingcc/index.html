@@ -55,7 +55,7 @@
         <span onclick="toggleInfo()" style="cursor:pointer; font-size:1.3em;">&times;</span>
       </div>
       <p style="margin:6px 0;">A retro pseudo-3D racing game, based on Jake Gordon's JavaScript Racer.</p>
-      <p style="margin:6px 0;">The gas is automatic. Steer with the left and right arrows (or A and D), or touch the left or right side of the screen. Hold Up or W to lift off the gas (coast). Hold Down, S or Space, or touch and hold the car, to brake.</p>
+      <p style="margin:6px 0;">The gas is automatic. Steer with the left and right arrows (or A and D), or touch the left or right side of the screen. Hold Up or W to lift off the gas (coast). Hold Down, S or Space, or touch and hold the lap map (top-left), to brake.</p>
       <div><a href="https://github.com/yauhahu/pixelracingcc" target="_blank" rel="noopener" style="color:#7cc4ff;">Source code on GitHub</a></div>
       <div><a href="https://jakesgordon.com/writing/javascript-racer/" target="_blank" rel="noopener" style="color:#7cc4ff;">Original JavaScript Racer by Jake Gordon</a></div>
       <div style="margin-top:8px;"><b>More games</b></div>
@@ -66,8 +66,7 @@
     </div>
     <div id="pauseOverlay" onclick="togglePause()" style="display:none; position:absolute; z-index:2; left:0; right:0; top:40%; text-align:center; font-size:4em; color:#fff; text-shadow:0 0 8px #000; cursor:pointer;">PAUSED<div style="font-size:0.3em;">press Esc to resume</div></div>
     <div id="demoBanner" style="display:none; position:absolute; z-index:2; left:0; right:0; bottom:8%; text-align:center; font-size:1.6em; color:#fff; text-shadow:0 0 6px #000; pointer-events:none;">DEMO &mdash; press an arrow key or T to take over</div>
-    <div id="brake" title="Tap and hold the car to brake" style="position:fixed; z-index:2; left:50%; bottom:0; transform:translateX(-50%); width:30%; min-width:140px; height:20%; min-height:90px; border-radius:16px; background:transparent; user-select:none; -webkit-user-select:none; touch-action:none; cursor:pointer;"></div>
-    <canvas id="minimap" width="170" height="110" title="Lap map" style="position:absolute; z-index:1; left:8px; top:58px; width:170px; height:110px; background:rgba(0,0,0,0.45); border:2px solid rgba(255,255,255,0.8); border-radius:10px; pointer-events:none;"></canvas>
+    <canvas id="minimap" width="170" height="110" title="Hold to brake" style="position:absolute; z-index:2; cursor:pointer; touch-action:none; user-select:none; -webkit-user-select:none; left:8px; top:58px; width:170px; height:110px; background:rgba(0,0,0,0.45); border:2px solid rgba(255,255,255,0.8); border-radius:10px;"></canvas>
     <canvas id="canvas">
       Sorry, cannot run because your browser does not support &lt;canvas&gt; element
     </canvas></div>
@@ -128,19 +127,20 @@
 
 	  }
 	  
-	  // the car is the brake button (mouse or touch): hold your finger on it to slow down
+	  // the lap map (top-left) is the brake button, mouse or touch: hold it to slow down.
+	  // it sits off to the side so both thumbs stay free to steer on the rest of the screen.
 	  var touchBrake = false;
 	  (function() {
-	  	var btn = Dom.get('brake');
-	  	var press   = function(e) { e.preventDefault(); e.stopPropagation(); touchBrake = true;  btn.style.background = 'rgba(255,0,0,0.3)'; if (btn.setPointerCapture) { try { btn.setPointerCapture(e.pointerId); } catch(err) {} } };
-	  	var release = function(e) { e.preventDefault(); e.stopPropagation(); touchBrake = false; btn.style.background = 'transparent'; if (!keyFaster) keySlower = false; };
+	  	var btn = Dom.get('minimap');
+	  	var press   = function(e) { e.preventDefault(); e.stopPropagation(); touchBrake = true;  btn.style.background = 'rgba(255,0,0,0.5)'; btn.style.borderColor = '#ff4d4d'; if (btn.setPointerCapture) { try { btn.setPointerCapture(e.pointerId); } catch(err) {} } };
+	  	var release = function(e) { e.preventDefault(); e.stopPropagation(); touchBrake = false; btn.style.background = 'rgba(0,0,0,0.45)'; btn.style.borderColor = 'rgba(255,255,255,0.8)'; if (!keyFaster) keySlower = false; };
 	  	btn.addEventListener('pointerdown', press, false);
 	  	btn.addEventListener('pointerup', release, false);
 	  	btn.addEventListener('pointercancel', release, false);
 	  	btn.addEventListener('contextmenu', function(e) { e.preventDefault(); }, false);   // no long-press menu on phones
 	  })();
 
-	  var touch = new TouchControl(document.getElementsByTagName("canvas")[0]);
+	  var touch = new TouchControl(document.getElementById("canvas"));
 	  	  
 
 //////////
