@@ -55,7 +55,7 @@
         <span onclick="toggleInfo()" style="cursor:pointer; font-size:1.3em;">&times;</span>
       </div>
       <p style="margin:6px 0;">A retro pseudo-3D racing game, based on Jake Gordon's JavaScript Racer.</p>
-      <p style="margin:6px 0;">The gas is automatic. Steer with the left and right arrows (or A and D), or touch the left or right side of the screen. Hold Down, S or Space, or touch and hold the car, to brake.</p>
+      <p style="margin:6px 0;">The gas is automatic. Steer with the left and right arrows (or A and D), or touch the left or right side of the screen. Hold Up or W to lift off the gas (coast). Hold Down, S or Space, or touch and hold the car, to brake.</p>
       <div><a href="https://github.com/yauhahu/pixelracingcc" target="_blank" rel="noopener" style="color:#7cc4ff;">Source code on GitHub</a></div>
       <div><a href="https://jakesgordon.com/writing/javascript-racer/" target="_blank" rel="noopener" style="color:#7cc4ff;">Original JavaScript Racer by Jake Gordon</a></div>
       <div style="margin-top:8px;"><b>More games</b></div>
@@ -67,6 +67,7 @@
     <div id="pauseOverlay" onclick="togglePause()" style="display:none; position:absolute; z-index:2; left:0; right:0; top:40%; text-align:center; font-size:4em; color:#fff; text-shadow:0 0 8px #000; cursor:pointer;">PAUSED<div style="font-size:0.3em;">press Esc to resume</div></div>
     <div id="demoBanner" style="display:none; position:absolute; z-index:2; left:0; right:0; bottom:8%; text-align:center; font-size:1.6em; color:#fff; text-shadow:0 0 6px #000; pointer-events:none;">DEMO &mdash; press an arrow key or T to take over</div>
     <div id="brake" title="Tap and hold the car to brake" style="position:fixed; z-index:2; left:50%; bottom:0; transform:translateX(-50%); width:30%; min-width:140px; height:20%; min-height:90px; border-radius:16px; background:transparent; user-select:none; -webkit-user-select:none; touch-action:none; cursor:pointer;"></div>
+    <canvas id="minimap" width="170" height="110" title="Lap map" style="position:absolute; z-index:1; left:8px; top:58px; width:170px; height:110px; background:rgba(0,0,0,0.45); border:2px solid rgba(255,255,255,0.8); border-radius:10px; pointer-events:none;"></canvas>
     <canvas id="canvas">
       Sorry, cannot run because your browser does not support &lt;canvas&gt; element
     </canvas></div>
@@ -201,6 +202,7 @@
     var keyLeft        = false;
     var keyRight       = false;
     var keyFaster      = false;
+    var keyCoast       = false;                   // UP / W held: lift off the accelerator (the gas is automatic)
     var keySlower      = false;
 
     var hud = {
@@ -257,10 +259,13 @@
 
       playerX = playerX - (dx * speedPercent * playerSegment.curve * centrifugal);
 
-      // the gas is automatic: the car accelerates unless a brake is held (the demo drives the gas itself)
-      if (demo ? keyFaster : (keyFaster || !keySlower))
+      // the gas is automatic: the car accelerates unless you brake (Down / S / Space) or lift off the gas (Up / W).
+      // the demo drives the gas itself.
+      var gas = demo ? keyFaster : (!keySlower && !keyCoast);
+      var brakes = demo ? (keySlower && !keyFaster) : keySlower;
+      if (gas)
         speed = Util.accelerate(speed, accel, dt);
-      else if (keySlower)
+      else if (brakes)
         speed = Util.accelerate(speed, breaking, dt);
       else
         speed = Util.accelerate(speed, decel, dt);
@@ -324,13 +329,14 @@
       }
 
       updateHud('speed',            5 * Math.round(speed/500));
+      drawMiniMap(findSegment(position + playerZ).index);
       var pct = Math.round(100 * speed / maxSpeed);                       // speedometer bar: green, then yellow, then red near top speed
       if (pct !== lastSpeedPct) {
         lastSpeedPct = pct;
         speedFill.style.width = pct + '%';
         speedFill.style.backgroundColor = pct < 50 ? '#2ecc40' : (pct < 80 ? '#ffdc00' : '#ff4136');
       }
-      var braking = keySlower && !keyFaster;                              // brake light: on while any brake is pressed
+      var braking = demo ? (keySlower && !keyFaster) : keySlower;                              // brake light: on while any brake is pressed
       if (braking !== lastBraking) {
         lastBraking = braking;
         brakeLight.className = braking ? 'on' : '';
@@ -403,6 +409,39 @@
     }
 
     //-------------------------------------------------------------------------
+
+    // ---- minimap: an oval track with a dot for how far round the lap you are (not the exact shape) ----
+    var miniCanvas = Dom.get('minimap'), miniCtx = miniCanvas.getContext('2d');
+    var miniBase = null, miniLastPct = -1;
+    var MINI = { cx: 85, cy: 55, rx: 66, ry: 36 };
+
+    function buildMiniMap() {
+      miniBase = document.createElement('canvas');                       // draw the oval once, copy it every frame
+      miniBase.width = miniCanvas.width; miniBase.height = miniCanvas.height;
+      var b = miniBase.getContext('2d');
+      b.beginPath(); b.ellipse(MINI.cx, MINI.cy, MINI.rx, MINI.ry, 0, 0, 2*Math.PI);
+      b.lineWidth = 12; b.strokeStyle = 'rgba(190,190,190,0.75)'; b.stroke();       // road
+      b.lineWidth = 2;  b.strokeStyle = 'rgba(255,255,255,0.9)';  b.setLineDash([6, 6]); b.stroke(); b.setLineDash([]);   // centre line
+      b.fillStyle = '#2ecc40'; b.fillRect(MINI.cx - 2, MINI.cy + MINI.ry - 8, 4, 16);   // start / finish line (bottom)
+      miniLastPct = -1;
+      placeMiniMap();
+    }
+
+    function placeMiniMap() { miniCanvas.style.top = (Dom.get('hud').offsetHeight + 8) + 'px'; }
+    window.addEventListener('resize', placeMiniMap);
+
+    function drawMiniMap(index) {
+      if (!miniBase) return;
+      var lap = index / segments.length, pct = Math.floor(lap * 400);   // redraw only when the dot moves a little
+      if (pct === miniLastPct) return;
+      miniLastPct = pct;
+      var angle = Math.PI / 2 - 2 * Math.PI * lap;                       // start at the bottom, go round to the right
+      miniCtx.clearRect(0, 0, miniCanvas.width, miniCanvas.height);
+      miniCtx.drawImage(miniBase, 0, 0);
+      miniCtx.beginPath(); miniCtx.arc(MINI.cx + MINI.rx * Math.cos(angle), MINI.cy + MINI.ry * Math.sin(angle), 6, 0, 2*Math.PI);
+      miniCtx.fillStyle = '#ff3b30'; miniCtx.fill();
+      miniCtx.lineWidth = 2; miniCtx.strokeStyle = '#fff'; miniCtx.stroke();
+    }
 
     var speedFill = Dom.get('speedFill'), brakeLight = Dom.get('brakeLight'), lastSpeedPct = -1, lastBraking = null;
 
@@ -638,6 +677,7 @@
         segments[segments.length-1-n].color = COLORS.FINISH;
 
       trackLength = segments.length * segmentLength;
+      buildMiniMap();
     }
 
     function resetSprites() {
@@ -714,11 +754,11 @@
         { keys: [KEY.T],            mode: 'down', action: function() { toggleDemo(); } },
         { keys: [KEY.LEFT,  KEY.A], mode: 'down', action: function() { keyLeft   = true;  } },
         { keys: [KEY.RIGHT, KEY.D], mode: 'down', action: function() { keyRight  = true;  } },
-        { keys: [KEY.UP,    KEY.W], mode: 'down', action: function() { keyFaster = true;  } },
+        { keys: [KEY.UP,    KEY.W], mode: 'down', action: function() { keyCoast = true;  } },
         { keys: [KEY.DOWN,  KEY.S, KEY.SPACE], mode: 'down', action: function() { keySlower = true;  } },
         { keys: [KEY.LEFT,  KEY.A], mode: 'up',   action: function() { keyLeft   = false; } },
         { keys: [KEY.RIGHT, KEY.D], mode: 'up',   action: function() { keyRight  = false; } },
-        { keys: [KEY.UP,    KEY.W], mode: 'up',   action: function() { keyFaster = false; } },
+        { keys: [KEY.UP,    KEY.W], mode: 'up',   action: function() { keyCoast = false; } },
         { keys: [KEY.DOWN,  KEY.S, KEY.SPACE], mode: 'up',   action: function() { keySlower = false; } },
         { keys: [KEY.N],            mode: 'down', action: function() { toggleMode(); } },
         { keys: [KEY.ESC], mode: 'down', action: function() { if (!pauseLatch) { pauseLatch = true; togglePause(); } } },
@@ -761,7 +801,7 @@
     function stopDemo() {
       if (!demo) return;
       demo = false;
-      keyLeft = keyRight = keyFaster = keySlower = false;
+      keyLeft = keyRight = keyFaster = keySlower = keyCoast = false;
       Dom.get('demoBanner').style.display = 'none';
       Dom.get('demo').innerHTML = '&#129302; Demo';
     }
