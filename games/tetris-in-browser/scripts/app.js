@@ -605,7 +605,7 @@ window.addEventListener("keydown",
         if (event.defaultPrevented) return;
 
         // toggle pause menu
-        if (event.key == "Escape") {
+        if (event.key == "Escape" || event.key == "Enter") {
             if (gamePaused) {
                 hidePauseMenu();
             }
@@ -789,7 +789,7 @@ document.getElementById("btn-demo").addEventListener("click", (event) => {
 
 // a real key press (not one sent by the demo) hands control back to the player
 window.addEventListener("keydown", (event) => {
-    if (event.isTrusted && demo && event.key != "Escape") stopDemo();
+    if (event.isTrusted && demo && event.key != "Escape" && event.key != "Enter") stopDemo();
 });
 
 if (/[?&]demo=1/.test(location.search)) startDemo();   // game.html?demo=1 starts in demo mode

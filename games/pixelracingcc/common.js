@@ -355,6 +355,7 @@ var KEY = {
   P:     80,
   SPACE: 32,
   ESC:   27,
+  ENTER: 13,
   T:     84,
   S:     83,
   W:     87

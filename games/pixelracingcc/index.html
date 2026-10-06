@@ -45,7 +45,7 @@
     </div>
     <div id="modeControls" style="position:absolute; z-index:2; right:10px; top:70px; display:flex; gap:8px;">
       <button id="demo" onclick="toggleDemo(); this.blur();" title="Let the computer drive (T)" style="font-size:1.4em;">&#129302; Demo</button>
-      <button id="pause" onclick="togglePause(); this.blur();" title="Pause (Esc)" style="font-size:1.4em;">&#10074;&#10074; Pause</button>
+      <button id="pause" onclick="togglePause(); this.blur();" title="Pause (Esc or Enter)" style="font-size:1.4em;">&#10074;&#10074; Pause</button>
       <button id="info" onclick="toggleInfo(); this.blur();" title="About this game" style="font-size:1.4em;">&#9432; Info</button>
       <button id="daynight" onclick="manualToggle(); this.blur();" style="font-size:1.4em;"></button>
     </div>
@@ -59,12 +59,12 @@
       <div><a href="https://github.com/yauhahu/pixelracingcc" target="_blank" rel="noopener" style="color:#7cc4ff;">Source code on GitHub</a></div>
       <div><a href="https://jakesgordon.com/writing/javascript-racer/" target="_blank" rel="noopener" style="color:#7cc4ff;">Original JavaScript Racer by Jake Gordon</a></div>
       <div style="margin-top:8px;"><b>More games</b></div>
-      <div><a href="https://firedynasty.github.io/pixelracingcc/" target="_blank" rel="noopener" style="color:#7cc4ff;">Racing</a></div>
-      <div><a href="https://firedynasty.github.io/tetris-in-browser/" target="_blank" rel="noopener" style="color:#7cc4ff;">Tetris</a></div>
-      <div><a href="https://firedynasty.github.io/pacman/" target="_blank" rel="noopener" style="color:#7cc4ff;">Pac-Man</a></div>
+      <div><a href="https://firedynasty.github.io/games/pixelracingcc/" target="_blank" rel="noopener" style="color:#7cc4ff;">Racing</a></div>
+      <div><a href="https://firedynasty.github.io/games/tetris-in-browser/" target="_blank" rel="noopener" style="color:#7cc4ff;">Tetris</a></div>
+      <div><a href="https://firedynasty.github.io/games/pacman/" target="_blank" rel="noopener" style="color:#7cc4ff;">Pac-Man</a></div>
       <div style="font-size:0.8em; opacity:0.7; margin-top:8px;">Billboard photos from Unsplash. MIT license.</div>
     </div>
-    <div id="pauseOverlay" onclick="togglePause()" style="display:none; position:absolute; z-index:2; left:0; right:0; top:40%; text-align:center; font-size:4em; color:#fff; text-shadow:0 0 8px #000; cursor:pointer;">PAUSED<div style="font-size:0.3em;">press Esc to resume</div></div>
+    <div id="pauseOverlay" onclick="togglePause()" style="display:none; position:absolute; z-index:2; left:0; right:0; top:40%; text-align:center; font-size:4em; color:#fff; text-shadow:0 0 8px #000; cursor:pointer;">PAUSED<div style="font-size:0.3em;">press Esc or Enter to resume</div></div>
     <div id="demoBanner" style="display:none; position:absolute; z-index:2; left:0; right:0; bottom:8%; text-align:center; font-size:1.6em; color:#fff; text-shadow:0 0 6px #000; pointer-events:none;">DEMO &mdash; press an arrow key or T to take over</div>
     <canvas id="minimap" width="170" height="110" title="Hold to brake" style="position:absolute; z-index:2; cursor:pointer; touch-action:none; user-select:none; -webkit-user-select:none; left:8px; top:58px; width:170px; height:110px; background:rgba(0,0,0,0.45); border:2px solid rgba(255,255,255,0.8); border-radius:10px;"></canvas>
     <canvas id="canvas">
@@ -761,8 +761,8 @@
         { keys: [KEY.UP,    KEY.W], mode: 'up',   action: function() { keyCoast = false; } },
         { keys: [KEY.DOWN,  KEY.S, KEY.SPACE], mode: 'up',   action: function() { keySlower = false; } },
         { keys: [KEY.N],            mode: 'down', action: function() { toggleMode(); } },
-        { keys: [KEY.ESC], mode: 'down', action: function() { if (!pauseLatch) { pauseLatch = true; togglePause(); } } },
-        { keys: [KEY.ESC], mode: 'up',   action: function() { pauseLatch = false; } }
+        { keys: [KEY.ESC, KEY.ENTER], mode: 'down', action: function() { if (!pauseLatch) { pauseLatch = true; togglePause(); } } },
+        { keys: [KEY.ESC, KEY.ENTER], mode: 'up',   action: function() { pauseLatch = false; } }
       ],
       ready: function(images) {
         backgrounds = { night: images[0], day: images[2] };
