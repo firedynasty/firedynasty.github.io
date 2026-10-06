@@ -1,0 +1,47 @@
+<!DOCTYPE html> 
+<html>
+<head>
+  <title>Javascript Boulderdash</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link href="boulderdash.css" media="screen, print" rel="stylesheet" type="text/css" />
+</head> 
+
+<body> 
+
+  <div id="boulderdash">
+    <div id="header">
+      <img  id='prev' src='images/up.png'   title="previous level">
+      <img  id='next' src='images/down.png' title="next level">
+      <span id="description">Boulderdash</span>
+      <a    id="help" href="help.html">instructions</a>
+      <button id="demoBtn">DEMO</button>
+      <button id="infoBtn">INFO</button>
+      <button id="pauseBtn">PAUSE</button>
+    </div>
+    <canvas id="canvas">
+      Sorry, this example cannot be run because your browser does not support the &lt;canvas&gt; element
+    </canvas>
+    <div id="pauseMsg">PAUSED<br><small>Esc / Enter to resume</small></div>
+    <div id="keys">Use the <b>arrow</b> keys to control Rockford. <b>Esc / Enter</b>: pause. <b>R</b>: restart level. <b>T</b>: demo. <b>Space</b>: grab.</div>
+    <div id="info">
+      <h3>Boulderdash</h3>
+      <p>Javascript Boulderdash by Jake Gordon (MIT license).<br>
+      <a href="https://github.com/jakesgordon/javascript-boulderdash" target="_blank">github.com/jakesgordon/javascript-boulderdash</a><br>
+      <a href="https://jakesgordon.com/writing/javascript-boulderdash/" target="_blank">How it works</a></p>
+      <p><b>More games</b><br>
+      <a href="https://firedynasty.github.io/games/pixelracingcc/">Racing</a> &middot;
+      <a href="https://firedynasty.github.io/games/tetris-in-browser/">Tetris</a> &middot;
+      <a href="https://firedynasty.github.io/games/pacman/">Pac-Man</a></p>
+      <button id="infoClose">Close</button>
+    </div>
+  </div>
+
+  <script src="stats.js"></script>
+  <script src="caves.js"></script>
+  <script src="boulderdash.js"></script>
+  <script>
+    Boulderdash();
+  </script>
+
+</body> 
+</html>
