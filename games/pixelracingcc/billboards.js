@@ -13,8 +13,12 @@ var SF_BILLBOARDS = [
   "images/billboards/soccer_field.jpg"
 ];
 
-// Returns (via callback) a canvas copy of the spritesheet with every billboard slot
-// replaced by one of SF_BILLBOARDS (cycling through the list).
+// Color shown in every billboard slot until its photo has loaded.
+var BILLBOARD_PLACEHOLDER = "#8a8a8a";
+
+// Hands back (via callback, immediately) a canvas copy of the spritesheet with every billboard slot painted
+// plain gray, so the game can start without waiting for any photo. The photos then load in the background and
+// are drawn over the gray slots one by one; the canvas is updated in place, so the game picks them up on its own.
 function applyBillboards(sheet, callback) {
   var canvas = document.createElement('canvas');
   canvas.width  = sheet.width;
@@ -22,25 +26,24 @@ function applyBillboards(sheet, callback) {
   var ctx = canvas.getContext('2d');
   ctx.drawImage(sheet, 0, 0);
 
-  var count = SF_BILLBOARDS.length, imgs = [];
+  ctx.fillStyle = BILLBOARD_PLACEHOLDER;
+  SPRITES.BILLBOARDS.forEach(function(slot) {
+    ctx.clearRect(slot.x, slot.y, slot.w, slot.h);
+    ctx.fillRect(slot.x, slot.y, slot.w, slot.h);
+  });
+  callback(canvas);
+
   SF_BILLBOARDS.forEach(function(src, n) {
     var img = new Image();
-    var done = function() {
-      if (--count == 0) {
-        SPRITES.BILLBOARDS.forEach(function(slot, i) {
-          var pic = imgs[i % imgs.length];
-          if (!pic || !pic.width) return;
-          var scale = Math.max(slot.w / pic.width, slot.h / pic.height); // cover-fit
-          var sw = slot.w / scale, sh = slot.h / scale;
-          ctx.clearRect(slot.x, slot.y, slot.w, slot.h);
-          ctx.drawImage(pic, (pic.width - sw) / 2, (pic.height - sh) / 2, sw, sh, slot.x, slot.y, slot.w, slot.h);
-        });
-        callback(canvas);
-      }
+    img.onload = function() {
+      SPRITES.BILLBOARDS.forEach(function(slot, i) {
+        if (i % SF_BILLBOARDS.length !== n) return; // this photo belongs in slots n, n+9, ...
+        var scale = Math.max(slot.w / img.width, slot.h / img.height); // cover-fit
+        var sw = slot.w / scale, sh = slot.h / scale;
+        ctx.clearRect(slot.x, slot.y, slot.w, slot.h);
+        ctx.drawImage(img, (img.width - sw) / 2, (img.height - sh) / 2, sw, sh, slot.x, slot.y, slot.w, slot.h);
+      });
     };
-    img.onload = done;
-    img.onerror = done; // a missing file keeps the original billboard
-    img.src = src;
-    imgs[n] = img;
+    img.src = src; // a missing file just leaves its slot gray
   });
 }

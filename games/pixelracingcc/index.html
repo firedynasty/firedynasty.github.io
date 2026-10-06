@@ -768,7 +768,7 @@
         backgrounds = { night: images[0], day: images[2] };
         initDayNight();
         sprites    = images[1];
-        applyBillboards(images[1], function(sheet) { sprites = sheet; }); // swap in San Francisco billboards
+        applyBillboards(images[1], function(sheet) { sprites = sheet; }); // gray billboards right away, San Francisco photos fill in as they load
         reset();
         Dom.storage.fast_lap_time = Dom.storage.fast_lap_time || 180;
         updateHud('fast_lap_time', formatTime(Util.toFloat(Dom.storage.fast_lap_time)));

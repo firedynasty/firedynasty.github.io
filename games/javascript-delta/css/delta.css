@@ -74,8 +74,8 @@ h2#start {
 
 #toolbar button { font-family: inherit; font-size: 0.8em; margin-left: 0.4em; cursor: pointer; }
 #toolbar { position: fixed; bottom: 8px; left: 8px; z-index: 20; }
-#pauseMsg { position: absolute; top: 40%; width: 100%; text-align: center; color: white; font-size: 3em; font-weight: bold; z-index: 2; pointer-events: none; }
+#pauseMsg { line-height: 1.3; position: absolute; top: 40%; width: 100%; text-align: center; color: white; font-size: 3em; font-weight: bold; z-index: 2; pointer-events: none; }
 #pauseMsg small { font-size: 0.35em; font-weight: normal; color: #A0A0FF; }
-#info { position: absolute; top: 20%; left: 50%; transform: translateX(-50%); z-index: 10; background: #111; color: #DDD; border: 2px solid #888; padding: 0.5em 2em 1em; text-align: center; font-size: 0.9em; }
+#info { line-height: 1.5; font-size: 14px; position: absolute; top: 20%; left: 50%; transform: translateX(-50%); z-index: 10; background: #111; color: #DDD; border: 2px solid #888; padding: 0.5em 2em 1em; text-align: center; }
 #info h3 { margin: 0.5em 0; }
 #info a { color: #A0A0FF; }
