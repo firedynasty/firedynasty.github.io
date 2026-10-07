@@ -642,8 +642,7 @@ Gauntlet = function() {
         game.forceLevel(parseInt(select.value, 10));
       };
       select.onchange = function() {
-        select.blur(); // otherwise the arrow keys would keep changing the level
-        game.gotoLevel(parseInt(select.value, 10));
+        select.blur(); // just choose - the level only loads when FORCE LOAD is clicked (and blur so the arrow keys don't keep changing it)
       };
     },
 
@@ -667,19 +666,6 @@ Gauntlet = function() {
       }
       this.fireLatched = false;
       this.load(n);
-    },
-
-    gotoLevel: function(n) {
-      if (this.is('help'))
-        this.resume();
-      if (this.is('playing'))
-        this.load(n);          // jump straight there
-      else if (this.is('menu'))
-        this.start(this.player.type || PLAYER.WARRIOR, n); // start a game there, as whoever you last played
-      else if (this.is('lost') || this.is('won'))
-        this.pendingLevel = n; // the game is fading out to the menu, start there as soon as it arrives
-      else
-        document.getElementById('levelSelect').value = this.loadLevel();
     },
 
     togglePause: function() {
