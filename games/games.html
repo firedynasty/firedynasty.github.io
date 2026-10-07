@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Games</title>
+  <style>
+    body    { margin: 0; background: #111; color: #ddd; font-family: Arial, Helvetica, sans-serif; }
+    header  { text-align: center; padding: 2em 1em 1em; }
+    h1      { margin: 0; letter-spacing: 0.15em; color: #fff; }
+    header p { color: #888; margin: 0.5em 0 0; }
+    .grid   { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; max-width: 1000px; margin: 1em auto 3em; padding: 0 16px; }
+    a.card  { display: block; padding: 1.1em 1.2em; background: #1c1c1c; border: 2px solid #333; border-radius: 8px; color: inherit; text-decoration: none; transition: border-color 0.15s, transform 0.15s; }
+    a.card:hover, a.card:focus { border-color: #F90503; transform: translateY(-2px); outline: none; }
+    .card h2 { margin: 0 0 0.3em; font-size: 1.15em; color: #fff; }
+    .card p  { margin: 0 0 0.6em; font-size: 0.9em; color: #aaa; line-height: 1.35; }
+    .card small { color: #777; font-size: 0.78em; }
+    .card small b { color: #bbb; }
+    footer  { text-align: center; padding-bottom: 2em; color: #666; font-size: 0.8em; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>GAMES</h1>
+    <p>Seven games to play in your browser</p>
+  </header>
+
+  <main class="grid">
+
+    <a class="card" href="javascript-boulderdash/index.html">
+      <h2>Boulderdash</h2>
+      <p>Dig for diamonds, dodge falling boulders and reach the exit.</p>
+      <small>Pause, <b>T</b> demo, Info panel</small>
+    </a>
+
+    <a class="card" href="javascript-delta/index.html">
+      <h2>Delta</h2>
+      <p>Arcade shooter. Blast the waves and stay alive.</p>
+      <small>Pause, <b>T</b> demo, Info panel</small>
+    </a>
+
+    <a class="card" href="javascript-gauntlet/index.html">
+      <h2>Gauntlet</h2>
+      <p>Dungeon crawl with 17 levels. Warrior, Valkyrie, Wizard and Elf, and AI allies you can click to add.</p>
+      <small><b>T</b> demo, <b>Enter</b> pause, <b>/</b> auto-fire, level dropdown</small>
+    </a>
+
+    <a class="card" href="javascript-tiny-platformer/index.html">
+      <h2>Tiny Platformer</h2>
+      <p>Collect the gold and avoid the monsters. Comes with 12 extra levels.</p>
+      <small><b>T</b> demo, <b>Enter</b> pause, <b>R</b> restart</small>
+    </a>
+
+    <a class="card" href="pacman/index.html">
+      <h2>Pac-Man</h2>
+      <p>Eat the dots, dodge the ghosts.</p>
+      <small>Arrow keys</small>
+    </a>
+
+    <a class="card" href="pixelracingcc/index.html">
+      <h2>Pixel Racing</h2>
+      <p>Classic 2D racer with billboards along the road.</p>
+      <small>Arrow keys</small>
+    </a>
+
+    <a class="card" href="tetris-in-browser/index.html">
+      <h2>Tetris</h2>
+      <p>Stack the blocks and clear the lines.</p>
+      <small>Arrow keys</small>
+    </a>
+
+  </main>
+
+  <footer>Click a card to play.</footer>
+
+</body>
+</html>
