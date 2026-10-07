@@ -1,0 +1,1 @@
+var THOMAS_LEVELS = [{"n": 1, "title": "Thomas 1"}, {"n": 2, "title": "Thomas 2"}, {"n": 3, "title": "Thomas 3"}, {"n": 4, "title": "Thomas 4"}, {"n": 5, "title": "Stairs"}, {"n": 6, "title": "Islands"}, {"n": 7, "title": "Towers"}, {"n": 8, "title": "Ascent"}, {"n": 9, "title": "Pit Run"}, {"n": 10, "title": "Cave"}, {"n": 11, "title": "Spiral"}, {"n": 12, "title": "Gauntlet"}];
