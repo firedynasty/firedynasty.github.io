@@ -835,8 +835,7 @@ window.addEventListener('keydown', function (e) {
   if (GAMEKEYS[k]) { if (demo && playing()) setDemo(false); keys[k] = true; }
 });
 window.addEventListener('keyup', function (e) { keys[e.code] = false; });
-window.addEventListener('blur', function () { keys = {}; pauseGame(); });
-document.addEventListener('visibilitychange', function () { if (document.hidden) pauseGame(); });
+window.addEventListener('blur', function () { keys = {}; });
 function toggleMute() { muted = !muted; $('bSound').textContent = muted ? 'Sound off' : 'Sound on'; try { localStorage.setItem('shell-hopper-mute', muted ? '1' : '0'); } catch (e) {} }
 function bind(id, fn) { $(id).addEventListener('click', function (e) { e.currentTarget.blur(); fn(); }); }
 bind('bStart', startPlay); bind('bStartInfo', function () { openSide('info'); }); bind('bResume', hideOv); bind('bNext', nextLevel);
