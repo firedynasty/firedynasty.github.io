@@ -73,7 +73,7 @@
     </div>
     <div id="pauseOverlay" onclick="togglePause()" style="display:none;"><div class="card"><h2>PAUSED</h2><p>Press <kbd>Enter</kbd> or <kbd>Esc</kbd> to resume</p></div></div>
     <div id="demoBanner" style="display:none;"><b>DEMO</b> &nbsp; press an arrow key or <kbd>T</kbd> to take over</div>
-    <canvas id="minimap" width="170" height="110" title="Hold to brake" style="position:absolute; z-index:2; cursor:pointer; touch-action:none; user-select:none; -webkit-user-select:none; left:8px; top:58px; width:170px; height:110px;"></canvas>
+    <canvas id="minimap" width="200" height="140" title="Hold to brake" style="position:absolute; z-index:2; cursor:pointer; touch-action:none; user-select:none; -webkit-user-select:none; left:8px; top:58px; width:200px; height:140px;"></canvas>
     <canvas id="canvas">
       Sorry, cannot run because your browser does not support &lt;canvas&gt; element
     </canvas></div>
@@ -306,6 +306,7 @@
         }
       }
 
+      window.carOffRoad = (playerX < -1) || (playerX > 1);   // lets the car sprite rumble only when off the road
       playerX = Util.limit(playerX, -3, 3);     // dont ever let it go too far out of bounds
       speed   = Util.limit(speed, 0, maxSpeed); // or exceed maxSpeed
 
@@ -417,20 +418,40 @@
 
     //-------------------------------------------------------------------------
 
-    // ---- minimap: an oval track with a dot for how far round the lap you are (not the exact shape) ----
+    // ---- minimap: the real track layout, worked out from each segment's curve, with a dot for where you are ----
     var miniCanvas = Dom.get('minimap'), miniCtx = miniCanvas.getContext('2d');
-    var miniBase = null, miniLastPct = -1;
-    var MINI = { cx: 85, cy: 55, rx: 66, ry: 36 };
+    var miniBase = null, miniLastIdx = -1, miniPts = [];
 
     function buildMiniMap() {
-      miniBase = document.createElement('canvas');                       // draw the oval once, copy it every frame
-      miniBase.width = miniCanvas.width; miniBase.height = miniCanvas.height;
+      var n = segments.length, i, h = -Math.PI / 2, x = 0, y = 0, sum = 0, raw = [];   // start heading up the map
+      for (i = 0; i < n; i++) sum += Math.abs(segments[i].curve);
+      var mk = parseFloat((/[?&]mk=([\d.]+)/.exec(location.search) || [])[1]) || 1;
+      var k = (sum > 0 ? 4 * Math.PI / sum : 0.01) * mk;             // one number: how many degrees of turn per unit of curve
+      for (i = 0; i < n; i++) {                                       // drive the lap from above: each segment turns by its curve, nothing else added
+        raw.push({ x: x, y: y });
+        h += segments[i].curve * k; x += Math.cos(h); y += Math.sin(h);   // right bends turn right on the map, left bends turn left
+      }
+      var minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
+      for (i = 0; i < n; i++) { minX = Math.min(minX, raw[i].x); maxX = Math.max(maxX, raw[i].x); minY = Math.min(minY, raw[i].y); maxY = Math.max(maxY, raw[i].y); }
+      var pad = 14, w = miniCanvas.width, ht = miniCanvas.height;
+      var sc = Math.min((w - 2 * pad) / ((maxX - minX) || 1), (ht - 2 * pad) / ((maxY - minY) || 1));
+      var ox = (w - (maxX - minX) * sc) / 2 - minX * sc, oy = (ht - (maxY - minY) * sc) / 2 - minY * sc;
+      miniPts = raw.map(function(p) { return { x: p.x * sc + ox, y: p.y * sc + oy }; });
+
+      miniBase = document.createElement('canvas');                    // draw the track once, copy it every frame
+      miniBase.width = w; miniBase.height = ht;
       var b = miniBase.getContext('2d');
-      b.beginPath(); b.ellipse(MINI.cx, MINI.cy, MINI.rx, MINI.ry, 0, 0, 2*Math.PI);
-      b.lineWidth = 12; b.strokeStyle = 'rgba(190,190,190,0.75)'; b.stroke();       // road
-      b.lineWidth = 2;  b.strokeStyle = 'rgba(255,255,255,0.9)';  b.setLineDash([6, 6]); b.stroke(); b.setLineDash([]);   // centre line
-      b.fillStyle = '#2ecc40'; b.fillRect(MINI.cx - 2, MINI.cy + MINI.ry - 8, 4, 16);   // start / finish line (bottom)
-      miniLastPct = -1;
+      function trace() { b.beginPath(); miniPts.forEach(function(p, j) { if (j) b.lineTo(p.x, p.y); else b.moveTo(p.x, p.y); }); }
+      b.lineJoin = 'round'; b.lineCap = 'round';
+      var e = miniPts[n - 1], s0 = miniPts[0];
+      b.beginPath(); b.moveTo(e.x, e.y); b.lineTo(s0.x, s0.y);        // the lap wraps round from the finish back to the start
+      b.lineWidth = 1.5; b.strokeStyle = 'rgba(255,255,255,0.35)'; b.setLineDash([3, 4]); b.stroke(); b.setLineDash([]);
+      trace(); b.lineWidth = 7; b.strokeStyle = 'rgba(190,190,190,0.8)'; b.stroke();                                  // road
+      trace(); b.lineWidth = 1.5; b.strokeStyle = 'rgba(255,255,255,0.9)'; b.setLineDash([5, 5]); b.stroke(); b.setLineDash([]);   // centre line
+      function line(p, q, col) { var a = Math.atan2(q.y - p.y, q.x - p.x) + Math.PI / 2; b.beginPath(); b.moveTo(p.x - Math.cos(a) * 7, p.y - Math.sin(a) * 7); b.lineTo(p.x + Math.cos(a) * 7, p.y + Math.sin(a) * 7); b.lineWidth = 3; b.strokeStyle = col; b.stroke(); }
+      line(s0, miniPts[Math.min(3, n - 1)], '#2ecc40');                                                              // start line
+      line(e, miniPts[n - 4], '#ffffff');                                                                             // finish line
+      miniLastIdx = -1;
       placeMiniMap();
     }
 
@@ -438,19 +459,26 @@
     window.addEventListener('resize', placeMiniMap);
 
     function drawMiniMap(index) {
-      if (!miniBase) return;
-      var lap = index / segments.length, pct = Math.floor(lap * 400);   // redraw only when the dot moves a little
-      if (pct === miniLastPct) return;
-      miniLastPct = pct;
-      var angle = Math.PI / 2 - 2 * Math.PI * lap;                       // start at the bottom, go round to the right
+      if (!miniBase || index === miniLastIdx) return;
+      miniLastIdx = index;
+      var p = miniPts[index % miniPts.length];
       miniCtx.clearRect(0, 0, miniCanvas.width, miniCanvas.height);
       miniCtx.drawImage(miniBase, 0, 0);
-      miniCtx.beginPath(); miniCtx.arc(MINI.cx + MINI.rx * Math.cos(angle), MINI.cy + MINI.ry * Math.sin(angle), 6, 0, 2*Math.PI);
+      miniCtx.beginPath(); miniCtx.arc(p.x, p.y, 5.5, 0, 2*Math.PI);
       miniCtx.fillStyle = '#ff3b30'; miniCtx.fill();
       miniCtx.lineWidth = 2; miniCtx.strokeStyle = '#fff'; miniCtx.stroke();
     }
 
     var speedFill = Dom.get('speedFill'), brakeLight = Dom.get('brakeLight'), lastSpeedPct = -1, lastBraking = null;
+
+    // the car sprite only changes lean after the steering has held for a moment, so quick taps (and the autopilot's small corrections) don't flicker it
+    var steerNow = 0, steerPending = 0, steerSince = 0;
+    function visSteer() {
+      var want = keyLeft ? -1 : keyRight ? 1 : 0, t = performance.now();
+      if (want !== steerPending) { steerPending = want; steerSince = t; }
+      if (steerPending !== steerNow && t - steerSince > 90) steerNow = steerPending;
+      return steerNow;
+    }
 
     function updateHud(key, value) { // accessing DOM can be slow, so only do it if value has changed
       if (hud[key].value !== value) {
@@ -549,7 +577,7 @@
                         cameraDepth/playerZ,
                         width/2,
                         (height/2) - (cameraDepth/playerZ * Util.interpolate(playerSegment.p1.camera.y, playerSegment.p2.camera.y, playerPercent) * height/2),
-                        speed * (keyLeft ? -1 : keyRight ? 1 : 0),
+                        speed * visSteer(),
                         playerSegment.p2.world.y - playerSegment.p1.world.y);
         }
       }

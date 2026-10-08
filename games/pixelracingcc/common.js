@@ -312,7 +312,9 @@ var Render = {
 
   player: function(ctx, width, height, resolution, roadWidth, sprites, speedPercent, scale, destX, destY, steer, updown) {
 
-    var bounce = (1.5 * Math.random() * speedPercent * resolution) * Util.randomChoice([-1,1]);
+    // gentle, smooth suspension sway on the road; a quick rumble only when you are off the tarmac (was a random jump every frame)
+    var t = performance.now() / 1000, off = window.carOffRoad;
+    var bounce = (off ? 1.5 : 0.4) * speedPercent * resolution * Math.sin(t * (off ? 40 : 8));
     var sprite;
     if (steer < 0)
       sprite = (updown > 0) ? SPRITES.PLAYER_UPHILL_LEFT : SPRITES.PLAYER_LEFT;

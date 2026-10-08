@@ -10,10 +10,12 @@ body { background: var(--bg); font-family: var(--mono); }
 #racer { font: 500 13px/1.4 var(--mono); color: var(--text); }
 
 /* HUD: floating chips instead of a solid bar */
-#hud { background: linear-gradient(rgba(10,21,25,.75), rgba(10,21,25,0)); border: 0; padding: 10px 12px; font: 500 14px/1.2 var(--mono); display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; }
+#hud { background: linear-gradient(rgba(10,21,25,.75), rgba(10,21,25,0)); border: 0; padding: 10px 12px; font: 500 14px/1.2 var(--mono); display: flex; align-items: flex-start; gap: 8px; flex-wrap: nowrap; overflow: hidden; }
 #hud .hud { float: none !important; display: block; margin: 0; padding: 7px 12px; background: rgba(16,31,37,.82); backdrop-filter: blur(6px); border: 1px solid var(--line); border-radius: 999px; color: var(--dim); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
 #hud .value { color: var(--text); font: 700 16px var(--display); letter-spacing: 0; text-transform: none; }
-#hud #speed { order: 3; margin-left: auto; min-width: 140px; border-radius: 14px; }
+#hud #speed { order: 3; margin-left: auto; flex: none; width: 150px; border-radius: 14px; white-space: nowrap; font-variant-numeric: tabular-nums; }   /* fixed width: it must not grow and wrap as the digits change */
+#hud .hud { flex: none; white-space: nowrap; }
+#hud .value { font-variant-numeric: tabular-nums; display: inline-block; min-width: 3.2ch; }
 #hud #speedBar { height: 6px; margin-top: 6px; background: rgba(255,255,255,.12); }
 #hud #fast_lap_time { width: auto; margin: 0; order: 2; text-align: left; }
 #hud #current_lap_time { order: 1; }
@@ -49,3 +51,7 @@ body { background: var(--bg); font-family: var(--mono); }
 #infoModal h3 { margin: 12px 0 4px; font: 500 11px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
 #infoModal .links { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 12px; }
 #infoModal .fine { margin-top: 10px; font-size: 11px; opacity: .7; }
+
+/* narrow windows: drop the least useful chip instead of letting the HUD wrap and jump about */
+@media (max-width: 720px) { #hud #fast_lap_time { display: none; } }
+@media (max-width: 480px) { #hud { padding: 8px; gap: 6px; } #hud .hud { padding: 6px 9px; font-size: 10px; } #hud #speed { width: 120px; } #hud .value { font-size: 13px; } }
