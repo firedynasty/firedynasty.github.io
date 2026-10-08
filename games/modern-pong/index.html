@@ -83,6 +83,7 @@ canvas{display:block;width:100%;height:auto;aspect-ratio:8/5;touch-action:none}
         <button type="button" data-ball="normal" aria-pressed="true">Normal ball</button>
         <button type="button" data-ball="fast" aria-pressed="false">Fast ball</button>
       </div>
+      <button type="button" class="toggle" id="demoBtn" aria-pressed="false">Demo (T)</button>
       <button type="button" class="toggle" id="pauseBtn" disabled>Pause</button>
       <button type="button" class="toggle" id="soundBtn" aria-pressed="true">Sound on</button>
     </div>
@@ -216,9 +217,17 @@ canvas{display:block;width:100%;height:auto;aspect-ratio:8/5;touch-action:none}
     b.x = W / 2; b.y = H / 2; b.vx = 0; b.vy = 0;
     S.live = false; S.lastHitter = 0; trail.length = 0;
   }
+  var demo = false;   // T: the CPU plays both paddles
+  function toggleDemo(force) {
+    demo = typeof force === 'boolean' ? force : !demo;
+    $('demoBtn').setAttribute('aria-pressed', String(demo));
+    $('demoBtn').textContent = demo ? 'Demo on (T)' : 'Demo (T)';
+    setAI();
+    if (demo && (S.phase === 'attract' || S.phase === 'over')) startMatch();
+  }
   function setAI() {
-    L.aiOn = S.phase === 'attract';
-    R.aiOn = S.phase === 'attract' || S.mode === '1';
+    L.aiOn = S.phase === 'attract' || demo;
+    R.aiOn = S.phase === 'attract' || demo || S.mode === '1';
   }
   function saveBest() { try { localStorage.setItem('pong.best', String(S.best)); } catch (e) {} }
 
@@ -294,6 +303,7 @@ canvas{display:block;width:100%;height:auto;aspect-ratio:8/5;touch-action:none}
     burst(wx, 200, 70, wc, 420, 1.1);
     burst(wx, 300, 50, col.ball, 320, 1.0);
     sfxWin();
+    if (demo) setTimeout(function () { if (demo && S.phase === 'over') startMatch(); }, 2500);
   }
 
   function score(side) {
@@ -330,6 +340,8 @@ canvas{display:block;width:100%;height:auto;aspect-ratio:8/5;touch-action:none}
     var onButton = e.target && e.target.tagName === 'BUTTON';
     if (onButton && (k === ' ' || k === 'enter')) return;
     if (k === ' ' || k === 'arrowup' || k === 'arrowdown') e.preventDefault();
+    if (k === 't' && !e.repeat && !e.metaKey && !e.ctrlKey && !e.altKey) { toggleDemo(); return; }
+    if (demo && e.isTrusted && (k === 'w' || k === 's' || k === 'arrowup' || k === 'arrowdown')) toggleDemo(false);
     if (!e.repeat) {
       if (k === ' ' || k === 'p' || k === 'enter') toggleSpace();
       else if (k === 'escape') pause();
@@ -356,6 +368,7 @@ canvas{display:block;width:100%;height:auto;aspect-ratio:8/5;touch-action:none}
   });
 
   overlay.addEventListener('click', primary);
+  $('demoBtn').addEventListener('click', function (e) { toggleDemo(); e.currentTarget.blur(); });
   pauseBtn.addEventListener('click', function () {
     ensureAudio();
     if (S.phase === 'play') pause(); else resume();

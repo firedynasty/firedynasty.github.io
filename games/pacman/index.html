@@ -34,7 +34,7 @@
         <p><b>About this game</b> <span id="info-close">&times;</span></p>
         <p>Pac-Man in HTML5 canvas by Haole Zheng (passer-by.com). I got it from:</p>
         <p><a href="https://github.com/mumuy/pacman" target="_blank" rel="noopener">github.com/mumuy/pacman</a></p>
-        <p>Controls: arrow keys to move, Enter to start, Esc, Space or Enter to pause. Demo lets the computer play.</p>
+        <p>Controls: arrow keys to move, Enter to start, Esc, Space or Enter to pause. T or the Demo button lets the computer play.</p>
         <p><b>More games</b></p>
         <p><a href="https://firedynasty.github.io/games/pixelracingcc/" target="_blank" rel="noopener">Racing</a></p>
         <p><a href="https://firedynasty.github.io/games/tetris-in-browser/" target="_blank" rel="noopener">Tetris</a></p>
@@ -61,6 +61,7 @@
             document.getElementById('demo-banner').style.display = on ? 'block' : 'none';
         };
         document.getElementById('btn-demo').addEventListener('click', function (e) { e.currentTarget.blur(); window.pacmanDemo.toggle(); });
+        window.addEventListener('keydown', function (e) { if (e.isTrusted && (e.keyCode === 84) && !e.metaKey && !e.ctrlKey && !e.altKey) window.pacmanDemo.toggle(); });   // T toggles demo
         if (/[?&]demo=1/.test(location.search)) window.pacmanDemo.start();   // index.html?demo=1 starts in demo mode
         document.getElementById('info-close').addEventListener('click', toggleInfo);
         // the pause button sends the same Esc key the game already listens for

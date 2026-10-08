@@ -789,7 +789,9 @@ document.getElementById("btn-demo").addEventListener("click", (event) => {
 
 // a real key press (not one sent by the demo) hands control back to the player
 window.addEventListener("keydown", (event) => {
-    if (event.isTrusted && demo && event.key != "Escape" && event.key != "Enter") stopDemo();
+    if (event.isTrusted && (event.key == "t" || event.key == "T") && !event.metaKey && !event.ctrlKey && !event.altKey) {
+        if (demo) stopDemo(); else startDemo();   // T toggles demo
+    } else if (event.isTrusted && demo && event.key != "Escape" && event.key != "Enter") stopDemo();
 });
 
 if (/[?&]demo=1/.test(location.search)) startDemo();   // game.html?demo=1 starts in demo mode

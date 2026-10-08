@@ -53,6 +53,7 @@ h1 { margin: 0; font: 800 clamp(24px, 6vw, 34px)/1 var(--display); letter-spacin
   cursor: pointer;
 }
 .btn:hover { border-color: var(--dim); }
+.btn.on { border-color: var(--ai); color: var(--ai); }
 .btn:active { transform: translateY(1px); }
 .btn.primary { background: var(--p1); border-color: var(--p1); color: #0a1519; }
 .btn.primary:hover { filter: brightness(1.08); }
@@ -131,6 +132,7 @@ canvas { display: block; width: 100%; height: 100%; touch-action: none; }
       <p>Eat, grow, outlast the rest.</p>
     </div>
     <div class="tools">
+      <button class="btn" id="btn-demo" type="button">Demo<kbd>T</kbd></button>
       <button class="btn" id="btn-pause" type="button">Pause<kbd>P</kbd></button>
       <button class="btn" id="btn-sound" type="button">Sound on</button>
     </div>
@@ -341,6 +343,7 @@ const rgb = (a) => 'rgb(' + a[0] + ',' + a[1] + ',' + a[2] + ')';
 
 /* ---------- game state ---------- */
 let snakes = [], items = [], rocks = [], particles = [], pops = [];
+let demo = false;             // T: the AI plays your snake(s)
 let state = 'menu';            // menu | count | play | paused | ending | over
 let level = 1, eaten = 0, spawnT = 8, shake = 0, endT = 0, countT = 0, goT = 0, lastCount = 0;
 let clock = 0, gt = 0, roundOver = false, bestSaved = 0;
@@ -473,7 +476,7 @@ function onLevelUp() {
 }
 
 function step(s) {
-  if (s.ctrl === 'ai') aiThink(s);
+  if (s.ctrl === 'ai' || demo) aiThink(s);
   else if (s.queue.length) { const d = s.queue.shift(); if (d !== (s.dir + 2) % 4) s.dir = d; }
   const head = s.body[0], v = DIRS[s.dir];
   let nx = head.x + v[0], ny = head.y + v[1];
@@ -606,6 +609,12 @@ function updatePlay(dt) {
   if (roundOver) { roundOver = false; state = 'ending'; endT = 1.0; }
 }
 
+function toggleDemo() {
+  demo = !demo;
+  $('#btn-demo').classList.toggle('on', demo);
+  $('#btn-demo').firstChild.nodeValue = demo ? 'Demo on' : 'Demo';
+  if (demo && (state === 'menu' || state === 'over')) startGame();
+}
 function startGame() {
   audio();
   newRound();
@@ -677,7 +686,7 @@ function showOver() {
   if (cfg.mode === 'solo') {
     if (easy()) title = 'Nice try!';
     sub = 'Score ' + a.score + ' · Length ' + a.body.length + ' · Level ' + level;
-    rank = saveScore(a.score);
+    rank = demo ? -1 : saveScore(a.score);
   } else {
     let w = null;
     if (a.alive && !b.alive) w = a; else if (b.alive && !a.alive) w = b;
@@ -687,7 +696,7 @@ function showOver() {
       win = (cfg.mode === 'ai') ? w === a : true;
     } else title = 'Draw';
     sub = a.name + ' ' + a.score + ' · ' + b.name + ' ' + b.score + ' · Wins ' + wins.a + ' – ' + wins.b;
-    if (cfg.mode === 'ai') rank = saveScore(a.score);
+    if (cfg.mode === 'ai') rank = demo ? -1 : saveScore(a.score);
   }
   $('#over-title').textContent = title;
   $('#over-sub').textContent = sub;
@@ -696,6 +705,7 @@ function showOver() {
   if (rank === 0 || win) sfx('win');
   bestSaved = loadScores()[0] || bestSaved;
   showPanel('over'); $('#btn-again').focus();
+  if (demo) setTimeout(() => { if (demo && state === 'over') startGame(); }, 2500);
 }
 
 /* ---------- input ---------- */
@@ -709,6 +719,8 @@ window.addEventListener('keydown', (e) => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   const c = e.code;
   const onBtn = e.target && e.target.tagName === 'BUTTON';
+  if (c === 'KeyT') { toggleDemo(); return; }
+  if (demo && (c in KEYS_ARROWS || c in KEYS_WASD)) { demo = false; $('#btn-demo').classList.remove('on'); $('#btn-demo').firstChild.nodeValue = 'Demo'; }
   if (c in KEYS_ARROWS || c in KEYS_WASD) {
     if (c in KEYS_ARROWS && (state === 'play' || state === 'count')) e.preventDefault();
     if (cfg.mode === 'duo') {
@@ -760,6 +772,7 @@ $('#btn-restart').addEventListener('click', startGame);
 $('#btn-resume').addEventListener('click', resume);
 $('#btn-menu-a').addEventListener('click', showMenu);
 $('#btn-menu-b').addEventListener('click', showMenu);
+$('#btn-demo').addEventListener('click', (e) => { e.currentTarget.blur(); toggleDemo(); });
 $('#btn-pause').addEventListener('click', (e) => { e.currentTarget.blur(); if (state === 'play') pause(); else if (state === 'paused') resume(); });
 $('#btn-sound').addEventListener('click', (e) => { e.currentTarget.blur(); toggleMute(); });
 
