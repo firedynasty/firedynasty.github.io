@@ -53,6 +53,7 @@ kbd { margin-left:6px; padding:0 5px; font:inherit; font-size:10px; color:var(--
     <button id="bDemo" title="Autopilot tour (T)">Autopilot<kbd>T</kbd></button>
     <button id="bPause" title="Pause (Enter)">Pause<kbd>Enter</kbd></button>
     <button id="bReset2" title="Start over (R)">Reset<kbd>R</kbd></button>
+    <button id="bInfo" title="How to play (I)">Info<kbd>I</kbd></button>
     <button id="bLog" title="Discovery log (L)">Log<kbd>L</kbd></button>
     <button id="bSound" title="Sound (M)">Sound on</button>
     <a class="btn" href="../games.html">All games</a>
@@ -74,6 +75,17 @@ kbd { margin-left:6px; padding:0 5px; font:inherit; font-size:10px; color:var(--
   <p>Eight planets, the Moon, the Sun and Pluto are waiting. Distances here are squeezed together so the trip is possible. In real life, the Sun to Neptune is about 4.5 billion km.</p>
   <p><kbd>Space</kbd>, <kbd>&uarr;</kbd> or <kbd>W</kbd> thrust &middot; <kbd>&larr;</kbd> <kbd>&rarr;</kbd> or <kbd>A</kbd> <kbd>D</kbd> turn &middot; <kbd>Shift</kbd> boost &middot; <kbd>S</kbd> / <kbd>&darr;</kbd> brake &middot; <kbd>Enter</kbd> pause &middot; <kbd>T</kbd> autopilot &middot; <kbd>L</kbd> log &middot; <kbd>R</kbd> reset &middot; <kbd>M</kbd> sound. On touch, hold a finger where you want to go.</p>
   <button class="go" id="bStart">Launch<kbd>Enter</kbd></button>
+</div></div>
+
+<div class="overlay" id="oInfo"><div class="panel" style="text-align:left">
+  <h2 style="text-align:center">HOW TO PLAY</h2>
+  <p><b style="color:var(--text)">Goal.</b> Scan all 11 worlds: the Sun, 8 planets, the Moon and Pluto. Each scan unlocks real facts about that world.</p>
+  <p><b style="color:var(--text)">Scanning.</b> Fly close to a world and stay near it for a moment. A ring fills up around it, then a fact card appears and the world is ticked off in your log.</p>
+  <p><b style="color:var(--text)">Moves.</b> <kbd>Space</kbd>, <kbd>&uarr;</kbd> or <kbd>W</kbd> thrust &middot; <kbd>&larr;</kbd> <kbd>&rarr;</kbd> or <kbd>A</kbd> <kbd>D</kbd> turn &middot; <kbd>S</kbd> or <kbd>&darr;</kbd> brake &middot; <kbd>Shift</kbd> with thrust to boost. On touch, hold a finger where you want to go.</p>
+  <p><b style="color:var(--text)">Radar.</b> The circle at the bottom right shows the whole system. The white triangle is your ship and it points the way you are facing. The yellow dot in the middle is the Sun, and planets get a green ring once scanned. A blue arrow around your ship points to the next world to scan.</p>
+  <p><b style="color:var(--text)">Tips.</b> The planets keep orbiting, so you may need to chase them. There is no air in space, so you keep drifting until you brake. Worlds are solid, so steer around them. Distances are squeezed together here to make the trip short.</p>
+  <p><b style="color:var(--text)">Keys.</b> <kbd>Enter</kbd> pause &middot; <kbd>T</kbd> autopilot tour &middot; <kbd>L</kbd> log &middot; <kbd>R</kbd> reset &middot; <kbd>M</kbd> sound &middot; <kbd>I</kbd> this panel</p>
+  <div style="text-align:center"><button class="go" id="bInfoClose">Got it<kbd>I</kbd></button></div>
 </div></div>
 
 <div class="overlay" id="oPause"><div class="panel"><h2>PAUSED</h2><p>Press <kbd>Enter</kbd> to resume</p></div></div>
@@ -376,17 +388,22 @@ function drawShip(time) {
   ctx.restore();
 }
 function drawMap() {
-  var R = 64, cx = W - R - 14, cy = H - R - 14, s = R / 7900;
-  if (W < 600) return;
+  var R = 76, cx = W - R - 14, cy = H - R - 14, s = R / 7900;
+  if (W < 480) return;
   ctx.save(); ctx.translate(cx, cy);
-  ctx.fillStyle = 'rgba(14,24,34,.85)'; ctx.strokeStyle = '#223646'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(0, 0, R + 4, 0, 6.2832); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = 'rgba(14,24,34,.88)'; ctx.strokeStyle = '#223646'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(0, 0, R + 4, 0, 6.2832); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = 'rgba(120,170,200,.16)';
+  [0.25, 0.5, 0.75].forEach(function (f) { ctx.beginPath(); ctx.arc(0, 0, R * f, 0, 6.2832); ctx.stroke(); });
   BODIES.forEach(function (b) {
     if (b.id === 'moon') return;
-    ctx.fillStyle = b.c[1]; ctx.strokeStyle = found[b.id] ? '#c6f25a' : 'transparent';
-    ctx.beginPath(); ctx.arc(b.x * s, b.y * s, b.id === 'sun' ? 3.5 : 2, 0, 6.2832); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = b.c[1]; ctx.strokeStyle = found[b.id] ? '#c6f25a' : 'transparent'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(b.x * s, b.y * s, b.id === 'sun' ? 4 : 2.6, 0, 6.2832); ctx.fill(); ctx.stroke();
   });
-  ctx.fillStyle = '#fff'; ctx.fillRect(ship.x * s - 1.5, ship.y * s - 1.5, 3, 3);
+  // your ship: a white triangle pointing the way you face
+  ctx.translate(ship.x * s, ship.y * s); ctx.rotate(ship.a);
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(6, 0); ctx.lineTo(-4, -3.6); ctx.lineTo(-4, 3.6); ctx.closePath(); ctx.fill();
   ctx.restore();
+  ctx.fillStyle = 'rgba(134,160,171,.8)'; ctx.font = '9px DM Mono, monospace'; ctx.textAlign = 'center'; ctx.fillText('RADAR', cx, cy - R - 8);
 }
 
 /* ---------- state / UI ---------- */
@@ -397,6 +414,12 @@ function togglePause() {
   if (state === 'play') { state = 'paused'; show('oPause', true); }
   else if (state === 'paused') { state = 'play'; show('oPause', false); }
   syncButtons();
+}
+function toggleInfo(force) {
+  var on = force === undefined ? !$('oInfo').classList.contains('show') : force;
+  if (on && state === 'play') { state = 'paused'; $('oInfo')._paused = true; }
+  if (!on && $('oInfo')._paused && state === 'paused') { state = 'play'; $('oInfo')._paused = false; }
+  show('oInfo', on); syncButtons();
 }
 function toggleLog(force) {
   var on = force === undefined ? !$('oLog').classList.contains('show') : force;
@@ -410,6 +433,8 @@ $('bStart').onclick = start;
 $('bDemo').onclick = function () { toggleDemo(); this.blur(); };
 $('bPause').onclick = function () { togglePause(); this.blur(); };
 $('bReset2').onclick = function () { resetGame(); this.blur(); };
+$('bInfo').onclick = function () { toggleInfo(); this.blur(); };
+$('bInfoClose').onclick = function () { toggleInfo(false); };
 $('bLog').onclick = function () { toggleLog(); this.blur(); };
 $('bSound').onclick = function () { toggleSound(); this.blur(); };
 $('bLogClose').onclick = function () { toggleLog(false); };
@@ -421,9 +446,10 @@ $('oPause').onclick = togglePause;
 addEventListener('keydown', function (e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   var c = e.code;
-  if (c === 'Enter') { e.preventDefault(); if (state === 'start') start(); else if ($('oLog').classList.contains('show')) toggleLog(false); else if ($('oWin').classList.contains('show')) show('oWin', false); else togglePause(); return; }
-  if (c === 'KeyP' || c === 'Escape') { if ($('oLog').classList.contains('show')) toggleLog(false); else togglePause(); return; }
+  if (c === 'Enter') { e.preventDefault(); if ($('oInfo').classList.contains('show')) toggleInfo(false); else if (state === 'start') start(); else if ($('oLog').classList.contains('show')) toggleLog(false); else if ($('oWin').classList.contains('show')) show('oWin', false); else togglePause(); return; }
+  if (c === 'KeyP' || c === 'Escape') { if ($('oInfo').classList.contains('show')) toggleInfo(false); else if ($('oLog').classList.contains('show')) toggleLog(false); else togglePause(); return; }
   if (c === 'KeyM') { toggleSound(); return; }
+  if (c === 'KeyI') { toggleInfo(); return; }
   if (c === 'KeyL') { if (state !== 'start') toggleLog(); return; }
   if (c === 'KeyT') { toggleDemo(); return; }
   if (c === 'KeyR') { if (state !== 'start') resetGame(); return; }
