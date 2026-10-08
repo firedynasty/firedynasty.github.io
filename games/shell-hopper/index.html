@@ -97,7 +97,7 @@ body.demo #demoBanner { display:block; }
   <h2>How to play</h2>
   <ul>
     <li><b>&larr; &rarr;</b> or <b>A D</b> run. <b>Space</b>, <b>&uarr;</b> or <b>W</b> jump (hold for a higher jump).</li>
-    <li><b>/</b> throws a shell in an arc (X, J, Z and Shift work too). One shell per press, so holding the key doesn't auto-throw. It bounces off walls and knocks out enemies. Pip's own shells never hurt Pip.</li>
+    <li><b>F</b> or <b>/</b> throws a shell in an arc. One shell per press, so holding the key doesn't auto-throw. It bounces off walls and knocks out enemies. Pip's own shells never hurt Pip.</li>
     <li>Land on enemies to stomp them. Spiky ones can only be hit with shells.</li>
     <li>Hit <b>?</b> blocks from below for coins, <b>shell blocks</b> for ammo and <b>heart blocks</b> for health.</li>
     <li>Spikes hurt. Springs launch you. Falling into a gap costs a life.</li>
@@ -431,7 +431,7 @@ function throwShell() {
 function readInput() {
   var l = keys.ArrowLeft || keys.KeyA || touch.l, r = keys.ArrowRight || keys.KeyD || touch.r;
   var j = keys.Space || keys.ArrowUp || keys.KeyW || touch.j;
-  var t = keys.Slash || keys.KeyX || keys.KeyJ || keys.KeyZ || keys.ShiftLeft || keys.ShiftRight || touch.t;
+  var t = keys.KeyF || keys.Slash || keys.KeyX || keys.KeyJ || keys.KeyZ || keys.ShiftLeft || keys.ShiftRight || touch.t;
   if (demo) { var o = bot(); l = o.l; r = o.r; j = o.j; t = o.t; }
   var jp = !!j && !prevJ, tp = !!t && !prevT; prevJ = !!j; prevT = !!t;
   return { l: !!l, r: !!r, j: !!j, jp: jp, t: !!t, tp: tp };
@@ -801,7 +801,7 @@ function fit() {
 window.addEventListener('resize', fit);
 
 /* ---------- input ---------- */
-var GAMEKEYS = { ArrowLeft: 1, ArrowRight: 1, ArrowUp: 1, ArrowDown: 1, Space: 1, KeyA: 1, KeyD: 1, KeyW: 1, KeyX: 1, KeyJ: 1, KeyZ: 1, Slash: 1, ShiftLeft: 1, ShiftRight: 1 };
+var GAMEKEYS = { ArrowLeft: 1, ArrowRight: 1, ArrowUp: 1, ArrowDown: 1, Space: 1, KeyA: 1, KeyD: 1, KeyW: 1, KeyX: 1, KeyJ: 1, KeyZ: 1, KeyF: 1, Slash: 1, ShiftLeft: 1, ShiftRight: 1 };
 window.addEventListener('keydown', function (e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   var k = e.code;
