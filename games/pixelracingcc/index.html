@@ -4,7 +4,9 @@
 <head>
   <title>Pixel Racing</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Unbounded:wght@700;800&display=swap">
   <link href="common.css" rel="stylesheet" type="text/css" />
+  <link href="modern.css" rel="stylesheet" type="text/css" />
   <style>
   	.top-div { display: block; margin: 4px; padding: 2px; margin-left: 20px }
   	.top-div input { font-size: normal; width: 40px; text-align: center; border: 1px solid #eee;}
@@ -43,32 +45,35 @@
       <span id="last_lap_time"    class="hud">Last Lap: <span id="last_lap_time_value" class="value">0.0</span></span>
       <span id="fast_lap_time"    class="hud">Fastest Lap: <span id="fast_lap_time_value" class="value">0.0</span></span>
     </div>
-    <div id="modeControls" style="position:absolute; z-index:2; right:10px; top:70px; display:flex; gap:8px;">
-      <button id="demo" onclick="toggleDemo(); this.blur();" title="Let the computer drive (T)" style="font-size:1.4em;">&#129302; Demo</button>
-      <button id="pause" onclick="togglePause(); this.blur();" title="Pause (Esc or Enter)" style="font-size:1.4em;">&#10074;&#10074; Pause</button>
-      <button id="info" onclick="toggleInfo(); this.blur();" title="About this game" style="font-size:1.4em;">&#9432; Info</button>
-      <button id="daynight" onclick="manualToggle(); this.blur();" style="font-size:1.4em;"></button>
+    <div id="modeControls">
+      <button id="demo" onclick="toggleDemo(); this.blur();" title="Let the computer drive (T)">Demo<kbd>T</kbd></button>
+      <button id="pause" onclick="togglePause(); this.blur();" title="Pause (Esc or Enter)">&#10074;&#10074; Pause<kbd>Enter</kbd></button>
+      <button id="info" onclick="toggleInfo(); this.blur();" title="About this game">Info</button>
+      <button id="daynight"></button>
     </div>
-    <div id="infoModal" style="display:none; position:absolute; z-index:3; right:10px; top:120px; width:280px; padding:12px; background:rgba(20,20,30,0.92); color:#fff; border:2px solid #fff; border-radius:8px; font-size:0.9em; line-height:1.4;">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <b>About Pixel Racing</b>
-        <span onclick="toggleInfo()" style="cursor:pointer; font-size:1.3em;">&times;</span>
+    <div id="infoModal" style="display:none;">
+      <div class="head"><span>Pixel Racing</span><span class="close" onclick="toggleInfo()">&times;</span></div>
+      <p>A retro pseudo-3D racer based on Jake Gordon's JavaScript Racer.</p>
+      <p>The gas is automatic. Steer with the left and right arrows (or A and D), or touch the left or right side of the screen. Hold Up or W to coast. Hold Down, S or Space, or touch and hold the lap map, to brake. Enter or Esc pauses, T lets the computer drive.</p>
+      <h3>Credits</h3>
+      <div><a href="https://github.com/yauhahu/pixelracingcc" target="_blank" rel="noopener">Source on GitHub</a></div>
+      <div><a href="https://jakesgordon.com/writing/javascript-racer/" target="_blank" rel="noopener">Original by Jake Gordon</a></div>
+      <h3>More games</h3>
+      <div class="links">
+        <a href="../games.html">All games</a>
+        <a href="../snake/index.html">Snake</a>
+        <a href="../modern-pong/index.html">Pong</a>
+        <a href="../tetris-in-browser/index.html">Tetris</a>
+        <a href="../pacman/index.html">Pac-Man</a>
+        <a href="../javascript-boulderdash/index.html">Boulderdash</a>
+        <a href="../javascript-delta/index.html">Delta</a>
+        <a href="../javascript-gauntlet/index.html">Gauntlet</a>
       </div>
-      <p style="margin:6px 0;">A retro pseudo-3D racing game, based on Jake Gordon's JavaScript Racer.</p>
-      <p style="margin:6px 0;">The gas is automatic. Steer with the left and right arrows (or A and D), or touch the left or right side of the screen. Hold Up or W to lift off the gas (coast). Hold Down, S or Space, or touch and hold the lap map (top-left), to brake.</p>
-      <div><a href="https://github.com/yauhahu/pixelracingcc" target="_blank" rel="noopener" style="color:#7cc4ff;">Source code on GitHub</a></div>
-      <div><a href="https://jakesgordon.com/writing/javascript-racer/" target="_blank" rel="noopener" style="color:#7cc4ff;">Original JavaScript Racer by Jake Gordon</a></div>
-      <div style="margin-top:8px;"><b>More games</b></div>
-      <div><a href="https://firedynasty.github.io/games/pixelracingcc/" target="_blank" rel="noopener" style="color:#7cc4ff;">Racing</a></div>
-      <div><a href="https://firedynasty.github.io/games/tetris-in-browser/" target="_blank" rel="noopener" style="color:#7cc4ff;">Tetris</a></div>
-      <div><a href="https://firedynasty.github.io/games/pacman/" target="_blank" rel="noopener" style="color:#7cc4ff;">Pac-Man</a></div>
-      <div><a href="https://firedynasty.github.io/games/javascript-boulderdash/" target="_blank" rel="noopener" style="color:#7cc4ff;">Boulderdash</a></div>
-      <div><a href="https://firedynasty.github.io/games/javascript-delta/" target="_blank" rel="noopener" style="color:#7cc4ff;">Delta</a></div>
-      <div style="font-size:0.8em; opacity:0.7; margin-top:8px;">Billboard photos from Unsplash. MIT license.</div>
+      <div class="fine">Billboard photos from Unsplash. MIT license.</div>
     </div>
-    <div id="pauseOverlay" onclick="togglePause()" style="display:none; position:absolute; z-index:2; left:0; right:0; top:40%; text-align:center; font-size:4em; color:#fff; text-shadow:0 0 8px #000; cursor:pointer;">PAUSED<div style="font-size:0.3em;">press Esc or Enter to resume</div></div>
-    <div id="demoBanner" style="display:none; position:absolute; z-index:2; left:0; right:0; bottom:8%; text-align:center; font-size:1.6em; color:#fff; text-shadow:0 0 6px #000; pointer-events:none;">DEMO &mdash; press an arrow key or T to take over</div>
-    <canvas id="minimap" width="170" height="110" title="Hold to brake" style="position:absolute; z-index:2; cursor:pointer; touch-action:none; user-select:none; -webkit-user-select:none; left:8px; top:58px; width:170px; height:110px; background:rgba(0,0,0,0.45); border:2px solid rgba(255,255,255,0.8); border-radius:10px;"></canvas>
+    <div id="pauseOverlay" onclick="togglePause()" style="display:none;"><div class="card"><h2>PAUSED</h2><p>Press <kbd>Enter</kbd> or <kbd>Esc</kbd> to resume</p></div></div>
+    <div id="demoBanner" style="display:none;"><b>DEMO</b> &nbsp; press an arrow key or <kbd>T</kbd> to take over</div>
+    <canvas id="minimap" width="170" height="110" title="Hold to brake" style="position:absolute; z-index:2; cursor:pointer; touch-action:none; user-select:none; -webkit-user-select:none; left:8px; top:58px; width:170px; height:110px;"></canvas>
     <canvas id="canvas">
       Sorry, cannot run because your browser does not support &lt;canvas&gt; element
     </canvas></div>
@@ -135,7 +140,7 @@
 	  (function() {
 	  	var btn = Dom.get('minimap');
 	  	var press   = function(e) { e.preventDefault(); e.stopPropagation(); touchBrake = true;  btn.style.background = 'rgba(255,0,0,0.5)'; btn.style.borderColor = '#ff4d4d'; if (btn.setPointerCapture) { try { btn.setPointerCapture(e.pointerId); } catch(err) {} } };
-	  	var release = function(e) { e.preventDefault(); e.stopPropagation(); touchBrake = false; btn.style.background = 'rgba(0,0,0,0.45)'; btn.style.borderColor = 'rgba(255,255,255,0.8)'; if (!keyFaster) keySlower = false; };
+	  	var release = function(e) { e.preventDefault(); e.stopPropagation(); touchBrake = false; btn.style.background = ''; btn.style.borderColor = ''; if (!keyFaster) keySlower = false; };
 	  	btn.addEventListener('pointerdown', press, false);
 	  	btn.addEventListener('pointerup', release, false);
 	  	btn.addEventListener('pointercancel', release, false);
@@ -849,7 +854,7 @@
     function togglePause() {
       paused = !paused;
       Dom.get('pauseOverlay').style.display = paused ? 'block' : 'none';
-      Dom.get('pause').innerHTML = paused ? '&#9654; Resume' : '&#10074;&#10074; Pause';
+      Dom.get('pause').innerHTML = (paused ? '&#9654; Resume' : '&#10074;&#10074; Pause') + '<kbd>Enter</kbd>';
     }
     function toggleInfo() {
       var m = Dom.get('infoModal');

@@ -1,0 +1,51 @@
+/* Modern skin for Pixel Racing: same palette and type as Snake and Modern Pong. Loaded after common.css. */
+:root {
+  --bg: #0a1519; --panel: #101f25; --line: #22414b; --text: #e4efe9; --dim: #8aa7aa;
+  --accent: #c6f25a; --sky: #62c8ff; --gold: #ffc93c; --danger: #ff4466;
+  --display: 'Unbounded', system-ui, sans-serif;
+  --mono: 'DM Mono', ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+body { background: var(--bg); font-family: var(--mono); }
+#racer { font: 500 13px/1.4 var(--mono); color: var(--text); }
+
+/* HUD: floating chips instead of a solid bar */
+#hud { background: linear-gradient(rgba(10,21,25,.75), rgba(10,21,25,0)); border: 0; padding: 10px 12px; font: 500 14px/1.2 var(--mono); display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; }
+#hud .hud { float: none !important; display: block; margin: 0; padding: 7px 12px; background: rgba(16,31,37,.82); backdrop-filter: blur(6px); border: 1px solid var(--line); border-radius: 999px; color: var(--dim); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+#hud .value { color: var(--text); font: 700 16px var(--display); letter-spacing: 0; text-transform: none; }
+#hud #speed { order: 3; margin-left: auto; min-width: 140px; border-radius: 14px; }
+#hud #speedBar { height: 6px; margin-top: 6px; background: rgba(255,255,255,.12); }
+#hud #fast_lap_time { width: auto; margin: 0; order: 2; text-align: left; }
+#hud #current_lap_time { order: 1; }
+#hud .fastest { background: rgba(255,201,60,.28); border-color: var(--gold); }
+#hud #brakeLight { border-color: #000; }
+
+/* Control buttons */
+#modeControls { position: absolute; z-index: 2; right: 10px; top: 64px; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+#modeControls button { font: 500 12px var(--mono); letter-spacing: .06em; padding: 8px 14px; color: var(--text); background: rgba(16,31,37,.88); border: 1px solid var(--line); border-radius: 999px; cursor: pointer; backdrop-filter: blur(6px); transition: border-color .15s, color .15s; }
+#modeControls button:hover, #modeControls button:focus-visible { border-color: var(--accent); color: var(--accent); outline: none; }
+#modeControls button kbd { margin-left: 6px; padding: 0 5px; font: inherit; font-size: 10px; color: var(--dim); border: 1px solid var(--line); border-radius: 4px; }
+
+/* Minimap */
+#minimap { background: rgba(16,31,37,.78) !important; border: 1px solid var(--line) !important; border-radius: 14px !important; }
+
+/* Paused: dim the road and show a card */
+#pauseOverlay { position: absolute; z-index: 2; inset: 0; background: rgba(7,15,18,.7); backdrop-filter: blur(4px); cursor: pointer; }
+#pauseOverlay .card { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); text-align: center; padding: 28px 40px; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+#pauseOverlay h2 { margin: 0 0 8px; font: 800 28px var(--display); letter-spacing: .08em; color: var(--accent); }
+#pauseOverlay p { margin: 0; color: var(--dim); font-size: 13px; }
+#pauseOverlay kbd, #demoBanner kbd { padding: 1px 6px; border: 1px solid var(--line); border-radius: 4px; color: var(--text); }
+
+#demoBanner { position: absolute; z-index: 2; left: 50%; bottom: 7%; transform: translateX(-50%); padding: 9px 18px; background: rgba(16,31,37,.88); border: 1px solid #c58bff; border-radius: 999px; color: var(--text); font-size: 13px; white-space: nowrap; pointer-events: none; }
+#demoBanner b { color: #c58bff; font-family: var(--display); letter-spacing: .1em; }
+
+/* Info card */
+#infoModal { position: absolute; z-index: 3; right: 10px; top: 112px; width: min(320px, calc(100% - 20px)); padding: 16px 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,.5); font-size: 12.5px; line-height: 1.55; color: var(--text); }
+#infoModal .head { display: flex; justify-content: space-between; align-items: center; font: 700 14px var(--display); color: var(--accent); }
+#infoModal .close { cursor: pointer; font-size: 22px; line-height: 1; color: var(--dim); }
+#infoModal p { margin: 8px 0; color: var(--dim); }
+#infoModal a { color: var(--sky); text-decoration: none; }
+#infoModal a:hover { text-decoration: underline; }
+#infoModal h3 { margin: 12px 0 4px; font: 500 11px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+#infoModal .links { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 12px; }
+#infoModal .fine { margin-top: 10px; font-size: 11px; opacity: .7; }
