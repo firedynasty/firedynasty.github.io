@@ -81,7 +81,7 @@ body.demo #demoBanner { display:block; }
 <div class="overlay show" id="o_start"><div class="panel">
   <h1>SHELL HOPPER</h1>
   <p>Pip the penguin has ten levels to cross. Stomp the enemies, collect coins, and throw turtle shells like grenades.</p>
-  <p>Stomping a turtle gives you a shell. A thrown shell bounces along the ground and is used up when it hits an enemy.</p>
+  <p>Stomping a turtle gives you a shell. A thrown shell flies a set distance without slowing down and is used up when it hits an enemy.</p>
   <div class="row">
     <button class="go" id="bStart">Play<kbd>Enter</kbd></button>
     <button class="go" id="bStartInfo">How to play<kbd>I</kbd></button>
@@ -98,7 +98,7 @@ body.demo #demoBanner { display:block; }
   <h2>How to play</h2>
   <ul>
     <li><b>&larr; &rarr;</b> or <b>A D</b> run. <b>Space</b>, <b>&uarr;</b> or <b>W</b> jump (hold for a higher jump). Press jump again in mid-air for a smaller second jump.</li>
-    <li><b>F</b> or <b>/</b> throws a shell in an arc. One shell per press, so holding the key doesn't auto-throw. It bounces off walls and disappears after it hits an enemy. Careful: a shell that bounces back at Pip hurts too, so jump it.</li>
+    <li><b>F</b> or <b>/</b> throws a shell in an arc. One shell per press, so holding the key doesn't auto-throw. It keeps its speed, bounces off walls, and disappears after it hits an enemy or flies about 6 tiles. Careful: a shell that bounces back at Pip hurts too, so jump it.</li>
     <li>Land on enemies to stomp them. Spiky ones can only be hit with shells.</li>
     <li>Hit <b>?</b> blocks from below for coins, <b>shell blocks</b> for ammo and <b>heart blocks</b> for health.</li>
     <li>Spikes hurt. Springs launch you. Falling into a gap costs a life.</li>
@@ -139,7 +139,7 @@ body.demo #demoBanner { display:block; }
 (function () {
 'use strict';
 var TS = 32, ROWS = 14, VW = 800, VH = 448, GR = 11;
-var STEP = 1 / 120, GRAV = 1800, MAXV = 220, JUMP = 640, JUMP2 = 520;
+var STEP = 1 / 120, GRAV = 1800, MAXV = 220, JUMP = 640, JUMP2 = 520, SHELL_RANGE = 190;
 var cv = document.getElementById('c'), ctx = cv.getContext('2d');
 cv.width = VW; cv.height = VH;
 function $(id) { return document.getElementById(id); }
@@ -219,7 +219,7 @@ var LEVELS = [
     b.gap(36, 3); b.arc(35, 8, 5); b.en('bat', [44], 8); b.hill(48, 3); b.en('spiky', [58]);
     b.plat(62, 8, 5); b.coins(62, 7, 5); b.en('turtle', [66]); b.gap(72, 4); b.arc(71, 8, 6);
     b.item(78, 9, 'S'); b.en('walker', [82, 84, 86]); b.spikes(90, 2); b.arc(89, 8, 5);
-    b.wall(98, 3); b.en('spiky', [102]); b.en('bat', [108, 114], 8); b.gap(110, 3);
+    b.item(93, 9, 'S'); b.item(95, 9, 'S'); b.item(96, 9, 'H'); b.wall(98, 3); b.en('spiky', [102]); b.en('bat', [108, 114], 8); b.gap(110, 3);
     b.row(116, 8, '$h$'); b.en('turtle', [121, 123]); b.gap(132, 3); b.hill(138, 2); b.en('spiky', [146]);
     b.flag(154); return b; } },
   { n: 'Lava Ruins', f: function () { var b = new B(160, 'lava');
@@ -425,7 +425,8 @@ function stomp(e) {
 function throwShell() {
   if (ammo <= 0 || P.cd > 0 || P.dead) return;
   ammo--; P.cd = 0.28; SFX.throw();
-  SH.push({ x: P.x + 3 + P.face * 8, y: P.y + 6, w: 16, h: 14, vx: P.face * 220 + P.vx * 0.2, vy: -300, friendly: true, bounces: 5, life: 6, spin: 0, kills: 0 });
+  var v0 = 220 + Math.abs(P.vx) * 0.2;
+  SH.push({ x: P.x + 3 + P.face * 8, y: P.y + 6, w: 16, h: 14, v0: v0, vx: P.face * v0, vy: -300, friendly: true, bounces: 5, life: 6, spin: 0, kills: 0 });
 }
 
 /* ---------- update ---------- */
@@ -509,7 +510,7 @@ function updateBoss(e, dt) {
   e.vy += GRAV * dt;
   if (e.hopT <= 0 && e.ground) { e.vy = -540; e.hopT = 2.6 + Math.random() * 1.5; }
   moveBody(e, dt);
-  if (e.ft <= 0) { e.ft = e.rate; SH.push({ x: e.x + (e.face > 0 ? e.w : -16), y: e.y + e.h - 20, w: 16, h: 14, vx: e.face * 230, vy: 0, friendly: false, bounces: 2, life: 4, spin: 0, kills: 0 }); SFX.throw(); }
+  if (e.ft <= 0) { e.ft = e.rate; SH.push({ x: e.x + (e.face > 0 ? e.w : -16), y: e.y + e.h - 20, w: 16, h: 14, v0: 230, vx: e.face * 230, vy: 0, friendly: false, bounces: 2, life: 4, spin: 0, kills: 0 }); SFX.throw(); }
 }
 function updateShell(s, dt) {
   s.vy += GRAV * dt; if (s.vy > 900) s.vy = 900;
@@ -517,7 +518,9 @@ function updateShell(s, dt) {
   moveBody(s, dt);
   if (s.hitWall) { s.vx = -s.vx; s.bounces--; SFX.bounce(); }
   if (s.impact > 220) { s.vy = -s.impact * 0.45; SFX.bounce(); }
-  if (s.ground && Math.abs(s.vx) < 120) s.vx = (s.vx >= 0 ? 1 : -1) * 120;
+  if (s.ground && Math.abs(s.vx) < s.v0) s.vx = (s.vx >= 0 ? 1 : -1) * s.v0;
+  s.dist = (s.dist || 0) + Math.abs(s.vx) * dt;
+  if (s.friendly && s.dist > SHELL_RANGE) { s.gone = true; burst(s.x + 8, s.y + 7, 8, '#9ff08a', 90); return; }
   if (s.bounces < 0 || s.life <= 0 || s.y > VH + 60) { s.gone = true; return; }
   if (s.friendly) {
     for (var i = 0; i < E.length; i++) {
@@ -593,7 +596,7 @@ function bot() {
     var dist = e.x - (p.x + p.w), dy = Math.abs(e.y + e.h - feet);
     if (dist < -20 || dist > 260 || dy > 70) continue;
     if (e.t === 'bat') { if (dist < 70 && dy < 50 && ammo > 0 && bt.tcd <= 0) { o.t = true; bt.tcd = 0.5; } continue; }
-    if (ammo > 0 && dist > 50 && dist < 170 && bt.tcd <= 0) { o.t = true; bt.tcd = 0.55; }
+    if (ammo > 0 && dist > 50 && dist < 130 && bt.tcd <= 0) { o.t = true; bt.tcd = 0.55; }
     else if (dist < (e.t === 'spiky' ? 74 : 56)) want = true;
   }
   for (i = 0; i < SH.length; i++) {
@@ -604,11 +607,11 @@ function bot() {
   if (boss) {
     var bdx = boss.x + boss.w / 2 - cx, bad = Math.abs(bdx), toward = bdx > 0;
     if (ammo > 0) {
-      if (bad > 300) { o.r = toward; o.l = !toward; }
-      else if (bad < 190) { o.r = !toward; o.l = toward; }
+      if (bad > 150) { o.r = toward; o.l = !toward; }
+      else if (bad < 100) { o.r = !toward; o.l = toward; }
       else if (p.face !== (toward ? 1 : -1)) { o.r = toward; o.l = !toward; }
       else { o.r = false; o.l = false; }
-      if (p.face === (toward ? 1 : -1) && bad < 300 && bt.tcd <= 0) { o.t = true; bt.tcd = 0.42; }
+      if (p.face === (toward ? 1 : -1) && bad < 165 && bt.tcd <= 0) { o.t = true; bt.tcd = 0.42; }
     } else { o.r = toward; o.l = !toward; if (bad < 110) want = true; }
   }
   if (p.ground && !want) bt.hold = 0;
@@ -836,6 +839,7 @@ window.addEventListener('keydown', function (e) {
 });
 window.addEventListener('keyup', function (e) { keys[e.code] = false; });
 window.addEventListener('blur', function () { keys = {}; });
+document.addEventListener('contextmenu', function (e) { e.preventDefault(); });
 function toggleMute() { muted = !muted; $('bSound').textContent = muted ? 'Sound off' : 'Sound on'; try { localStorage.setItem('shell-hopper-mute', muted ? '1' : '0'); } catch (e) {} }
 function bind(id, fn) { $(id).addEventListener('click', function (e) { e.currentTarget.blur(); fn(); }); }
 bind('bStart', startPlay); bind('bStartInfo', function () { openSide('info'); }); bind('bResume', hideOv); bind('bNext', nextLevel);
