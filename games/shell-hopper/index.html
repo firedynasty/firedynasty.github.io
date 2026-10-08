@@ -96,8 +96,8 @@ body.demo #demoBanner { display:block; }
 <div class="overlay" id="o_info"><div class="panel" style="text-align:left">
   <h2>How to play</h2>
   <ul>
-    <li><b>&larr; &rarr;</b> or <b>A D</b> run. <b>&uarr;</b> or <b>W</b> jump (hold for a higher jump).</li>
-    <li><b>Space</b> or <b>/</b> throws a shell in an arc (X, J, Z and Shift work too). One shell per press, so holding the key doesn't auto-throw. It bounces off walls and knocks out enemies. Pip's own shells never hurt Pip.</li>
+    <li><b>&larr; &rarr;</b> or <b>A D</b> run. <b>Space</b>, <b>&uarr;</b> or <b>W</b> jump (hold for a higher jump).</li>
+    <li><b>/</b> throws a shell in an arc (X, J, Z and Shift work too). One shell per press, so holding the key doesn't auto-throw. It bounces off walls and knocks out enemies. Pip's own shells never hurt Pip.</li>
     <li>Land on enemies to stomp them. Spiky ones can only be hit with shells.</li>
     <li>Hit <b>?</b> blocks from below for coins, <b>shell blocks</b> for ammo and <b>heart blocks</b> for health.</li>
     <li>Spikes hurt. Springs launch you. Falling into a gap costs a life.</li>
@@ -414,7 +414,7 @@ function hurtBoss(e, n) {
   return true;
 }
 function stomp(e) {
-  var held = playing() && (keys.ArrowUp || keys.KeyW || touch.j || (demo && bt.hold > 0));
+  var held = playing() && (keys.Space || keys.ArrowUp || keys.KeyW || touch.j || (demo && bt.hold > 0));
   P.vy = held ? -560 : -400; P.jumping = true; SFX.stomp();
   if (e.t === 'boss') { hurtBoss(e, 1); return; }
   burst(e.x + e.w / 2, e.y, 6, '#fff', 80); coinsScore(e);
@@ -430,8 +430,8 @@ function throwShell() {
 /* ---------- update ---------- */
 function readInput() {
   var l = keys.ArrowLeft || keys.KeyA || touch.l, r = keys.ArrowRight || keys.KeyD || touch.r;
-  var j = keys.ArrowUp || keys.KeyW || touch.j;
-  var t = keys.Space || keys.Slash || keys.KeyX || keys.KeyJ || keys.KeyZ || keys.ShiftLeft || keys.ShiftRight || touch.t;
+  var j = keys.Space || keys.ArrowUp || keys.KeyW || touch.j;
+  var t = keys.Slash || keys.KeyX || keys.KeyJ || keys.KeyZ || keys.ShiftLeft || keys.ShiftRight || touch.t;
   if (demo) { var o = bot(); l = o.l; r = o.r; j = o.j; t = o.t; }
   var jp = !!j && !prevJ, tp = !!t && !prevT; prevJ = !!j; prevT = !!t;
   return { l: !!l, r: !!r, j: !!j, jp: jp, t: !!t, tp: tp };
