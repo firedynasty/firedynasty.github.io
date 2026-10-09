@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Activity Island</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Unbounded:wght@700;800&display=swap">
+<style>
+:root { --bg:#070d18; --panel:#0e1a2a; --line:#24405a; --text:#e6f0f6; --dim:#8aa6b6; --accent:#62c8ff; --gold:#ffc93c; --ok:#c6f25a; --bad:#ff6b6b;
+  --display:'Unbounded',system-ui,sans-serif; --mono:'DM Mono',ui-monospace,Menlo,Consolas,monospace; color-scheme:dark; }
+* { box-sizing:border-box; }
+html,body { margin:0; height:100%; background:var(--bg); color:var(--text); font:400 13px/1.45 var(--mono); overflow:hidden; }
+body { display:flex; flex-direction:column; }
+.bar { display:flex; gap:6px; align-items:center; padding:6px 10px; flex:none; }
+.title { font:800 13px var(--display); letter-spacing:.06em; color:var(--accent); margin-right:6px; }
+.chip { padding:6px 12px; background:var(--panel); border:1px solid var(--line); border-radius:999px; color:var(--dim); font-size:11px; letter-spacing:.08em; text-transform:uppercase; white-space:nowrap; }
+.chip b { margin-left:4px; color:var(--text); font-weight:500; }
+.chip.live b { color:var(--ok); } .chip.off b { color:var(--bad); }
+.btns { margin-left:auto; display:flex; gap:5px; }
+button, a.btn { font:500 12px var(--mono); letter-spacing:.04em; padding:6px 11px; color:var(--text); background:var(--panel); border:1px solid var(--line); border-radius:999px; cursor:pointer; text-decoration:none; }
+button:hover, a.btn:hover, button:focus-visible { border-color:var(--accent); color:var(--accent); outline:none; }
+button.on { border-color:#c58bff; color:#c58bff; }
+#stage { position:relative; flex:1 1 0; min-height:0; overflow:hidden; }
+canvas { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); border:1px solid var(--line); border-radius:12px; background:#2f7fa8; }
+#feed { flex:none; height:128px; margin:0 10px 10px; padding:8px 12px; overflow:auto; background:var(--panel); border:1px solid var(--line); border-radius:12px; font-size:12px; }
+#feed div { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--dim); }
+#feed div:first-child { color:var(--text); }
+#feed .t { color:#5f7d8f; margin-right:8px; } #feed .who { color:var(--accent); margin-right:6px; }
+#feed .empty { color:var(--dim); }
+#chat { position:absolute; top:8px; right:10px; bottom:8px; width:min(340px,calc(100% - 20px)); display:none; flex-direction:column; background:rgba(14,26,42,.96); border:1px solid var(--line); border-radius:14px; backdrop-filter:blur(4px); z-index:3; }
+#chat.show { display:flex; }
+#chat header { display:flex; align-items:center; gap:8px; padding:10px 12px; border-bottom:1px solid var(--line); }
+#chat header b { font:800 13px var(--display); letter-spacing:.04em; }
+#chat header small { color:var(--dim); flex:1; }
+#msgs { flex:1; overflow:auto; padding:10px 12px; display:flex; flex-direction:column; gap:8px; }
+.m { padding:7px 10px; border-radius:12px; white-space:pre-wrap; word-wrap:break-word; max-width:92%; }
+.m.u { align-self:flex-end; background:#17324a; border:1px solid var(--line); }
+.m.a { align-self:flex-start; background:#10202f; border:1px solid var(--line); }
+.m.hint { color:var(--dim); background:none; border:none; padding:0; }
+#chat form { display:flex; gap:6px; padding:10px; border-top:1px solid var(--line); }
+#chat input { flex:1; min-width:0; font:400 13px var(--mono); padding:8px 12px; color:var(--text); background:#08121e; border:1px solid var(--line); border-radius:999px; }
+#chat input:focus { outline:none; border-color:var(--accent); }
+.chips2 { display:flex; gap:5px; padding:0 12px 8px; }
+.chips2 button { font-size:11px; padding:4px 9px; }
+@media (max-width:700px) { .chip.hide-s { display:none; } #feed { height:110px; } }
+</style>
+</head>
+<body>
+<div class="bar">
+  <span class="title">ACTIVITY ISLAND</span>
+  <span class="chip off" id="cConn">Server<b>offline</b></span>
+  <span class="chip hide-s">Islanders<b id="cCount">0</b></span>
+  <span class="chip hide-s off" id="cOll">Ollama<b>off</b></span>
+  <div class="btns">
+    <button id="bDemo">Demo</button>
+    <a class="btn" href="../games.html">All games</a>
+  </div>
+</div>
+<div id="stage"><canvas id="c" width="1920" height="1080"></canvas>
+  <div id="chat">
+    <header><b id="chName">Mochi</b><small id="chSub">your teacher while you wait</small><button id="chClose" title="Close">&times;</button></header>
+    <div id="msgs"></div>
+    <div class="chips2" id="chSug"></div>
+    <form id="chForm"><input id="chIn" autocomplete="off" placeholder="Ask about what's happening..." maxlength="500"><button>Ask</button></form>
+  </div>
+</div>
+<div id="feed"><div class="empty">Nothing yet. Start working in Claude Code, or press Demo.</div></div>
+
+<script>
+(function () {
+'use strict';
+var W = 960, H = 540;
+var cv = document.getElementById('c'), ctx = cv.getContext('2d');
+var stage = document.getElementById('stage');
+function fit() {
+  var s = Math.min(stage.clientWidth / W, stage.clientHeight / H);
+  cv.style.width = Math.floor(W * s) + 'px'; cv.style.height = Math.floor(H * s) + 'px';
+}
+window.addEventListener('resize', fit); fit();
+
+// ---------- world layout ----------
+var HUB = { x: 480, y: 292 };
+var PLACES = {
+  workshop: { x: 205, y: 205, label: 'WORKSHOP' },
+  library:  { x: 480, y: 168, label: 'LIBRARY' },
+  market:   { x: 745, y: 205, label: 'MARKET' },
+  ride:     { x: 775, y: 392, label: 'FERRIS WHEEL' },
+  plaza:    { x: 480, y: 292, label: '' }
+};
+var WHEEL = { x: 775, y: 322, r: 58 };
+var HOUSES = [[120, 300], [185, 385], [290, 432], [405, 446], [525, 446], [640, 432], [110, 225]];
+var COLORS = ['#ff6b6b', '#62c8ff', '#ffc93c', '#c6f25a', '#c58bff', '#ff9f5a', '#5ae6c2', '#ff7fc8'];
+var NAMES = ['Mochi', 'Poppy', 'Koji', 'Tsuki', 'Benny', 'Anko', 'Momo', 'Kero', 'Dango', 'Chani', 'Pip', 'Nook'];
+var SLOT = [[0, 0], [-22, 8], [22, 8], [-44, 16], [44, 16]];
+var IDLE_MS = 25000, SPEED = 78;
+
+// ---------- characters ----------
+var chars = {}, order = [], hashN = 0;
+function hash(s) { var h = 7; for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; }
+function getChar(id) {
+  if (chars[id]) return chars[id];
+  var idx = order.length, h = hash(id);
+  var name = NAMES[h % NAMES.length];
+  for (var i = 0; i < order.length; i++) if (chars[order[i]].name === name) { name = NAMES[(h + i + 1) % NAMES.length] + (idx > 11 ? idx : ''); }
+  var home = HOUSES[idx % HOUSES.length];
+  var c = { id: id, name: name, color: COLORS[idx % COLORS.length], home: home, idx: idx,
+    x: home[0], y: home[1] + 18, path: [], place: 'home', inside: true, alpha: 0, waiting: false,
+    bubble: '', bubbleUntil: 0, lastActive: Date.now(), gond: -1, walk: 0, face: 1, lastDetail: '' };
+  chars[id] = c; order.push(id);
+  document.getElementById('cCount').textContent = order.length;
+  return c;
+}
+function doorOf(c) { return { x: c.home[0], y: c.home[1] + 18 }; }
+function occupants(place, except) { var n = 0; for (var i = 0; i < order.length; i++) { var o = chars[order[i]]; if (o !== except && o.place === place) n++; } return n; }
+function spotFor(c, place) {
+  var p = PLACES[place], s = SLOT[occupants(place, c) % SLOT.length];
+  if (place === 'ride') return { x: p.x + s[0] * 0.6, y: p.y + s[1] * 0.4 };
+  return { x: p.x + s[0], y: p.y + 30 + s[1] };
+}
+function say(c, text, ms) { c.bubble = text; c.bubbleUntil = ms ? Date.now() + ms : 0; }
+function goTo(c, place, instant) {
+  if (place === c.place && !c.inside) return;
+  var wasRide = c.place === 'ride';
+  c.place = place;
+  var dest = place === 'home' ? doorOf(c) : spotFor(c, place);
+  if (wasRide && place !== 'ride') { c.gond = -1; }
+  if (c.inside && place !== 'home') { c.inside = false; var d = doorOf(c); c.x = d.x; c.y = d.y; }
+  if (instant) { c.x = dest.x; c.y = dest.y; c.path = []; c.alpha = place === 'home' ? 0 : 1; c.inside = place === 'home'; return; }
+  var pts = [];
+  var nearHub = Math.hypot(c.x - HUB.x, c.y - HUB.y) < 40;
+  if (!nearHub && place !== 'plaza') pts.push({ x: HUB.x, y: HUB.y });
+  pts.push(dest);
+  c.path = pts;
+}
+function goHome(c, instant) { c.waiting = false; goTo(c, 'home', instant); }
+
+function placeFor(tool) {
+  switch (tool) {
+    case 'Edit': case 'Write': case 'NotebookEdit': return 'workshop';
+    case 'Bash': return 'ride';
+    case 'Read': case 'Grep': case 'Glob': return 'library';
+    case 'WebSearch': case 'WebFetch': return 'market';
+    default: return 'plaza';
+  }
+}
+function line(ev) {
+  var d = ev.detail || '', t = ev.tool;
+  if (ev.event === 'UserPromptSubmit') return 'heading to work';
+  if (ev.event === 'Notification') return 'waiting on you' + (d ? ' (' + d + ')' : '');
+  if (ev.event === 'Stop' || ev.event === 'SubagentStop') return 'done, heading home';
+  if (t === 'Edit') return 'editing ' + (d || 'a file');
+  if (t === 'Write') return 'writing ' + (d || 'a file');
+  if (t === 'Read') return 'reading ' + (d || 'a file');
+  if (t === 'Bash') return 'running ' + (d || 'a command');
+  if (t === 'Grep' || t === 'Glob') return 'searching ' + (d || 'the code');
+  if (t === 'WebSearch') return 'searching the web' + (d ? ': ' + d : '');
+  if (t === 'WebFetch') return 'fetching ' + (d || 'a page');
+  return (t || ev.event) + (d ? ' ' + d : '');
+}
+var BUBBLE = { Edit: 'edit', Write: 'write', Read: 'read', Bash: 'run', Grep: 'search', Glob: 'search', WebSearch: 'web', WebFetch: 'web' };
+
+function handle(ev, instant) {
+  var id = ev.agent || ev.session || 'unknown';
+  var c = getChar(id);
+  c.lastActive = ev.ts || Date.now();
+  var stale = !instant ? false : (Date.now() - c.lastActive > IDLE_MS);
+  if (ev.event === 'UserPromptSubmit') {
+    c.waiting = false; say(c, 'heading to work', 3000); goTo(c, 'plaza', instant);
+  } else if (ev.event === 'Notification') {
+    c.waiting = true; say(c, '?', 0); if (c.inside) goTo(c, 'plaza', instant);
+  } else if (ev.event === 'Stop' || ev.event === 'SubagentStop') {
+    say(c, 'done!', 2500); goHome(c, instant);
+  } else {
+    c.waiting = false; say(c, BUBBLE[ev.tool] || '...', 2500); goTo(c, placeFor(ev.tool), instant);
+  }
+  if (stale && !c.inside) goHome(c, true);
+  addFeed(ev, c);
+}
+
+// ---------- feed ----------
+var feed = document.getElementById('feed'), feedCount = 0;
+function esc(s) { return String(s).replace(/[&<>]/g, function (m) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]; }); }
+function addFeed(ev, c) {
+  if (!feedCount) feed.innerHTML = '';
+  feedCount++;
+  var d = new Date(ev.ts || Date.now()), p = function (n) { return (n < 10 ? '0' : '') + n; };
+  var row = document.createElement('div');
+  row.innerHTML = '<span class="t">' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds()) + '</span><span class="who">' + esc(c.name) + '</span>' + esc(line(ev));
+  feed.insertBefore(row, feed.firstChild);
+  while (feed.children.length > 60) feed.removeChild(feed.lastChild);
+}
+
+// ---------- update ----------
+function wheelAngle(t) { return t * 0.35; }
+function gondolaPos(k, t) { var a = wheelAngle(t) + k * Math.PI / 4; return { x: WHEEL.x + Math.cos(a) * WHEEL.r, y: WHEEL.y + Math.sin(a) * WHEEL.r }; }
+var T = 0;
+function update(dt) {
+  T += dt;
+  var now = Date.now();
+  for (var i = 0; i < order.length; i++) {
+    var c = chars[order[i]];
+    if (c.bubble && c.bubbleUntil && now > c.bubbleUntil) c.bubble = '';
+    if (!c.waiting && c.place !== 'home' && now - c.lastActive > IDLE_MS) { say(c, 'zzz...', 0); goHome(c); }
+    if (c.path.length) {
+      var tp = c.path[0], dx = tp.x - c.x, dy = tp.y - c.y, d = Math.hypot(dx, dy), st = SPEED * dt;
+      if (d <= st) { c.x = tp.x; c.y = tp.y; c.path.shift(); }
+      else { c.x += dx / d * st; c.y += dy / d * st; c.walk += dt * 9; if (Math.abs(dx) > 1) c.face = dx > 0 ? 1 : -1; }
+      if (c.inside && c.path.length === 0) { }
+    } else if (c.place === 'home') {
+      if (!c.inside) { c.inside = true; if (!c.bubble) say(c, 'z', 0); }
+    }
+    // fade in/out at the door
+    var target = c.inside ? 0 : 1;
+    c.alpha += (target - c.alpha) * Math.min(1, dt * 6);
+    if (c.place === 'home' && c.inside && c.bubble !== 'z' && !c.bubbleUntil && c.bubble !== 'done!') c.bubble = 'z';
+    // ride: hop on a gondola once at the boarding spot
+    if (c.place === 'ride' && !c.path.length) {
+      if (c.gond < 0) c.gond = pickGondola(c);
+      var g = gondolaPos(c.gond, T);
+      c.x += (g.x - c.x) * Math.min(1, dt * 7); c.y += (g.y + 6 - c.y) * Math.min(1, dt * 7);
+    }
+  }
+}
+function pickGondola(c) {
+  var used = {};
+  for (var i = 0; i < order.length; i++) if (chars[order[i]].gond >= 0) used[chars[order[i]].gond] = 1;
+  var best = 0, bd = 1e9;
+  for (var k = 0; k < 8; k++) { if (used[k]) continue; var g = gondolaPos(k, T), d = Math.hypot(g.x - c.x, g.y - c.y); if (d < bd) { bd = d; best = k; } }
+  return best;
+}
+
+// ---------- drawing ----------
+function R(x, y, w, h, col) { ctx.fillStyle = col; ctx.fillRect(Math.round(x), Math.round(y), w, h); }
+function ellipse(x, y, rx, ry, col) { ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, 7); ctx.fill(); }
+function label(text, x, y, col) {
+  ctx.font = '500 10px DM Mono, monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  var w = ctx.measureText(text).width + 10;
+  ctx.fillStyle = 'rgba(7,13,24,.62)'; ctx.fillRect(Math.round(x - w / 2), Math.round(y - 8), Math.round(w), 16);
+  ctx.fillStyle = col || '#e6f0f6'; ctx.fillText(text, x, y + 0.5);
+}
+var TREES = [[60, 330], [95, 150], [330, 110], [640, 110], [880, 270], [870, 190], [330, 250], [650, 270], [420, 395], [560, 385], [300, 340]];
+function tree(x, y) { R(x - 2, y - 2, 4, 10, '#6b4a2b'); ellipse(x, y - 8, 11, 11, '#2f9a4a'); ellipse(x - 3, y - 11, 6, 6, '#46b560'); }
+
+function drawIsland() {
+  // sea
+  var g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#3c9bc9'); g.addColorStop(1, '#2a6f9e');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.lineWidth = 2;
+  for (var i = 0; i < 14; i++) {
+    var wx = (i * 137 + Math.sin(T * .6 + i) * 10) % W, wy = 22 + ((i * 53) % 90) + (i % 2 ? 420 : 0);
+    ctx.beginPath(); ctx.moveTo(wx, wy); ctx.quadraticCurveTo(wx + 12, wy - 5, wx + 24, wy); ctx.stroke();
+  }
+  // beach, grass
+  ellipse(480, 300, 452, 226, '#f0d9a0');
+  ellipse(480, 298, 436, 212, '#5fbf5a');
+  ellipse(480, 292, 410, 190, '#6fd067');
+  // paths from the plaza to each place
+  ctx.strokeStyle = '#d9b97a'; ctx.lineWidth = 12; ctx.lineCap = 'round';
+  var ks = ['workshop', 'library', 'market', 'ride'];
+  for (var k = 0; k < ks.length; k++) { var p = PLACES[ks[k]]; ctx.beginPath(); ctx.moveTo(HUB.x, HUB.y); ctx.lineTo(p.x, p.y + 30); ctx.stroke(); }
+  for (var h = 0; h < HOUSES.length; h++) { ctx.beginPath(); ctx.moveTo(HUB.x, HUB.y); ctx.lineTo(HOUSES[h][0], HOUSES[h][1] + 18); ctx.globalAlpha = .55; ctx.stroke(); ctx.globalAlpha = 1; }
+  // plaza + fountain
+  ellipse(HUB.x, HUB.y, 62, 30, '#c9c3b6'); ellipse(HUB.x, HUB.y, 54, 25, '#dad5c8');
+  ellipse(HUB.x, HUB.y + 2, 20, 9, '#7fd0f0'); R(HUB.x - 2, HUB.y - 16, 4, 16, '#bfe8f8');
+  var sp = (T * 2) % 3; ellipse(HUB.x, HUB.y - 16 - sp, 3, 3, '#bfe8f8');
+  // pond
+  ellipse(345, 296, 44, 18, '#7fd0f0'); ellipse(345, 296, 36, 13, '#5bb9de');
+}
+
+function drawWorkshop(busy) {
+  var p = PLACES.workshop, x = p.x, y = p.y;
+  R(x - 42, y - 34, 84, 56, '#9b6b3f'); R(x - 42, y - 34, 84, 6, '#b88454');
+  ctx.fillStyle = '#5a5f6b'; ctx.beginPath(); ctx.moveTo(x - 52, y - 32); ctx.lineTo(x, y - 66); ctx.lineTo(x + 52, y - 32); ctx.fill();
+  R(x + 22, y - 62, 10, 22, '#7a4a3a'); R(x - 9, y - 6, 18, 28, '#4b2f1c'); R(x - 34, y - 20, 16, 14, '#cfe9f5'); R(x + 18, y - 20, 16, 14, '#cfe9f5');
+  if (busy) { var s = (T * 3) % 1; ellipse(x + 27, y - 70 - s * 14, 4 + s * 3, 4 + s * 3, 'rgba(220,220,220,' + (0.8 - s * 0.7) + ')'); if (Math.sin(T * 22) > 0) R(x + 40, y + 6, 4, 4, '#ffc93c'); }
+  label(p.label, x, y + 34);
+}
+function drawLibrary() {
+  var p = PLACES.library, x = p.x, y = p.y;
+  R(x - 50, y - 30, 100, 52, '#d7d9e8'); R(x - 54, y - 36, 108, 8, '#aab0cc');
+  ctx.fillStyle = '#6a78b8'; ctx.beginPath(); ctx.moveTo(x - 58, y - 36); ctx.lineTo(x, y - 70); ctx.lineTo(x + 58, y - 36); ctx.fill();
+  for (var i = -2; i <= 2; i++) R(x + i * 20 - 3, y - 28, 6, 48, '#f1f2fa');
+  R(x - 9, y - 4, 18, 26, '#3a3f66'); R(x - 4, y - 56, 8, 8, '#ffd86b');
+  label(p.label, x, y + 34);
+}
+function drawMarket() {
+  var p = PLACES.market, x = p.x, y = p.y;
+  R(x - 36, y - 6, 72, 26, '#a8763e'); R(x - 36, y + 14, 72, 6, '#8a5c2d');
+  for (var i = 0; i < 6; i++) R(x - 40 + i * 14, y - 30, 14, 20, i % 2 ? '#ffffff' : '#e5534b');
+  R(x - 38, y - 12, 4, 30, '#6b4a2b'); R(x + 34, y - 12, 4, 30, '#6b4a2b');
+  ellipse(x - 18, y - 10, 5, 5, '#e5534b'); ellipse(x - 6, y - 10, 5, 5, '#ffc93c'); ellipse(x + 8, y - 10, 5, 5, '#9bd35a'); ellipse(x + 20, y - 10, 5, 5, '#ff9f5a');
+  label(p.label, x, y + 34);
+}
+function drawWheelBack() {
+  var cx = WHEEL.x, cy = WHEEL.y, r = WHEEL.r;
+  ctx.strokeStyle = '#7e8aa8'; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(cx - 34, cy + r + 36); ctx.lineTo(cx, cy); ctx.lineTo(cx + 34, cy + r + 36); ctx.stroke();
+  ctx.strokeStyle = '#c9d2ea'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.stroke(); ctx.beginPath(); ctx.arc(cx, cy, r * .55, 0, 7); ctx.stroke();
+  ctx.lineWidth = 2;
+  for (var k = 0; k < 8; k++) { var a = wheelAngle(T) + k * Math.PI / 4; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); ctx.stroke(); }
+  ellipse(cx, cy, 6, 6, '#ffc93c');
+  R(cx - 48, cy + r + 34, 96, 8, '#8a5c2d');
+}
+function drawWheelGondolas() {
+  var cols = ['#ff6b6b', '#62c8ff', '#ffc93c', '#c6f25a', '#c58bff', '#ff9f5a', '#5ae6c2', '#ff7fc8'];
+  for (var k = 0; k < 8; k++) { var g = gondolaPos(k, T); R(g.x - 8, g.y + 3, 16, 12, cols[k]); R(g.x - 8, g.y + 1, 16, 3, '#ffffff'); }
+  label(PLACES.ride.label, WHEEL.x, WHEEL.y + WHEEL.r + 56);
+}
+function drawHouse(i) {
+  var h = HOUSES[i], x = h[0], y = h[1], col = COLORS[i % COLORS.length];
+  var owner = null; for (var j = 0; j < order.length; j++) if (chars[order[j]].idx === i) owner = chars[order[j]];
+  R(x - 22, y - 14, 44, 32, '#f3e7c9'); R(x - 22, y + 14, 44, 4, '#d8c79c');
+  ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(x - 28, y - 12); ctx.lineTo(x, y - 36); ctx.lineTo(x + 28, y - 12); ctx.fill();
+  R(x - 6, y + 2, 12, 16, '#6b4a2b'); R(x - 18, y - 6, 9, 9, owner && owner.inside ? '#ffe9a0' : '#cfe9f5'); R(x + 9, y - 6, 9, 9, owner && owner.inside ? '#ffe9a0' : '#cfe9f5');
+  if (owner) label(owner.name, x, y + 30, '#ffffff');
+}
+function drawChar(c) {
+  var a = c.inside ? c.alpha : Math.max(c.alpha, .0);
+  if (a < .03) return;
+  ctx.globalAlpha = Math.min(1, a);
+  var bob = c.path.length ? Math.abs(Math.sin(c.walk)) * 2 : 0, x = Math.round(c.x), y = Math.round(c.y - bob);
+  ellipse(x, c.y + 3, 8, 3, 'rgba(0,0,0,.25)');
+  R(x - 5, y - 12, 10, 12, c.color);                 // body
+  R(x - 5, y - 2, 4, 3, '#33445a'); R(x + 1, y - 2, 4, 3, '#33445a'); // feet
+  R(x - 6, y - 21, 12, 10, '#ffd9b5');               // head
+  R(x - 6, y - 23, 12, 4, c.color);                  // hat
+  R(x + (c.face > 0 ? 1 : -4), y - 17, 2, 2, '#223');  // eye
+  ctx.globalAlpha = 1;
+  label(c.name, x, y - 32, c.color);
+  if (c.bubble) drawBubble(c, x, y - 48);
+}
+function drawBubble(c, x, y) {
+  var t = c.bubble;
+  ctx.font = '500 11px DM Mono, monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  var w = Math.max(22, ctx.measureText(t).width + 14);
+  ctx.fillStyle = '#fffdf3'; ctx.strokeStyle = '#2a3b4d'; ctx.lineWidth = 2;
+  ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x - w / 2, y - 10, w, 20, 8); else ctx.rect(x - w / 2, y - 10, w, 20); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x - 4, y + 10); ctx.lineTo(x, y + 16); ctx.lineTo(x + 4, y + 10); ctx.fillStyle = '#fffdf3'; ctx.fill();
+  ctx.fillStyle = t === '?' ? '#e5534b' : '#1c2a3a'; ctx.font = (t === '?' ? '700 13px' : '500 11px') + ' DM Mono, monospace'; ctx.fillText(t, x, y + 0.5);
+}
+function draw() {
+  ctx.setTransform(2, 0, 0, 2, 0, 0);
+  drawIsland();
+  for (var i = 0; i < TREES.length; i++) tree(TREES[i][0], TREES[i][1]);
+  var busy = false; for (var j = 0; j < order.length; j++) if (chars[order[j]].place === 'workshop' && !chars[order[j]].path.length) busy = true;
+  drawWorkshop(busy); drawLibrary(); drawMarket(); drawWheelBack();
+  for (var h = 0; h < HOUSES.length; h++) drawHouse(h);
+  drawWheelGondolas();
+  var list = order.map(function (id) { return chars[id]; }).sort(function (a, b) { return a.y - b.y; });
+  for (var k = 0; k < list.length; k++) drawChar(list[k]);
+  if (!order.length) label('waiting for activity... press Demo to preview', W / 2, H - 28, '#e6f0f6');
+}
+
+// ---------- loop ----------
+var last = performance.now();
+function frame(now) { var dt = Math.min(.1, (now - last) / 1000); last = now; update(dt); draw(); requestAnimationFrame(frame); }
+requestAnimationFrame(frame);
+
+// ---------- live connection ----------
+var cConn = document.getElementById('cConn'), demoOn = false, demoTimer = null, es = null;
+function setConn(ok) { cConn.className = 'chip ' + (ok ? 'live' : 'off'); cConn.querySelector('b').textContent = ok ? 'live' : 'offline'; }
+function connect() {
+  if (location.protocol === 'file:') return;
+  fetch('/recent').then(function (r) { return r.json(); }).then(function (evs) {
+    evs.forEach(function (ev) { handle(ev, true); });
+    // anyone idle in the replay goes home, others stay where the last event put them
+  }).catch(function () {}).then(function () {
+    es = new EventSource('/events');
+    es.onopen = function () { setConn(true); };
+    es.onerror = function () { setConn(false); };
+    es.onmessage = function (m) { try { handle(JSON.parse(m.data), false); } catch (e) { } };
+  });
+}
+connect();
+
+// ---------- demo ----------
+var SCRIPT = [
+  ['UserPromptSubmit'], ['PostToolUse', 'Read', 'index.html'], ['PostToolUse', 'Grep', 'handleClick'], ['PostToolUse', 'Edit', 'index.html'],
+  ['PostToolUse', 'Write', 'styles.css'], ['PostToolUse', 'Bash', 'npm test'], ['PostToolUse', 'Bash', 'npm run build'], ['PostToolUse', 'WebSearch', 'canvas sprite tips'],
+  ['Notification', '', 'needs permission'], ['PostToolUse', 'Edit', 'app.js'], ['Stop']
+];
+var demoStep = {};
+function demoTick() {
+  ['demo-a', 'demo-b', 'demo-c'].forEach(function (id, n) {
+    setTimeout(function () {
+      if (!demoOn) return;
+      var i = demoStep[id] = ((demoStep[id] == null ? n * 3 : demoStep[id]) + 1) % SCRIPT.length, s = SCRIPT[i];
+      handle({ ts: Date.now(), session: id, event: s[0], tool: s[1] || undefined, detail: s[2] || '' }, false);
+    }, n * 900);
+  });
+}
+document.getElementById('bDemo').addEventListener('click', function () {
+  demoOn = !demoOn; this.classList.toggle('on', demoOn); this.textContent = demoOn ? 'Stop demo' : 'Demo';
+  clearInterval(demoTimer);
+  if (demoOn) { demoTick(); demoTimer = setInterval(demoTick, 3600); }
+});
+
+// ---------- ask an islander (Ollama teacher) ----------
+var chatEl = document.getElementById('chat'), msgsEl = document.getElementById('msgs'), chIn = document.getElementById('chIn');
+var chatId = null, history = {}, busy = false;
+var SUGGEST = [['What?', 'What am I working on?'], ['Explain', 'Explain what is happening right now, like I\'m new to this.']]; // [button label, full question sent]
+function addMsg(cls, text) { var d = document.createElement('div'); d.className = 'm ' + cls; d.textContent = text; msgsEl.appendChild(d); msgsEl.scrollTop = msgsEl.scrollHeight; return d; }
+function openChat(c) {
+  if (chatId === c.id && chatEl.classList.contains('show')) { chIn.focus(); return; } // already open: don't wipe a reply that is streaming in
+  chatId = c.id; chatEl.classList.add('show');
+  document.getElementById('chName').textContent = c.name; document.getElementById('chName').style.color = c.color;
+  msgsEl.innerHTML = '';
+  var h = history[c.id] = history[c.id] || [];
+  if (!h.length) addMsg('hint', 'Hi, I\'m ' + c.name + '. Ask me about what\'s going on while you wait, and I\'ll explain it.');
+  h.forEach(function (m) { addMsg(m.role === 'user' ? 'u' : 'a', m.content); });
+  var sug = document.getElementById('chSug'); sug.innerHTML = '';
+  SUGGEST.forEach(function (q) { var b = document.createElement('button'); b.type = 'button'; b.textContent = q[0]; b.title = q[1]; b.onclick = function () { ask(q[1]); }; sug.appendChild(b); });
+  chIn.focus();
+}
+function ask(q) {
+  q = (q || '').trim(); if (!q || busy || !chatId) return;
+  var c = chars[chatId], h = history[chatId];
+  h.push({ role: 'user', content: q }); addMsg('u', q); chIn.value = '';
+  var bub = addMsg('a', '...'), got = '';
+  busy = true;
+  fetch('/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: c.id, name: c.name, messages: h }) })
+    .then(function (r) {
+      if (!r.ok) return r.text().then(function (t) { throw new Error(t || ('error ' + r.status)); });
+      var rd = r.body.getReader(), dec = new TextDecoder();
+      return (function pump() { return rd.read().then(function (x) { if (x.done) return; got += dec.decode(x.value, { stream: true }); bub.textContent = got; msgsEl.scrollTop = msgsEl.scrollHeight; return pump(); }); })();
+    })
+    .then(function () { h.push({ role: 'assistant', content: got || '(no answer)' }); })
+    .catch(function (e) { bub.textContent = 'Could not answer: ' + e.message; h.pop(); })
+    .then(function () { busy = false; });
+}
+document.getElementById('chForm').addEventListener('submit', function (e) { e.preventDefault(); ask(chIn.value); });
+document.getElementById('chClose').addEventListener('click', function () { chatEl.classList.remove('show'); chatId = null; });
+cv.addEventListener('click', function (e) {
+  var r = cv.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * W, y = (e.clientY - r.top) / r.height * H, best = null, bd = 28;
+  order.forEach(function (id) {
+    var c = chars[id], d = Math.hypot(c.x - x, c.y - 10 - y), dh = Math.hypot(c.home[0] - x, c.home[1] - y);
+    if (!c.inside && d < bd) { bd = d; best = c; }
+    if (dh < 28 && dh < bd) { bd = dh; best = c; }
+  });
+  if (best) openChat(best);
+});
+cv.addEventListener('mousemove', function (e) {
+  var r = cv.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * W, y = (e.clientY - r.top) / r.height * H, over = false;
+  order.forEach(function (id) { var c = chars[id]; if (Math.hypot(c.x - x, c.y - 10 - y) < 24 || Math.hypot(c.home[0] - x, c.home[1] - y) < 28) over = true; });
+  cv.style.cursor = over ? 'pointer' : 'default';
+});
+function checkOllama() {
+  if (location.protocol === 'file:') return;
+  fetch('/ollama').then(function (r) { return r.json(); }).then(function (j) {
+    var el = document.getElementById('cOll'); el.className = 'chip hide-s ' + (j.ok && j.haveModel ? 'live' : 'off');
+    el.querySelector('b').textContent = !j.ok ? 'off' : (j.haveModel ? j.model : j.model + ' missing');
+  }).catch(function () { });
+}
+checkOllama(); setInterval(checkOllama, 15000);
+window.__island = { handle: handle, chars: chars, goTo: goTo };
+})();
+</script>
+</body>
+</html>

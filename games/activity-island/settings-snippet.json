@@ -1,0 +1,22 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|Bash|Read|Grep|WebSearch|WebFetch",
+        "hooks": [{ "type": "command", "command": "node /Users/stanleytan/Documents/technical/github/claude_hooks_server/hook.js" }]
+      }
+    ],
+    "UserPromptSubmit": [
+      { "hooks": [{ "type": "command", "command": "node /Users/stanleytan/Documents/technical/github/claude_hooks_server/hook.js" }] }
+    ],
+    "Notification": [
+      { "hooks": [{ "type": "command", "command": "node /Users/stanleytan/Documents/technical/github/claude_hooks_server/hook.js" }] }
+    ],
+    "Stop": [
+      { "hooks": [{ "type": "command", "command": "node /Users/stanleytan/Documents/technical/github/claude_hooks_server/hook.js" }] }
+    ],
+    "SubagentStop": [
+      { "hooks": [{ "type": "command", "command": "node /Users/stanleytan/Documents/technical/github/claude_hooks_server/hook.js" }] }
+    ]
+  }
+}
