@@ -20,15 +20,27 @@ body { display:flex; flex-direction:column; }
 button, a.btn { font:500 12px var(--mono); letter-spacing:.04em; padding:6px 11px; color:var(--text); background:var(--panel); border:1px solid var(--line); border-radius:999px; cursor:pointer; text-decoration:none; }
 button:hover, a.btn:hover, button:focus-visible { border-color:var(--accent); color:var(--accent); outline:none; }
 button.on { border-color:#c58bff; color:#c58bff; }
-#stage { position:relative; flex:1 1 0; min-height:0; overflow:hidden; }
+#main { display:flex; gap:10px; flex:1 1 0; min-height:0; padding:0 10px 10px; }
+#stage { position:relative; flex:3 1 0; min-width:0; overflow:hidden; }
 canvas { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); border:1px solid var(--line); border-radius:12px; background:#2f7fa8; }
 #feed { flex:none; height:128px; margin:0 10px 10px; padding:8px 12px; overflow:auto; background:var(--panel); border:1px solid var(--line); border-radius:12px; font-size:12px; }
 #feed div { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--dim); }
 #feed div:first-child { color:var(--text); }
 #feed .t { color:#5f7d8f; margin-right:8px; } #feed .who { color:var(--accent); margin-right:6px; }
 #feed .empty { color:var(--dim); }
-#chat { position:absolute; top:8px; right:10px; bottom:8px; width:min(340px,calc(100% - 20px)); display:none; flex-direction:column; background:rgba(14,26,42,.96); border:1px solid var(--line); border-radius:14px; backdrop-filter:blur(4px); z-index:3; }
-#chat.show { display:flex; }
+#chat { flex:1 1 0; min-width:210px; display:flex; flex-direction:column; min-height:0; background:var(--panel); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+#talk { display:none; flex:1; min-height:0; flex-direction:column; }
+#chat.chatting #talk { display:flex; } #chat.chatting #info { display:none; }
+#info { flex:1; overflow:auto; padding:14px; color:var(--dim); }
+#info h2 { margin:0 0 6px; font:800 13px var(--display); letter-spacing:.06em; color:var(--accent); }
+#info h3 { margin:14px 0 6px; font:500 11px var(--mono); letter-spacing:.1em; text-transform:uppercase; color:var(--text); }
+#info p { margin:4px 0; }
+#info ul { margin:4px 0; padding:0; list-style:none; }
+#info li { padding:2px 0; } #info li b { color:var(--text); font-weight:500; }
+#info .isl { display:flex; flex-direction:column; gap:5px; }
+#info .isl button { display:flex; gap:8px; align-items:center; justify-content:flex-start; text-align:left; width:100%; border-radius:12px; }
+#info .isl i { width:10px; height:10px; border-radius:50%; flex:none; }
+#info .isl small { color:var(--dim); margin-left:auto; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:50%; }
 #chat header { display:flex; align-items:center; gap:8px; padding:10px 12px; border-bottom:1px solid var(--line); }
 #chat header b { font:800 13px var(--display); letter-spacing:.04em; }
 #chat header small { color:var(--dim); flex:1; }
@@ -41,8 +53,17 @@ canvas { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); b
 #chat input { flex:1; min-width:0; font:400 13px var(--mono); padding:8px 12px; color:var(--text); background:#08121e; border:1px solid var(--line); border-radius:999px; }
 #chat input:focus { outline:none; border-color:var(--accent); }
 .chips2 { display:flex; gap:5px; padding:0 12px 8px; }
+.prov { display:flex; gap:4px; padding:8px 12px 0; align-items:center; }
+.prov button { flex:1; font-size:11px; padding:4px 8px; }
+.prov button.sel { border-color:var(--accent); color:var(--accent); }
+.prov button:disabled { opacity:.4; cursor:not-allowed; }
+.prov label.web { display:flex; align-items:center; gap:5px; margin-left:6px; font-size:11px; color:var(--dim); cursor:pointer; white-space:nowrap; }
+.prov label.web.dis { opacity:.4; cursor:not-allowed; }
+.prov label.web input { accent-color:var(--accent); margin:0; width:auto; flex:none; padding:0; }
+.provnote { padding:4px 12px 0; font-size:10.5px; color:#d9a441; display:none; }
+
 .chips2 button { font-size:11px; padding:4px 9px; }
-@media (max-width:700px) { .chip.hide-s { display:none; } #feed { height:110px; } }
+@media (max-width:700px) { .chip.hide-s { display:none; } #feed { height:110px; } #main { flex-direction:column; } #stage { flex:3 1 0; } #chat { flex:2 1 0; min-width:0; } }
 </style>
 </head>
 <body>
@@ -51,17 +72,38 @@ canvas { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); b
   <span class="chip off" id="cConn">Server<b>offline</b></span>
   <span class="chip hide-s">Islanders<b id="cCount">0</b></span>
   <span class="chip hide-s off" id="cOll">Ollama<b>off</b></span>
+  <span class="chip hide-s off" id="cOai">OpenAI<b>no key</b></span>
   <div class="btns">
     <button id="bDemo">Demo</button>
     <a class="btn" href="../games.html">All games</a>
   </div>
 </div>
-<div id="stage"><canvas id="c" width="1920" height="1080"></canvas>
+<div id="main">
+  <div id="stage"><canvas id="c" width="1920" height="1080"></canvas></div>
   <div id="chat">
-    <header><b id="chName">Mochi</b><small id="chSub">your teacher while you wait</small><button id="chClose" title="Close">&times;</button></header>
-    <div id="msgs"></div>
-    <div class="chips2" id="chSug"></div>
-    <form id="chForm"><input id="chIn" autocomplete="off" placeholder="Ask about what's happening..." maxlength="500"><button>Ask</button></form>
+    <div id="info">
+      <h2>ISLAND INFO</h2>
+      <p>Each character is one Claude Code session or subagent. Click a character or their house to ask them what is going on.</p>
+      <h3>Where they go</h3>
+      <ul>
+        <li><b>Workshop</b>: editing and writing files</li>
+        <li><b>Library</b>: reading and searching code</li>
+        <li><b>Ferris wheel</b>: running commands</li>
+        <li><b>Market</b>: web searches and fetches</li>
+        <li><b>Plaza ?</b>: waiting on you</li>
+        <li><b>House, z</b>: resting, or done</li>
+      </ul>
+      <h3>Islanders</h3>
+      <div class="isl" id="islList"><p>Nobody yet. Start working in Claude Code, or press Demo.</p></div>
+    </div>
+    <div id="talk">
+      <header><b id="chName">Mochi</b><small id="chSub">teacher</small><button id="chClose" title="Back to info">&times;</button></header>
+      <div class="prov" id="prov"><button type="button" data-p="ollama" class="sel">Ollama</button><button type="button" data-p="openai">OpenAI</button><label class="web" id="webLbl" title="OpenAI only: lets the model look things up online (small extra fee per search)"><input type="checkbox" id="webBox"> Web search</label></div>
+      <div class="provnote" id="provNote">OpenAI sends your recent activity (file names, commands, prompt snippet) to OpenAI. Web search adds a small fee per search.</div>
+      <div id="msgs"></div>
+      <div class="chips2" id="chSug"></div>
+      <form id="chForm"><input id="chIn" autocomplete="off" placeholder="Ask about what's happening..." maxlength="500"><button>Ask</button></form>
+    </div>
   </div>
 </div>
 <div id="feed"><div class="empty">Nothing yet. Start working in Claude Code, or press Demo.</div></div>
@@ -77,6 +119,7 @@ function fit() {
   cv.style.width = Math.floor(W * s) + 'px'; cv.style.height = Math.floor(H * s) + 'px';
 }
 window.addEventListener('resize', fit); fit();
+if (window.ResizeObserver) new ResizeObserver(fit).observe(stage);
 
 // ---------- world layout ----------
 var HUB = { x: 480, y: 292 };
@@ -361,14 +404,18 @@ var cConn = document.getElementById('cConn'), demoOn = false, demoTimer = null, 
 function setConn(ok) { cConn.className = 'chip ' + (ok ? 'live' : 'off'); cConn.querySelector('b').textContent = ok ? 'live' : 'offline'; }
 function connect() {
   if (location.protocol === 'file:') return;
+  // open the live stream first and queue what arrives, so nothing is lost while the replay loads
+  var seen = {}, queue = [], ready = false;
+  function key(ev) { return [ev.ts, ev.session, ev.agent, ev.event, ev.tool, ev.detail].join('|'); }
+  function take(ev, instant) { var k = key(ev); if (seen[k]) return; seen[k] = 1; handle(ev, instant); }
+  es = new EventSource('/events');
+  es.onopen = function () { setConn(true); };
+  es.onerror = function () { setConn(false); };
+  es.onmessage = function (m) { try { var ev = JSON.parse(m.data); if (ready) take(ev, false); else queue.push(ev); } catch (e) { } };
   fetch('/recent').then(function (r) { return r.json(); }).then(function (evs) {
-    evs.forEach(function (ev) { handle(ev, true); });
-    // anyone idle in the replay goes home, others stay where the last event put them
-  }).catch(function () {}).then(function () {
-    es = new EventSource('/events');
-    es.onopen = function () { setConn(true); };
-    es.onerror = function () { setConn(false); };
-    es.onmessage = function (m) { try { handle(JSON.parse(m.data), false); } catch (e) { } };
+    evs.forEach(function (ev) { take(ev, true); });
+  }).catch(function () { }).then(function () {
+    ready = true; queue.forEach(function (ev) { take(ev, false); }); queue = [];
   });
 }
 connect();
@@ -397,12 +444,14 @@ document.getElementById('bDemo').addEventListener('click', function () {
 
 // ---------- ask an islander (Ollama teacher) ----------
 var chatEl = document.getElementById('chat'), msgsEl = document.getElementById('msgs'), chIn = document.getElementById('chIn');
-var chatId = null, history = {}, busy = false;
+var chatId = null, history = {}, busy = false, provider = 'ollama', provInfo = null, webOn = false;
+try { if (localStorage.getItem('island-provider') === 'openai') provider = 'openai'; webOn = localStorage.getItem('island-web') === '1'; } catch (e) { }
 var SUGGEST = [['What?', 'What am I working on?'], ['Explain', 'Explain what is happening right now, like I\'m new to this.']]; // [button label, full question sent]
+function tidy(t) { return t.replace(/\s*\(\[[^\]]*\]\([^)]*\)\)/g, '').replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1').replace(/[?&]utm_source=openai/g, ''); } // chat shows plain text: drop inline markdown links
 function addMsg(cls, text) { var d = document.createElement('div'); d.className = 'm ' + cls; d.textContent = text; msgsEl.appendChild(d); msgsEl.scrollTop = msgsEl.scrollHeight; return d; }
 function openChat(c) {
-  if (chatId === c.id && chatEl.classList.contains('show')) { chIn.focus(); return; } // already open: don't wipe a reply that is streaming in
-  chatId = c.id; chatEl.classList.add('show');
+  if (chatId === c.id && chatEl.classList.contains('chatting')) { chIn.focus(); return; } // already open: don't wipe a reply that is streaming in
+  chatId = c.id; chatEl.classList.add('chatting');
   document.getElementById('chName').textContent = c.name; document.getElementById('chName').style.color = c.color;
   msgsEl.innerHTML = '';
   var h = history[c.id] = history[c.id] || [];
@@ -418,18 +467,18 @@ function ask(q) {
   h.push({ role: 'user', content: q }); addMsg('u', q); chIn.value = '';
   var bub = addMsg('a', '...'), got = '';
   busy = true;
-  fetch('/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: c.id, name: c.name, messages: h }) })
+  fetch('/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: c.id, name: c.name, messages: h, provider: provider, web: provider === 'openai' && webOn }) })
     .then(function (r) {
       if (!r.ok) return r.text().then(function (t) { throw new Error(t || ('error ' + r.status)); });
       var rd = r.body.getReader(), dec = new TextDecoder();
-      return (function pump() { return rd.read().then(function (x) { if (x.done) return; got += dec.decode(x.value, { stream: true }); bub.textContent = got; msgsEl.scrollTop = msgsEl.scrollHeight; return pump(); }); })();
+      return (function pump() { return rd.read().then(function (x) { if (x.done) return; got += dec.decode(x.value, { stream: true }); bub.textContent = tidy(got); msgsEl.scrollTop = msgsEl.scrollHeight; return pump(); }); })();
     })
-    .then(function () { h.push({ role: 'assistant', content: got || '(no answer)' }); })
+    .then(function () { got = tidy(got); bub.textContent = got || bub.textContent; h.push({ role: 'assistant', content: got || '(no answer)' }); })
     .catch(function (e) { bub.textContent = 'Could not answer: ' + e.message; h.pop(); })
     .then(function () { busy = false; });
 }
 document.getElementById('chForm').addEventListener('submit', function (e) { e.preventDefault(); ask(chIn.value); });
-document.getElementById('chClose').addEventListener('click', function () { chatEl.classList.remove('show'); chatId = null; });
+document.getElementById('chClose').addEventListener('click', function () { chatEl.classList.remove('chatting'); chatId = null; });
 cv.addEventListener('click', function (e) {
   var r = cv.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * W, y = (e.clientY - r.top) / r.height * H, best = null, bd = 28;
   order.forEach(function (id) {
@@ -444,13 +493,49 @@ cv.addEventListener('mousemove', function (e) {
   order.forEach(function (id) { var c = chars[id]; if (Math.hypot(c.x - x, c.y - 10 - y) < 24 || Math.hypot(c.home[0] - x, c.home[1] - y) < 28) over = true; });
   cv.style.cursor = over ? 'pointer' : 'default';
 });
+function statusOf(c) {
+  if (c.waiting) return 'waiting on you';
+  if (c.place === 'home') return c.inside ? 'resting' : 'heading home';
+  return ({ workshop: 'in the workshop', library: 'in the library', market: 'at the market', ride: 'on the ride', plaza: 'at the plaza' })[c.place] || c.place;
+}
+var lastIsl = '';
+function renderIslanders() {
+  var key = order.map(function (id) { return id + statusOf(chars[id]); }).join('|');
+  if (key === lastIsl) return; lastIsl = key;
+  var box = document.getElementById('islList');
+  if (!order.length) { box.innerHTML = '<p>Nobody yet. Start working in Claude Code, or press Demo.</p>'; return; }
+  box.innerHTML = '';
+  order.forEach(function (id) {
+    var c = chars[id], b = document.createElement('button');
+    b.innerHTML = '<i style="background:' + c.color + '"></i>' + esc(c.name) + '<small>' + esc(statusOf(c)) + '</small>';
+    b.onclick = function () { openChat(c); };
+    box.appendChild(b);
+  });
+}
+setInterval(renderIslanders, 500);
+function setProvider(p) {
+  provider = p; try { localStorage.setItem('island-provider', p); } catch (e) { }
+  [].forEach.call(document.querySelectorAll('#prov button'), function (b) { b.classList.toggle('sel', b.getAttribute('data-p') === p); });
+  document.getElementById('provNote').style.display = p === 'openai' ? 'block' : 'none';
+  var box = document.getElementById('webBox'), lbl = document.getElementById('webLbl');
+  box.disabled = p !== 'openai'; box.checked = p === 'openai' && webOn; lbl.classList.toggle('dis', p !== 'openai');
+}
+document.getElementById('webBox').addEventListener('change', function () { webOn = this.checked; try { localStorage.setItem('island-web', webOn ? '1' : '0'); } catch (e) { } });
+[].forEach.call(document.querySelectorAll('#prov button'), function (b) { b.addEventListener('click', function () { if (!b.disabled) setProvider(b.getAttribute('data-p')); }); });
 function checkOllama() {
   if (location.protocol === 'file:') return;
-  fetch('/ollama').then(function (r) { return r.json(); }).then(function (j) {
-    var el = document.getElementById('cOll'); el.className = 'chip hide-s ' + (j.ok && j.haveModel ? 'live' : 'off');
-    el.querySelector('b').textContent = !j.ok ? 'off' : (j.haveModel ? j.model : j.model + ' missing');
+  fetch('/providers').then(function (r) { return r.json(); }).then(function (j) {
+    provInfo = j;
+    var o = document.getElementById('cOll'), a = document.getElementById('cOai'), ob = document.querySelector('#prov [data-p=ollama]'), ab = document.querySelector('#prov [data-p=openai]');
+    var oOk = j.ollama.ok && j.ollama.haveModel;
+    o.className = 'chip hide-s ' + (oOk ? 'live' : 'off'); o.querySelector('b').textContent = !j.ollama.ok ? 'off' : (j.ollama.haveModel ? j.ollama.model : j.ollama.model + ' missing');
+    a.className = 'chip hide-s ' + (j.openai.configured ? 'live' : 'off'); a.querySelector('b').textContent = j.openai.configured ? j.openai.model : 'no key';
+    ab.disabled = !j.openai.configured; ab.title = j.openai.configured ? 'Use ' + j.openai.model : 'Add OPENAI_API_KEY to the server (see README) and restart it';
+    ob.title = oOk ? 'Use ' + j.ollama.model : 'Ollama is not running or the model is missing';
+    if (provider === 'openai' && !j.openai.configured) setProvider('ollama');
   }).catch(function () { });
 }
+setProvider(provider);
 checkOllama(); setInterval(checkOllama, 15000);
 window.__island = { handle: handle, chars: chars, goTo: goTo };
 })();
