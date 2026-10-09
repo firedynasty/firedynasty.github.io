@@ -60,9 +60,16 @@ canvas { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); b
 .prov label.web { display:flex; align-items:center; gap:5px; margin-left:6px; font-size:11px; color:var(--dim); cursor:pointer; white-space:nowrap; }
 .prov label.web.dis { opacity:.4; cursor:not-allowed; }
 .prov label.web input { accent-color:var(--accent); margin:0; width:auto; flex:none; padding:0; }
-.provnote { padding:4px 12px 0; font-size:10.5px; color:#d9a441; display:none; }
 
 .chips2 button { font-size:11px; padding:4px 9px; }
+#chat { font-size:9.75px; }
+#chat header b { font-size:10px; } #chat header small { font-size:9px; }
+.m { font-size:9.75px; line-height:1.4; padding:5px 8px; }
+#chat input { font-size:9.75px; padding:6px 10px; }
+#chat button, #chat a.btn { font-size:9px; padding:4px 8px; }
+.chips2 button, .prov button { font-size:8.5px; padding:3px 7px; }
+.prov label.web { font-size:8.5px; }
+#info { font-size:9.75px; padding:11px; } #info h2 { font-size:10px; } #info h3 { font-size:8.5px; }
 @media (max-width:700px) { .chip.hide-s { display:none; } #feed { height:110px; } #main { flex-direction:column; } #stage { flex:3 1 0; } #chat { flex:2 1 0; min-width:0; } }
 </style>
 </head>
@@ -97,9 +104,8 @@ canvas { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); b
       <div class="isl" id="islList"><p>Nobody yet. Start working in Claude Code, or press Demo.</p></div>
     </div>
     <div id="talk">
-      <header><b id="chName">Mochi</b><small id="chSub">teacher</small><button id="chClose" title="Back to info">&times;</button></header>
+      <header><b id="chName">Mochi</b><small id="chSub">teacher</small><button id="chCopy" title="Copy this character's hook log and our chat, ready to paste into ChatGPT or the OpenAI Playground">Copy</button><button id="chClose" title="Back to info">&times;</button></header>
       <div class="prov" id="prov"><button type="button" data-p="ollama" class="sel">Ollama</button><button type="button" data-p="openai">OpenAI</button><label class="web" id="webLbl" title="OpenAI only: lets the model look things up online (small extra fee per search)"><input type="checkbox" id="webBox"> Web search</label></div>
-      <div class="provnote" id="provNote">OpenAI sends your recent activity (file names, commands, prompt snippet) to OpenAI. Web search adds a small fee per search.</div>
       <div id="msgs"></div>
       <div class="chips2" id="chSug"></div>
       <form id="chForm"><input id="chIn" autocomplete="off" placeholder="Ask about what's happening..." maxlength="500"><button>Ask</button></form>
@@ -206,6 +212,7 @@ function handle(ev, instant) {
   var id = ev.agent || ev.session || 'unknown';
   var c = getChar(id);
   c.lastActive = ev.ts || Date.now();
+  (c.events = c.events || []).push(ev); if (c.events.length > 80) c.events.shift();
   var stale = !instant ? false : (Date.now() - c.lastActive > IDLE_MS);
   if (ev.event === 'UserPromptSubmit') {
     c.waiting = false; say(c, 'heading to work', 3000); goTo(c, 'plaza', instant);
@@ -513,10 +520,47 @@ function renderIslanders() {
   });
 }
 setInterval(renderIslanders, 500);
+
+// ---------- copy log + chat to the clipboard ----------
+function fmtEv(ev) {
+  var d = new Date(ev.ts || Date.now()), p = function (n) { return (n < 10 ? '0' : '') + n; };
+  return p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds()) + '  ' + line(ev) + (ev.event === 'UserPromptSubmit' && ev.detail ? ': "' + ev.detail + '"' : '') + '   [' + ev.event + (ev.tool ? ' ' + ev.tool : '') + ']';
+}
+function buildCopy(c, evs) {
+  var out = [];
+  out.push('I am using Claude Code. A small tool logs what it does through hooks; the log below belongs to one session (nicknamed "' + c.name + '").');
+  out.push('Please act as a patient teacher: explain what is going on in plain language, define jargon, and give context. The log only has tool names, file names, short commands and a snippet of my request (not file contents or Claude\'s replies), so say so instead of guessing.');
+  out.push('');
+  out.push('## Hook activity log for ' + c.name + ' (oldest first, ' + evs.length + ' events)');
+  out.push(evs.length ? evs.map(fmtEv).join('\n') : '(nothing logged yet)');
+  var h = history[c.id] || [];
+  if (h.length) {
+    out.push(''); out.push('## Our conversation so far');
+    h.forEach(function (m) { out.push((m.role === 'user' ? 'Me' : c.name) + ': ' + m.content); });
+  }
+  out.push(''); out.push('## My question');
+  out.push('');
+  return out.join('\n');
+}
+function copyText(t) {
+  if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(t);
+  return new Promise(function (ok, no) {
+    var ta = document.createElement('textarea'); ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy') ? ok() : no(new Error('copy blocked')); } catch (e) { no(e); } document.body.removeChild(ta);
+  });
+}
+document.getElementById('chCopy').addEventListener('click', function () {
+  var btn = this, c = chars[chatId]; if (!c) return;
+  function flash(t) { btn.textContent = t; setTimeout(function () { btn.textContent = 'Copy'; }, 1400); }
+  fetch('/recent?n=400').then(function (r) { return r.json(); }).then(function (all) {
+    return all.filter(function (e) { return (e.agent || e.session) === c.id; }).slice(-60);
+  }).catch(function () { return (c.events || []).slice(-60); }).then(function (evs) {
+    return copyText(buildCopy(c, evs));
+  }).then(function () { flash('Copied!'); }, function () { flash('Blocked'); });
+});
 function setProvider(p) {
   provider = p; try { localStorage.setItem('island-provider', p); } catch (e) { }
   [].forEach.call(document.querySelectorAll('#prov button'), function (b) { b.classList.toggle('sel', b.getAttribute('data-p') === p); });
-  document.getElementById('provNote').style.display = p === 'openai' ? 'block' : 'none';
   var box = document.getElementById('webBox'), lbl = document.getElementById('webLbl');
   box.disabled = p !== 'openai'; box.checked = p === 'openai' && webOn; lbl.classList.toggle('dis', p !== 'openai');
 }
