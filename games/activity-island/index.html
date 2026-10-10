@@ -463,15 +463,27 @@ function openChat(c) {
   msgsEl.innerHTML = '';
   var h = history[c.id] = history[c.id] || [];
   if (!h.length) addMsg('hint', 'Hi, I\'m ' + c.name + '. Ask me about what\'s going on while you wait, and I\'ll explain it.');
-  h.forEach(function (m) { addMsg(m.role === 'user' ? 'u' : 'a', m.content); });
+  h.forEach(function (m) { addMsg(m.role === 'user' ? 'u' : 'a', m.shown || m.content); });
   var sug = document.getElementById('chSug'); sug.innerHTML = '';
   SUGGEST.forEach(function (q) { var b = document.createElement('button'); b.type = 'button'; b.textContent = q[0]; b.title = q[1]; b.onclick = function () { ask(q[1]); }; sug.appendChild(b); });
+  var pb = document.createElement('button'); pb.type = 'button'; pb.textContent = 'Paste'; pb.title = 'Explain whatever is on your clipboard (an error, a command, some code)'; pb.onclick = pasteAsk; sug.appendChild(pb);
   chIn.focus();
 }
-function ask(q) {
+function pasteAsk() {
+  if (busy) return;
+  if (!navigator.clipboard || !navigator.clipboard.readText) { addMsg('hint', 'Your browser does not allow reading the clipboard here. Paste into the box and press Ask instead.'); return; }
+  navigator.clipboard.readText().then(function (t) {
+    t = (t || '').trim();
+    if (!t) { addMsg('hint', 'The clipboard is empty. Copy an error, a command or some code first.'); return; }
+    var clip = t.length > 3500 ? t.slice(0, 3500) + '\n[...cut]' : t;
+    var one = t.replace(/\s+/g, ' ');
+    ask('Explain this, which I copied from my clipboard. Tie it to what I am working on if it fits:\n\n' + clip, 'Paste: ' + (one.length > 90 ? one.slice(0, 90) + '...' : one));
+  }, function () { addMsg('hint', 'Clipboard access was blocked. Allow it in the browser prompt (or the address bar icon) and click Paste again.'); });
+}
+function ask(q, shown) {
   q = (q || '').trim(); if (!q || busy || !chatId) return;
   var c = chars[chatId], h = history[chatId];
-  h.push({ role: 'user', content: q }); addMsg('u', q); chIn.value = '';
+  h.push({ role: 'user', content: q, shown: shown }); addMsg('u', shown || q); chIn.value = '';
   var bub = addMsg('a', '...'), got = '';
   busy = true;
   fetch('/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: c.id, name: c.name, messages: h, provider: provider, web: provider === 'openai' && webOn }) })
