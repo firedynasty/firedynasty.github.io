@@ -1,0 +1,4 @@
+night-skyline.png
+  "Background City Skyline" by FabinhoSC (Visualisation03 example image)
+  License: CC0 1.0 (public domain). No credit required; given here anyway.
+  Source: https://opengameart.org/content/skyline-background
