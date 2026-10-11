@@ -194,7 +194,9 @@ html{background:#0a0c17}
       <h3>How it works</h3>
       <p>Block stops almost all damage. Punches pass over a ducking fighter, kicks do not.</p>
       <p>Landing hits fills the SP meter. At 50 you can throw a projectile.</p>
-      <p>Chain hits before the opponent recovers and each one hurts a little less. <kbd>P</kbd> pauses.</p>
+      <p>Chain hits before the opponent recovers and each one hurts a little less. <kbd>P</kbd> or <kbd>Enter</kbd> pauses. <kbd>Enter</kbd> also starts a match and rematches.</p>
+      <p>Moves buffer: press an attack a split second early and it comes out as soon as you recover.</p>
+      <p>Gamepad: D-pad or stick moves and jumps, X punch, A kick, B or a bumper blocks, Y special. Pad 1 plays Player 1, pad 2 plays Player 2.</p>
     </div>
   </section>
 </div>
@@ -226,7 +228,7 @@ const CHARS=[
    pal:[{skin:'#8d5b3d',top:'#6b2f8a',pants:'#2f1840',acc:'#ffd04a',hair:'#0f0f14'},{skin:'#8d5b3d',top:'#d9772b',pants:'#4d2a0e',acc:'#ffffff',hair:'#0f0f14'}]}
 ];
 
-const G={phase:'menu',mode:1,diff:'normal',stage:0,sel:[2,0],round:1,wins:[0,0],fighters:[],proj:[],parts:[],hitstop:0,shake:0,flash:0,t:0,pt:0,timer:0,msg:null,msgT:0,slow:false,paused:false,combo:[{n:0,t:0},{n:0,t:0}]};
+const G={phase:'menu',mode:1,diff:'normal',stage:0,charge:0,chargeF:null,slowT:0,sel:[2,0],round:1,wins:[0,0],fighters:[],proj:[],parts:[],hitstop:0,shake:0,flash:0,t:0,pt:0,timer:0,msg:null,msgT:0,slow:false,paused:false,combo:[{n:0,t:0},{n:0,t:0}]};
 const blank=()=>({left:false,right:false,down:false,block:false,pu:false,pp:false,pk:false,ps:false});
 
 function makeFighter(side){
@@ -237,7 +239,7 @@ function makeFighter(side){
 function resetFighter(f){
   Object.assign(f,{x:f.side?W/2+170:W/2-170,y:GROUND,vx:0,vy:0,face:f.side?-1:1,hp:100,ghost:100,ghostDelay:0,meter:0,
     state:'idle',atk:null,hitstun:0,blockstun:0,grounded:true,crouch:false,crouchBlock:false,anim:0,koT:0,juggle:0,walkDir:0});
-  f.ai={t:0,plan:'hold',seen:0,blockDec:false,hold:0};
+  f.ai={t:0,plan:'hold',seen:0,blockDec:false,hold:0};f.buf={pp:0,pk:0,ps:0};
 }
 
 function atkDef(f,type){
@@ -250,10 +252,24 @@ function startAtk(f,type){
   if(type==='special'&&!f.grounded) return;
   const a=atkDef(f,type);a.fr=0;a.hit=false;a.crouch=f.crouch;
   f.atk=a;f.state='atk';
-  if(type==='special'){f.meter-=50;sfx('special')}else sfx('whoosh');
+  if(type==='special'){f.meter-=50;G.charge=CHARGE;G.chargeF=f;sfx('charge')}else sfx('whoosh');
 }
+const CHARGE=36;
+const SPNAME={rook:'IRON WAVE',wren:'WIND BLADE',ash:'EMBER SHOT'};
 function spawnProj(f){
-  G.proj.push({x:f.x+f.face*46,y:f.y-(f.crouch?62:112),vx:f.face*f.c.proj.spd,owner:f,dmg:f.c.proj.dmg,age:0,dead:false});
+  const y=f.y-(f.crouch?62:112);
+  G.proj.push({x:f.x+f.face*46,y,vx:f.face*f.c.proj.spd,owner:f,dmg:Math.round(f.c.proj.dmg*1.35),age:0,dead:false});
+  spark(f.x+f.face*52,y,'hit',f.face);G.shake=Math.max(G.shake,5);sfx('special');
+}
+// Time-stop while a special charges: the world freezes and energy gathers on the caster.
+function chargeFx(){
+  const f=G.chargeF;if(!f)return;
+  const cx=f.x,cy=f.y-(f.crouch?60:95);
+  for(let i=0;i<3;i++){
+    const an=rnd(0,Math.PI*2),R=rnd(70,130);
+    G.parts.push({x:cx+Math.cos(an)*R,y:cy+Math.sin(an)*R,vx:-Math.cos(an)*R/12,vy:-Math.sin(an)*R/12,life:12,max:12,size:rnd(3,6),color:i%2?SIDE[f.side]:'#ffffff',g:0});
+  }
+  if(G.charge===1)spark(cx+f.face*30,cy,'hit',f.face);
 }
 
 /* ---------- Input ---------- */
@@ -264,6 +280,11 @@ const GAMEKEYS=new Set(['Space','KeyP','Escape'].concat(...[K1A,K2].map(m=>[].co
 const held=new Set(),edge=new Set();
 const T={held:{},edge:new Set()};
 addEventListener('keydown',e=>{
+  if(e.code==='Enter'||e.code==='NumpadEnter'){
+    e.preventDefault();if(e.repeat)return;
+    if(G.phase==='menu'||G.phase==='result')startMatch();else togglePause();
+    return;
+  }
   if(G.phase==='menu') return;
   if(GAMEKEYS.has(e.code)) e.preventDefault();
   if(e.repeat) return;
@@ -283,10 +304,30 @@ document.querySelectorAll('[data-t]').forEach(b=>{
   b.addEventListener('lostpointercapture',up);
   b.addEventListener('contextmenu',e=>e.preventDefault());
 });
-function readHuman(map,touch){
+const padPrev=[{},{}];
+function padState(i){
+  const gp=(navigator.getGamepads?navigator.getGamepads():[])[i];
+  if(!gp)return null;
+  const b=n=>!!(gp.buttons[n]&&gp.buttons[n].pressed),ax=n=>gp.axes[n]||0;
+  const cur={left:b(14)||ax(0)<-.5,right:b(15)||ax(0)>.5,up:b(12)||ax(1)<-.6,down:b(13)||ax(1)>.6,
+    punch:b(2),kick:b(0),block:b(1)||b(4)||b(5)||b(6)||b(7),special:b(3)};
+  const pv=padPrev[i],r={left:cur.left,right:cur.right,down:cur.down,block:cur.block,
+    pu:cur.up&&!pv.up,pp:cur.punch&&!pv.punch,pk:cur.kick&&!pv.kick,ps:cur.special&&!pv.special};
+  padPrev[i]=cur;return r;
+}
+function readHuman(map,touch,pad){
   const h=k=>map[k].some(c=>held.has(c))||(touch&&!!T.held[k]);
   const e=k=>map[k].some(c=>edge.has(c))||(touch&&T.edge.has(k));
-  return {left:h('left'),right:h('right'),down:h('down'),block:h('block'),pu:e('up'),pp:e('punch'),pk:e('kick'),ps:e('special')};
+  const r={left:h('left'),right:h('right'),down:h('down'),block:h('block'),pu:e('up'),pp:e('punch'),pk:e('kick'),ps:e('special')};
+  const g=pad==null?null:padState(pad);
+  if(g)for(const k in r)r[k]=r[k]||g[k];
+  return r;
+}
+// Presses made during the last few frames of a recovery still count, so moves chain without frame-perfect timing.
+function bufInput(f,i){
+  const B=f.buf||(f.buf={pp:0,pk:0,ps:0});
+  for(const k of ['pp','pk','ps']){if(i[k])B[k]=6;else if(B[k]>0)B[k]--;i[k]=B[k]>0}
+  return i;
 }
 
 /* ---------- CPU ---------- */
@@ -398,7 +439,7 @@ function collectHits(){
   for(const p of G.proj){
     if(p.dead)continue;
     const def=p.owner===a?b:a;
-    if(ov({x:p.x-16,y:p.y-16,w:32,h:32},hurt(def))){
+    if(ov({x:p.x-22,y:p.y-22,w:44,h:44},hurt(def))){
       p.dead=true;
       ev.push({att:p.owner,def,p:{dmg:p.dmg,hs:26,bs:14,kb:6,stop:6,type:'proj'},dir:sgn(p.vx),y:p.y});
     }
@@ -426,6 +467,12 @@ function applyHit(e){
     G.hitstop=Math.max(G.hitstop,3);
     return;
   }
+  if(p.type==='proj'){
+    G.shake=Math.max(G.shake,18);G.flash=Math.max(G.flash,.85);G.hitstop=Math.max(G.hitstop,16);G.slowT=48;
+    for(let k=0;k<3;k++)spark(sx+rnd(-20,20),e.y+rnd(-40,40),'hit',dir);
+    for(let k=0;k<2;k++)G.parts.push({x:sx,y:e.y,ring:true,r:10+k*14,life:14+k*4,max:18});
+    sfx('specialhit');
+  }
   def.juggle=def.hitstun>0?def.juggle+1:1;
   const scaleD=Math.max(.45,1-.14*(def.juggle-1));
   const dmg=Math.max(1,Math.round(p.dmg*scaleD));
@@ -447,7 +494,7 @@ function applyHit(e){
 function say(text,dur,sub,c1,c2){G.msg={text,dur,sub,c1,c2};G.msgT=0}
 function startRound(){
   G.fighters.forEach(resetFighter);
-  G.proj=[];G.parts=[];G.combo=[{n:0,t:0},{n:0,t:0}];G.hitstop=0;G.slow=false;
+  G.proj=[];G.parts=[];G.combo=[{n:0,t:0},{n:0,t:0}];G.hitstop=0;G.slow=false;G.charge=0;G.slowT=0;
   G.timer=60*60;G.phase='intro';G.pt=62;
   say(G.wins[0]===1&&G.wins[1]===1?'FINAL ROUND':'ROUND '+G.round,60);
   sfx('round');
@@ -467,9 +514,10 @@ function simStep(){
       if(--G.pt<=0){G.phase='fight';say('FIGHT!',42,'','#fff3b8','#ff6a3d');sfx('fight')}
       break;
     case 'fight':{
-      const i0=readHuman(G.mode===1?K1A:K1B,true);
-      const i1=b.cpu?aiInput(b,a):readHuman(K2,false);
+      const i0=bufInput(a,readHuman(G.mode===1?K1A:K1B,true,0));
+      const i1=b.cpu?aiInput(b,a):bufInput(b,readHuman(K2,false,1));
       stepFighter(a,b,i0);stepFighter(b,a,i1);
+      for(const f of [a,b])if(f.buf&&f.atk&&f.atk.fr===0)f.buf.pp=f.buf.pk=f.buf.ps=0;
       for(const p of G.proj){p.x+=p.vx;p.age++;if(p.x<-40||p.x>W+40)p.dead=true}
       collectHits();
       pushApart(a,b);
@@ -509,7 +557,9 @@ function fxStep(){
 function tick(){
   if(G.paused||G.phase==='menu')return;
   fxStep();
+  if(G.charge>0){G.charge--;chargeFx();return}
   if(G.hitstop>0){G.hitstop--;return}
+  if(G.slowT>0){G.slowT--;if(G.t%2)return}
   simStep();
 }
 
@@ -554,6 +604,8 @@ function sfx(k){
     else if(k==='kick'){tone('sawtooth',130,40,.16,.14);noise(.1,.2,700)}
     else if(k==='block'){tone('triangle',320,200,.07,.09);noise(.04,.07,3000)}
     else if(k==='special')tone('sawtooth',200,700,.25,.07);
+    else if(k==='charge'){tone('sawtooth',110,900,.6,.08);tone('square',220,1400,.55,.03);noise(.5,.06,2400)}
+    else if(k==='specialhit'){tone('sawtooth',320,36,.55,.18);noise(.4,.3,500)}
     else if(k==='projhit'){tone('square',400,90,.2,.1);noise(.12,.16,900)}
     else if(k==='ko'){tone('sawtooth',220,35,.7,.16);noise(.4,.22,400)}
     else if(k==='round')tone('square',523,523,.14,.05);
@@ -944,10 +996,41 @@ function drawMsg(c){
   c.restore();
 }
 function drawProj(c,p){
-  const col=SIDE[p.owner.side];
-  const g=c.createRadialGradient(p.x,p.y,2,p.x,p.y,26);
-  g.addColorStop(0,'#ffffff');g.addColorStop(.35,col);g.addColorStop(1,'rgba(0,0,0,0)');
-  c.fillStyle=g;c.beginPath();c.arc(p.x,p.y,26,0,Math.PI*2);c.fill();
+  const col=SIDE[p.owner.side],d=-Math.sign(p.vx);
+  for(let k=5;k>=1;k--){
+    c.globalAlpha=.5-k*.08;c.fillStyle=col;c.beginPath();c.arc(p.x+d*k*12,p.y,30-k*3.4,0,Math.PI*2);c.fill();
+  }
+  c.globalAlpha=1;
+  const g=c.createRadialGradient(p.x,p.y,3,p.x,p.y,40);
+  g.addColorStop(0,'#ffffff');g.addColorStop(.3,'#fff3b8');g.addColorStop(.55,col);g.addColorStop(1,'rgba(0,0,0,0)');
+  c.fillStyle=g;c.beginPath();c.arc(p.x,p.y,40,0,Math.PI*2);c.fill();
+}
+function drawChargeBg(c){
+  const f=G.chargeF,k=1-G.charge/CHARGE;
+  c.fillStyle='rgba(2,3,14,'+(.6*Math.min(1,k*5))+')';c.fillRect(-30,-30,W+60,H+60);
+  const cx=f.x,cy=f.y-(f.crouch?60:95);
+  c.save();c.translate(cx,cy);c.strokeStyle=SIDE[f.side];c.lineWidth=2;
+  for(let i=0;i<30;i++){
+    const an=i*Math.PI*2/30+G.t*.015,r0=120+((i*37+G.t*9)%90),len=40+(i%4)*18;
+    c.globalAlpha=.35*Math.min(1,k*3);c.beginPath();c.moveTo(Math.cos(an)*r0,Math.sin(an)*r0);c.lineTo(Math.cos(an)*(r0+len),Math.sin(an)*(r0+len));c.stroke();
+  }
+  c.globalAlpha=1;
+  const r=40+k*70,g=c.createRadialGradient(0,0,4,0,0,r);
+  g.addColorStop(0,'rgba(255,255,255,.9)');g.addColorStop(.4,SIDE[f.side]);g.addColorStop(1,'rgba(0,0,0,0)');
+  c.globalAlpha=.55;c.fillStyle=g;c.beginPath();c.arc(0,0,r,0,Math.PI*2);c.fill();c.globalAlpha=1;
+  c.restore();
+}
+function drawChargeTxt(c){
+  const f=G.chargeF,k=1-G.charge/CHARGE,txt=SPNAME[f.c.id]||'SPECIAL';
+  c.save();c.globalAlpha=Math.min(1,k*5)*Math.min(1,G.charge/5+.2);
+  c.translate(W/2,215);c.scale(1+(1-Math.min(1,k*3))*.35,1+(1-Math.min(1,k*3))*.35);
+  c.textAlign='center';c.textBaseline='middle';c.lineJoin='round';
+  c.font='900 78px '+FD;try{c.letterSpacing='6px'}catch(e){}
+  c.lineWidth=10;c.strokeStyle='#05060c';c.strokeText(txt,0,0);
+  const g=c.createLinearGradient(0,-36,0,36);g.addColorStop(0,'#ffffff');g.addColorStop(1,SIDE[f.side]);
+  c.fillStyle=g;c.fillText(txt,0,0);
+  try{c.letterSpacing='0px'}catch(e){}
+  c.restore();
 }
 function drawParts(c){
   for(const p of G.parts){
@@ -971,7 +1054,11 @@ function render(){
     c.beginPath();c.ellipse(f.x,GROUND+5,44*(1-h*.4),9*(1-h*.4),0,0,Math.PI*2);c.fill();c.globalAlpha=1;
   }
   const pr=f=>f.state==='ko'?0:f.state==='hit'?1:f.state==='atk'?3:2;
-  [...G.fighters].sort((x,y)=>pr(x)-pr(y)).forEach(f=>drawFighter(c,f));
+  const order=[...G.fighters].sort((x,y)=>pr(x)-pr(y));
+  if(G.charge>0&&G.chargeF){
+    order.filter(f=>f!==G.chargeF).forEach(f=>drawFighter(c,f));
+    drawChargeBg(c);drawFighter(c,G.chargeF);
+  }else order.forEach(f=>drawFighter(c,f));
   G.fighters.forEach(f=>drawTag(c,f));
   G.proj.forEach(p=>drawProj(c,p));
   drawParts(c);
@@ -980,7 +1067,8 @@ function render(){
   const vg=c.createRadialGradient(W/2,H/2,H*.45,W/2,H/2,H*.95);
   vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.45)');
   c.fillStyle=vg;c.fillRect(0,0,W,H);
-  drawHUD(c);drawMsg(c);
+  drawHUD(c);
+  if(G.charge>0&&G.chargeF)drawChargeTxt(c);else drawMsg(c);
   if(G.flash>.04){c.fillStyle=`rgba(255,255,255,${G.flash*.55})`;c.fillRect(0,0,W,H)}
 }
 
@@ -1101,6 +1189,7 @@ function frame(now){
   render();
 }
 requestAnimationFrame(frame);
+window.__rr={G,tick};
 })();
 </script>
 
