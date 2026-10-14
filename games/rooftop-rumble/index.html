@@ -124,6 +124,7 @@ html{background:#0a0c17}
       <button class="btn" id="padBtn" type="button" aria-pressed="false" hidden>Pad</button>
       <button class="btn" id="sndBtn" type="button" aria-pressed="true">Sound on</button>
       <button class="btn" id="menuBtn" type="button" hidden>Fighter select</button>
+      <button class="btn" id="fsBtn" type="button" onclick="toggleFull();this.blur()" title="Full screen on or off">Full</button>
       <a class="btn" href="../games.html" style="text-decoration:none;color:inherit">All games</a>
     </div>
   </header>
@@ -1262,6 +1263,25 @@ function frame(now){
 }
 requestAnimationFrame(frame);
 window.__rr={G,tick};
+})();
+
+// full screen on and off; on Android Chrome it also locks landscape. Hidden where the browser can't do it (iPhone Safari).
+(function () {
+  var btn = document.getElementById('fsBtn'), root = document.documentElement;
+  var req = root.requestFullscreen || root.webkitRequestFullscreen;
+  if (!req) { btn.style.display = 'none'; return; }
+  function el() { return document.fullscreenElement || document.webkitFullscreenElement; }
+  function lock() { try { var o = screen.orientation; if (o && o.lock) { var q = o.lock('landscape'); if (q && q.catch) q.catch(function () {}); } } catch (e) {} }
+  function unlock() { try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e) {} }
+  window.toggleFull = function () {
+    try {
+      if (el()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+      else { var q = req.call(root); if (q && q.then) q.then(lock).catch(function () {}); else lock(); }
+    } catch (e) {}
+  };
+  ['fullscreenchange', 'webkitfullscreenchange'].forEach(function (n) {
+    document.addEventListener(n, function () { if (!el()) unlock(); btn.textContent = el() ? 'Exit' : 'Full'; });
+  });
 })();
 </script>
 
