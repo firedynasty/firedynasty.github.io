@@ -72,16 +72,29 @@ button{font:inherit;color:inherit;cursor:pointer}
 .vbox p{margin:0;color:var(--muted);font-size:clamp(12px,2.4vw,15px)}
 .vbox .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:4px}
 
-.touch{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;touch-action:none;user-select:none;-webkit-user-select:none}
-.pad{display:grid;gap:6px}
-.dpad{grid-template-columns:repeat(3,58px);grid-template-rows:repeat(2,58px)}
-.dpad [data-t="up"]{grid-column:2;grid-row:1}
-.dpad [data-t="left"]{grid-column:1;grid-row:2}
-.dpad [data-t="down"]{grid-column:2;grid-row:2}
-.dpad [data-t="right"]{grid-column:3;grid-row:2}
-.acts{grid-template-columns:repeat(2,70px);grid-template-rows:repeat(2,58px)}
-.touch button{background:var(--deck-2);border:1px solid var(--line);border-radius:6px;font:700 13px var(--f-body);letter-spacing:.06em;text-transform:uppercase;touch-action:none}
-.touch button.on{background:var(--ember);border-color:var(--ember);color:#1a0b06}
+/* on-screen pad: joystick on the left, four action buttons on the right, floating over the bottom of the screen */
+.touch{position:fixed;left:0;right:0;bottom:0;height:0;z-index:5;pointer-events:none;touch-action:none;user-select:none;-webkit-user-select:none}
+.touch>*{pointer-events:auto}
+.stick{position:absolute;left:36px;bottom:36px;width:170px;height:170px;border-radius:50%;background:rgba(16,22,40,.5);border:2px solid rgba(255,255,255,.35);touch-action:none}
+.knob{position:absolute;left:50%;top:50%;width:72px;height:72px;margin:-36px 0 0 -36px;border-radius:50%;background:rgba(255,255,255,.55);border:2px solid rgba(255,255,255,.8);pointer-events:none}
+.acts{position:absolute;right:30px;bottom:36px;width:256px;height:256px}
+.acts button{position:absolute;width:104px;height:104px;border-radius:50%;background:rgba(16,22,40,.55);border:2px solid rgba(255,255,255,.4);color:#fff;font:700 14px var(--f-body);letter-spacing:.06em;text-transform:uppercase;touch-action:none;user-select:none;-webkit-user-select:none}
+.acts button.on{background:var(--ember);border-color:var(--ember);color:#1a0b06}
+/* four buttons on a diamond: Special top, Block left, Punch right, Kick bottom */
+.acts [data-t="special"]{left:76px;top:0}
+.acts [data-t="block"]{left:0;top:76px}
+.acts [data-t="punch"]{right:0;top:76px}
+.acts [data-t="kick"]{left:76px;bottom:0}
+@media (max-width:500px){
+  .stick{left:20px;bottom:24px;width:130px;height:130px}
+  .knob{width:56px;height:56px;margin:-28px 0 0 -28px}
+  .acts{right:10px;bottom:24px;width:196px;height:196px}
+  .acts button{width:80px;height:80px;font-size:12px}
+  .acts [data-t="special"]{left:58px}
+  .acts [data-t="block"]{top:58px}
+  .acts [data-t="punch"]{top:58px}
+  .acts [data-t="kick"]{left:58px}
+}
 
 .help{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:14px}
 .help>div{background:var(--deck);border:1px solid var(--line);padding:14px 16px;min-width:0}
@@ -108,6 +121,7 @@ html{background:#0a0c17}
     </div>
     <div class="tools">
       <button class="btn" id="pauseBtn" type="button" hidden>Pause</button>
+      <button class="btn" id="padBtn" type="button" aria-pressed="false" hidden>Pad</button>
       <button class="btn" id="sndBtn" type="button" aria-pressed="true">Sound on</button>
       <button class="btn" id="menuBtn" type="button" hidden>Fighter select</button>
       <a class="btn" href="../games.html" style="text-decoration:none;color:inherit">All games</a>
@@ -154,17 +168,12 @@ html{background:#0a0c17}
   </div>
 
   <div id="touch" class="touch" hidden>
-    <div class="pad dpad">
-      <button type="button" data-t="up" aria-label="Jump">Jump</button>
-      <button type="button" data-t="left" aria-label="Move left">&larr;</button>
-      <button type="button" data-t="down" aria-label="Crouch">Duck</button>
-      <button type="button" data-t="right" aria-label="Move right">&rarr;</button>
-    </div>
-    <div class="pad acts">
+    <div id="stick" class="stick" aria-label="Joystick: left and right move, up jumps, down ducks"><div id="knob" class="knob"></div></div>
+    <div class="acts">
+      <button type="button" data-t="special">Spec</button>
+      <button type="button" data-t="block">Block</button>
       <button type="button" data-t="punch">Punch</button>
       <button type="button" data-t="kick">Kick</button>
-      <button type="button" data-t="block">Block</button>
-      <button type="button" data-t="special">Special</button>
     </div>
   </div>
 
@@ -212,6 +221,9 @@ const $=s=>document.querySelector(s);
 const cv=$('#cv'),ctx=cv.getContext('2d'),stageEl=$('#stage'),veil=$('#veil'),menuEl=$('#menu'),touchEl=$('#touch');
 const pauseBtn=$('#pauseBtn'),menuBtn=$('#menuBtn'),sndBtn=$('#sndBtn');
 const coarse=window.matchMedia('(pointer: coarse)');
+const padBtn=$('#padBtn');
+let padOn=false;
+try{const sv=localStorage.getItem('rr-pad');padOn=sv!==null?sv==='1':(('ontouchstart' in window)||navigator.maxTouchPoints>0||coarse.matches||innerWidth<=820)}catch(_){padOn=coarse.matches}
 let scale=1;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const rnd=(a,b)=>a+Math.random()*(b-a);
@@ -308,6 +320,27 @@ document.querySelectorAll('[data-t]').forEach(b=>{
   b.addEventListener('lostpointercapture',up);
   b.addEventListener('contextmenu',e=>e.preventDefault());
 });
+// joystick: left/right walk, up is a jump press, down is a duck
+const stickEl=$('#stick'),knobEl=$('#knob');let stickId=null;
+function setDir(k,v){if(v&&!T.held[k]&&k==='up')T.edge.add('up');T.held[k]=v}
+function moveStick(e){
+  const r=stickEl.getBoundingClientRect(),R=r.width/2;
+  let dx=e.clientX-(r.left+R),dy=e.clientY-(r.top+R);
+  const len=Math.hypot(dx,dy),lim=R-18;
+  if(len>lim){dx*=lim/len;dy*=lim/len}
+  knobEl.style.transform='translate('+dx+'px,'+dy+'px)';
+  const nx=dx/R,ny=dy/R;
+  setDir('left',nx<-.28);setDir('right',nx>.28);setDir('up',ny<-.4);setDir('down',ny>.4);
+}
+function releaseStick(){
+  stickId=null;knobEl.style.transform='';
+  for(const k of ['left','right','up','down'])T.held[k]=false;
+}
+stickEl.addEventListener('pointerdown',e=>{e.preventDefault();stickId=e.pointerId;try{stickEl.setPointerCapture(e.pointerId)}catch(_){}moveStick(e)});
+stickEl.addEventListener('pointermove',e=>{if(e.pointerId===stickId){e.preventDefault();moveStick(e)}});
+stickEl.addEventListener('pointerup',e=>{if(e.pointerId===stickId)releaseStick()});
+stickEl.addEventListener('pointercancel',e=>{if(e.pointerId===stickId)releaseStick()});
+stickEl.addEventListener('contextmenu',e=>e.preventDefault());
 const padPrev=[{},{}];
 function padState(i){
   const gp=(navigator.getGamepads?navigator.getGamepads():[])[i];
@@ -1119,7 +1152,7 @@ new ResizeObserver(resize).observe(stageEl);
 function setScreen(menu){
   menuEl.hidden=!menu;stageEl.hidden=menu;
   pauseBtn.hidden=menu;menuBtn.hidden=menu;
-  touchEl.hidden=menu||!coarse.matches;
+  touchEl.hidden=menu||!padOn;padBtn.hidden=menu;padBtn.setAttribute('aria-pressed',String(padOn));
 }
 function toMenu(){
   G.phase='menu';G.paused=false;veil.hidden=true;setScreen(true);sfx('ui');
@@ -1208,7 +1241,11 @@ $('#stageSeg').addEventListener('click',e=>{
   G.stage=+b.dataset.stage;
   $('#stageSeg').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
 });
-coarse.addEventListener?.('change',()=>{touchEl.hidden=G.phase==='menu'||!coarse.matches});
+padBtn.addEventListener('click',()=>{
+  padOn=!padOn;touchEl.hidden=G.phase==='menu'||!padOn;padBtn.setAttribute('aria-pressed',String(padOn));
+  if(!padOn)releaseStick();
+  try{localStorage.setItem('rr-pad',padOn?'1':'0')}catch(_){}
+});
 
 /* ---------- Loop ---------- */
 buildCards();
