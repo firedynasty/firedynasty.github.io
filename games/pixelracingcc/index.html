@@ -112,6 +112,7 @@
 	  //
 	  function touch_update() {
 
+	  	if (padActive) return;   // the on-screen pad owns steering and braking while it is showing
 	  	if (! ongoingTouches.length && ! activate_flag ) return;
 	  	if (! activate_flag ) activate_flag = true;
 	  	keyLeft = false;
@@ -210,6 +211,7 @@
     var keyLeft        = false;
     var keyRight       = false;
     var keyFaster      = false;
+    var padActive      = false;                   // on-screen joystick showing: screen-half touch steering is off
     var keyCoast       = false;                   // UP / W held: lift off the accelerator (the gas is automatic)
     var keySlower      = false;
 
@@ -1037,6 +1039,7 @@
 
       function show(on) {
         pad.classList.toggle('on', on);
+        padActive = on;
         toggleBtn.classList.toggle('active', on);
         if (!on) { releaseStick(); btnBrake = btnCoast = false; apply(); }
         try { localStorage.setItem('pixelracing-pad', on ? '1' : '0'); } catch (err) {}
