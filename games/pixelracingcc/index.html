@@ -974,15 +974,15 @@
   <style>
     #pad { display: none; }
     #pad.on { display: block; }
-    #stick { position: absolute; z-index: 3; left: 24px; bottom: 28px; width: 150px; height: 150px; border-radius: 50%;
+    #stick { position: absolute; z-index: 3; left: 48px; bottom: 40px; width: 200px; height: 200px; border-radius: 50%;
              background: rgba(16,31,37,.45); border: 2px solid rgba(255,255,255,.35); touch-action: none; user-select: none; -webkit-user-select: none; }
-    #knob { position: absolute; left: 50%; top: 50%; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%;
+    #knob { position: absolute; left: 50%; top: 50%; width: 84px; height: 84px; margin: -42px 0 0 -42px; border-radius: 50%;
             background: rgba(255,255,255,.55); border: 2px solid rgba(255,255,255,.8); pointer-events: none; }
-    .padBtn { position: absolute; z-index: 3; right: 24px; width: 92px; height: 92px; border-radius: 50%; font: 700 14px/92px 'DM Mono', monospace; text-align: center; letter-spacing: .05em;
+    .padBtn { position: absolute; z-index: 3; right: 40px; width: 104px; height: 104px; border-radius: 50%; font: 700 15px/104px 'DM Mono', monospace; text-align: center; letter-spacing: .05em;
               color: #fff; background: rgba(16,31,37,.55); border: 2px solid rgba(255,255,255,.4); touch-action: none; user-select: none; -webkit-user-select: none; }
-    #padBrake { bottom: 28px; }
+    #padBrake { bottom: 40px; }
     #padBrake.down { background: rgba(255,0,0,.55); border-color: #ff4d4d; }
-    #padCoast { bottom: 134px; width: 76px; height: 76px; line-height: 76px; right: 32px; }
+    #padCoast { bottom: 156px; width: 84px; height: 84px; line-height: 84px; right: 50px; }
     #padCoast.down { background: rgba(255,200,0,.5); border-color: #ffc800; }
     #padToggle.active { border-color: var(--accent); color: var(--accent); }
   </style>
@@ -1008,7 +1008,7 @@
       function moveStick(e) {
         var r = stick.getBoundingClientRect(), R = r.width / 2;
         var dx = e.clientX - (r.left + R), dy = e.clientY - (r.top + R);
-        var len = Math.sqrt(dx*dx + dy*dy), lim = R - 20;
+        var len = Math.sqrt(dx*dx + dy*dy), lim = R - 26;
         if (len > lim) { dx *= lim/len; dy *= lim/len; }
         knob.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
         var nx = dx / R, ny = dy / R;
