@@ -44,10 +44,24 @@ body.demo #demoBanner { display:block; }
 .lv button { padding:12px 6px; border-radius:12px; }
 .lv button b { display:block; font:700 15px var(--display); }
 .lv button small { display:block; color:var(--dim); font-size:10px; margin-top:2px; }
-#touch { display:none; position:fixed; left:0; right:0; bottom:0; padding:10px 14px; justify-content:space-between; pointer-events:none; z-index:4; }
-#touch div { display:flex; gap:10px; pointer-events:auto; }
-#touch button { width:64px; height:64px; border-radius:50%; font-size:20px; padding:0; background:rgba(14,26,42,.8); user-select:none; -webkit-user-select:none; touch-action:none; }
-@media (pointer:coarse) { #touch { display:flex; } }
+/* on-screen pad: joystick (walk left/right) on the left, JUMP and THROW on the right. Faint so the level stays visible. */
+#touch { display:none; position:fixed; left:0; right:0; bottom:0; height:0; pointer-events:none; z-index:4; }
+#touch.on { display:block; }
+#touch > * { pointer-events:auto; }
+#stick { position:absolute; left:80px; bottom:80px; width:180px; height:180px; border-radius:50%; background:rgba(14,26,42,.14); border:2px solid rgba(255,255,255,.2); touch-action:none; user-select:none; -webkit-user-select:none; }
+#knob { position:absolute; left:50%; top:50%; width:76px; height:76px; margin:-38px 0 0 -38px; border-radius:50%; background:rgba(255,255,255,.24); border:2px solid rgba(255,255,255,.38); pointer-events:none; }
+#touch .tb { position:absolute; border-radius:50%; display:flex; align-items:center; justify-content:center; font:700 15px var(--mono); letter-spacing:.06em; color:rgba(255,255,255,.55); background:rgba(14,26,42,.12); border:2px solid rgba(255,255,255,.22); touch-action:none; user-select:none; -webkit-user-select:none; }
+#touch .tb.down { background:rgba(120,200,255,.5); border-color:rgba(160,220,255,.9); color:#fff; }
+/* JUMP sits in the corner, THROW up and to its left on a diagonal */
+#tJ { right:70px; bottom:80px; width:140px; height:140px; }
+#tT { right:200px; bottom:200px; width:116px; height:116px; }
+@media (max-width:500px) {
+  #stick { left:30px; bottom:70px; width:140px; height:140px; }
+  #knob { width:60px; height:60px; margin:-30px 0 0 -30px; }
+  #tJ { right:28px; bottom:70px; width:112px; height:112px; }
+  #tT { right:118px; bottom:166px; width:96px; height:96px; font-size:13px; }
+}
+button.padon { border-color:var(--accent); color:var(--accent); }
 @media (max-width:1280px) { kbd { display:none; } .chip { padding:6px 10px; } }
 @media (max-width:760px) { .bar { flex-wrap:wrap; } .btns { margin-left:0; justify-content:flex-start; } kbd { display:none; } }
 </style>
@@ -66,6 +80,7 @@ body.demo #demoBanner { display:block; }
     <button id="bRestart" title="Restart level (R)">Restart<kbd>R</kbd></button>
     <button id="bLevels" title="Levels (L)">Levels<kbd>L</kbd></button>
     <button id="bInfo" title="How to play (I)">Info<kbd>I</kbd></button>
+    <button id="bPad" title="Show or hide the on-screen joystick and buttons">Pad</button>
     <button id="bSound" title="Sound (M)">Sound on</button>
     <a class="btn" href="../games.html">All games</a>
   </div>
@@ -74,8 +89,9 @@ body.demo #demoBanner { display:block; }
 <div id="stage"><canvas id="c"></canvas><div id="demoBanner">Autopilot &middot; press a key to take over</div></div>
 
 <div id="touch">
-  <div><button id="tL">&larr;</button><button id="tR">&rarr;</button></div>
-  <div><button id="tT">&#9679;</button><button id="tJ">&uarr;</button></div>
+  <div id="stick" aria-label="Joystick: walk left and right"><div id="knob"></div></div>
+  <div id="tT" class="tb">THROW</div>
+  <div id="tJ" class="tb">JUMP</div>
 </div>
 
 <div class="overlay show" id="o_start"><div class="panel">
@@ -941,11 +957,41 @@ bind('bRetry', function () { newGame(lvl); hideOv(); }); bind('bAgain', function
 bind('bInfoClose', closeSide); bind('bLevelsClose', closeSide);
 bind('bDemo', function () { setDemo(!demo); }); bind('bPause', function () { if (playing()) pauseGame(); else if (ov === 'pause') hideOv(); });
 bind('bRestart', restartLevel); bind('bLevels', function () { openSide('levels'); }); bind('bInfo', function () { openSide('info'); }); bind('bSound', toggleMute);
-[['tL', 'l'], ['tR', 'r'], ['tJ', 'j'], ['tT', 't']].forEach(function (a) {
+// on-screen pad: the joystick only walks, JUMP and THROW are held buttons. Toggle it with the Pad button (remembered).
+[['tJ', 'j'], ['tT', 't']].forEach(function (a) {
   var el = $(a[0]);
-  el.addEventListener('pointerdown', function (e) { e.preventDefault(); touch[a[1]] = 1; if (demo) setDemo(false); });
-  ['pointerup', 'pointercancel', 'pointerleave'].forEach(function (n) { el.addEventListener(n, function () { touch[a[1]] = 0; }); });
+  var up = function () { touch[a[1]] = 0; el.classList.remove('down'); };
+  el.addEventListener('pointerdown', function (e) { e.preventDefault(); try { el.setPointerCapture(e.pointerId); } catch (x) {} touch[a[1]] = 1; el.classList.add('down'); if (demo) setDemo(false); });
+  ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(function (n) { el.addEventListener(n, up); });
+  el.addEventListener('contextmenu', function (e) { e.preventDefault(); });
 });
+var stickEl = $('stick'), knobEl = $('knob'), stickId = null;
+function moveStick(e) {
+  var r = stickEl.getBoundingClientRect(), R = r.width / 2;
+  var dx = e.clientX - (r.left + R), dy = e.clientY - (r.top + R);
+  var len = Math.sqrt(dx * dx + dy * dy), lim = R - 20;
+  if (len > lim) { dx *= lim / len; dy *= lim / len; }
+  knobEl.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+  touch.l = dx / R < -0.25 ? 1 : 0; touch.r = dx / R > 0.25 ? 1 : 0;
+  if (demo && (touch.l || touch.r)) setDemo(false);
+}
+function releaseStick() { stickId = null; knobEl.style.transform = ''; touch.l = 0; touch.r = 0; }
+stickEl.addEventListener('pointerdown', function (e) { e.preventDefault(); stickId = e.pointerId; try { stickEl.setPointerCapture(e.pointerId); } catch (x) {} moveStick(e); });
+stickEl.addEventListener('pointermove', function (e) { if (e.pointerId === stickId) { e.preventDefault(); moveStick(e); } });
+stickEl.addEventListener('pointerup', function (e) { if (e.pointerId === stickId) releaseStick(); });
+stickEl.addEventListener('pointercancel', function (e) { if (e.pointerId === stickId) releaseStick(); });
+stickEl.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+var padOn = false;
+function showPad(on) {
+  padOn = on; $('touch').classList.toggle('on', on); $('bPad').classList.toggle('padon', on);
+  if (!on) { releaseStick(); touch.j = 0; touch.t = 0; }
+  try { localStorage.setItem('shell-hopper-pad', on ? '1' : '0'); } catch (x) {}
+}
+bind('bPad', function () { showPad(!padOn); });
+(function () {
+  var sv = null; try { sv = localStorage.getItem('shell-hopper-pad'); } catch (x) {}
+  showPad(sv !== null ? sv === '1' : (('ontouchstart' in window) || navigator.maxTouchPoints > 0 || window.innerWidth <= 820 || (window.matchMedia && matchMedia('(any-pointer: coarse)').matches)));
+})();
 $('bSound').textContent = muted ? 'Sound off' : 'Sound on';
 
 /* ---------- boot ---------- */
