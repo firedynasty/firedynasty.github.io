@@ -1045,7 +1045,7 @@
 
       var saved = null;
       try { saved = localStorage.getItem('pixelracing-pad'); } catch (err) {}
-      show(saved !== null ? saved === '1' : (window.matchMedia && matchMedia('(pointer: coarse)').matches));
+      show(saved !== null ? saved === '1' : (('ontouchstart' in window) || navigator.maxTouchPoints > 0 || window.innerWidth <= 820 || (window.matchMedia && matchMedia('(any-pointer: coarse)').matches)));
     })();
   </script>
 
