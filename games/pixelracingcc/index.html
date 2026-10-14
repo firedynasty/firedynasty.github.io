@@ -50,11 +50,12 @@
       <button id="pause" onclick="togglePause(); this.blur();" title="Pause (Esc or Enter)">&#10074;&#10074; Pause<kbd>Enter</kbd></button>
       <button id="info" onclick="toggleInfo(); this.blur();" title="About this game">Info</button>
       <button id="daynight"></button>
+      <button id="padToggle" onclick="togglePad(); this.blur();" title="Show or hide the on-screen joystick and buttons">Pad</button>
     </div>
     <div id="infoModal" style="display:none;">
       <div class="head"><span>Pixel Racing</span><span class="close" onclick="toggleInfo()">&times;</span></div>
       <p>A retro pseudo-3D racer based on Jake Gordon's JavaScript Racer.</p>
-      <p>The gas is automatic. Steer with the left and right arrows (or A and D), or touch the left or right side of the screen. Hold Up or W to coast. Hold Down, S or Space, or touch and hold the lap map, to brake. Enter or Esc pauses, T lets the computer drive.</p>
+      <p>The gas is automatic. Steer with the left and right arrows (or A and D), or touch the left or right side of the screen. Hold Up or W to coast. Hold Down, S or Space, or touch and hold the lap map, to brake. Enter or Esc pauses, T lets the computer drive. The Pad button shows an on-screen joystick (steer, up to coast, down to brake) with Coast and Brake buttons.</p>
       <h3>Credits</h3>
       <div><a href="https://github.com/yauhahu/pixelracingcc" target="_blank" rel="noopener">Source on GitHub</a></div>
       <div><a href="https://jakesgordon.com/writing/javascript-racer/" target="_blank" rel="noopener">Original by Jake Gordon</a></div>
@@ -966,6 +967,86 @@
 
     //=========================================================================
 
+  </script>
+
+  <style>
+    #pad { display: none; }
+    #pad.on { display: block; }
+    #stick { position: absolute; z-index: 3; left: 24px; bottom: 28px; width: 150px; height: 150px; border-radius: 50%;
+             background: rgba(16,31,37,.45); border: 2px solid rgba(255,255,255,.35); touch-action: none; user-select: none; -webkit-user-select: none; }
+    #knob { position: absolute; left: 50%; top: 50%; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%;
+            background: rgba(255,255,255,.55); border: 2px solid rgba(255,255,255,.8); pointer-events: none; }
+    .padBtn { position: absolute; z-index: 3; right: 24px; width: 92px; height: 92px; border-radius: 50%; font: 700 14px/92px 'DM Mono', monospace; text-align: center; letter-spacing: .05em;
+              color: #fff; background: rgba(16,31,37,.55); border: 2px solid rgba(255,255,255,.4); touch-action: none; user-select: none; -webkit-user-select: none; }
+    #padBrake { bottom: 28px; }
+    #padBrake.down { background: rgba(255,0,0,.55); border-color: #ff4d4d; }
+    #padCoast { bottom: 134px; width: 76px; height: 76px; line-height: 76px; right: 32px; }
+    #padCoast.down { background: rgba(255,200,0,.5); border-color: #ffc800; }
+    #padToggle.active { border-color: var(--accent); color: var(--accent); }
+  </style>
+  <div id="pad">
+    <div id="stick"><div id="knob"></div></div>
+    <div id="padCoast" class="padBtn">COAST</div>
+    <div id="padBrake" class="padBtn">BRAKE</div>
+  </div>
+  <script>
+    // on-screen pad: joystick on the left (steer, up = coast, down = brake) and buttons on the right.
+    // it drives the same key flags as the keyboard. toggle it with the Pad button; the choice is remembered.
+    (function() {
+      var pad = document.getElementById('pad'), stick = document.getElementById('stick'), knob = document.getElementById('knob');
+      var brakeBtn = document.getElementById('padBrake'), coastBtn = document.getElementById('padCoast'), toggleBtn = document.getElementById('padToggle');
+      var stickId = null, stickBrake = false, stickCoast = false, btnBrake = false, btnCoast = false;
+      var DEAD = 0.25;   // fraction of the stick radius before it registers
+
+      function apply() {
+        if (demo) stopDemo();
+        keySlower = stickBrake || btnBrake;
+        keyCoast  = stickCoast || btnCoast;
+      }
+      function moveStick(e) {
+        var r = stick.getBoundingClientRect(), R = r.width / 2;
+        var dx = e.clientX - (r.left + R), dy = e.clientY - (r.top + R);
+        var len = Math.sqrt(dx*dx + dy*dy), lim = R - 20;
+        if (len > lim) { dx *= lim/len; dy *= lim/len; }
+        knob.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+        var nx = dx / R, ny = dy / R;
+        keyLeft  = nx < -DEAD;
+        keyRight = nx >  DEAD;
+        stickCoast = ny < -DEAD * 1.5 && Math.abs(ny) > Math.abs(nx);
+        stickBrake = ny >  DEAD * 1.5 && Math.abs(ny) > Math.abs(nx);
+        apply();
+      }
+      function releaseStick() {
+        stickId = null; knob.style.transform = '';
+        keyLeft = keyRight = false; stickBrake = stickCoast = false; apply();
+      }
+      stick.addEventListener('pointerdown', function(e) { e.preventDefault(); stickId = e.pointerId; stick.setPointerCapture(e.pointerId); moveStick(e); });
+      stick.addEventListener('pointermove', function(e) { if (e.pointerId === stickId) { e.preventDefault(); moveStick(e); } });
+      stick.addEventListener('pointerup', function(e) { if (e.pointerId === stickId) releaseStick(); });
+      stick.addEventListener('pointercancel', function(e) { if (e.pointerId === stickId) releaseStick(); });
+
+      function hold(btn, set) {
+        var up = function(e) { e.preventDefault(); set(false); btn.classList.remove('down'); apply(); };
+        btn.addEventListener('pointerdown', function(e) { e.preventDefault(); btn.setPointerCapture(e.pointerId); set(true); btn.classList.add('down'); apply(); });
+        btn.addEventListener('pointerup', up);
+        btn.addEventListener('pointercancel', up);
+      }
+      hold(brakeBtn, function(v) { btnBrake = v; });
+      hold(coastBtn, function(v) { btnCoast = v; });
+      [stick, brakeBtn, coastBtn].forEach(function(el) { el.addEventListener('contextmenu', function(e) { e.preventDefault(); }); });
+
+      function show(on) {
+        pad.classList.toggle('on', on);
+        toggleBtn.classList.toggle('active', on);
+        if (!on) { releaseStick(); btnBrake = btnCoast = false; apply(); }
+        try { localStorage.setItem('pixelracing-pad', on ? '1' : '0'); } catch (err) {}
+      }
+      window.togglePad = function() { show(!pad.classList.contains('on')); };
+
+      var saved = null;
+      try { saved = localStorage.getItem('pixelracing-pad'); } catch (err) {}
+      show(saved !== null ? saved === '1' : (window.matchMedia && matchMedia('(pointer: coarse)').matches));
+    })();
   </script>
 
 </body> 
