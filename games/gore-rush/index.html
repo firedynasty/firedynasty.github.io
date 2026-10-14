@@ -484,8 +484,11 @@ if(!fsReq)fsBtn.style.display='none';
 fsBtn.addEventListener('pointerdown',e=>e.stopPropagation());
 fsBtn.addEventListener('click',e=>{e.currentTarget.blur();
   try{if(fsEl()){(document.exitFullscreen||document.webkitExitFullscreen).call(document)}
-      else{const q=fsReq.call(root);if(q&&q.catch)q.catch(()=>{})}}catch(_){}});
-['fullscreenchange','webkitfullscreenchange'].forEach(n=>document.addEventListener(n,()=>{fsBtn.classList.toggle('on',!!fsEl());fsBtn.textContent=fsEl()?'Exit':'Full'}));
+      else{const q=fsReq.call(root);if(q&&q.then)q.then(lockLandscape).catch(()=>{});else lockLandscape()}}catch(_){}});
+// on Android Chrome, full screen can also force landscape even when auto-rotate is off; it lets go when you leave full screen
+function lockLandscape(){try{const o=screen.orientation;if(o&&o.lock){const q=o.lock('landscape');if(q&&q.catch)q.catch(()=>{})}}catch(_){}}
+function unlockOrientation(){try{if(screen.orientation&&screen.orientation.unlock)screen.orientation.unlock()}catch(_){}}
+['fullscreenchange','webkitfullscreenchange'].forEach(n=>document.addEventListener(n,()=>{if(!fsEl())unlockOrientation();fsBtn.classList.toggle('on',!!fsEl());fsBtn.textContent=fsEl()?'Exit':'Full'}));
 {let sv=null;try{sv=localStorage.getItem('gore-rush-pad')}catch(_){}
  showPad(sv!==null?sv==='1':(isTouch||innerWidth<=820||matchMedia('(any-pointer: coarse)').matches))}
 cv.addEventListener('touchstart',e=>{e.preventDefault();const t=e.changedTouches[0];lookId=t.identifier;lookLast=t.clientX;lookLastY=t.clientY},{passive:false});
