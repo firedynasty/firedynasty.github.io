@@ -79,7 +79,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .dpad [data-t="left"]{grid-column:1;grid-row:2}
 .dpad [data-t="down"]{grid-column:2;grid-row:2}
 .dpad [data-t="right"]{grid-column:3;grid-row:2}
-.acts{grid-template-columns:repeat(2,70px);grid-template-rows:repeat(2,58px)}
+.acts{grid-template-columns:repeat(3,70px);grid-template-rows:repeat(2,58px)}
 .touch button{background:var(--deck-2);border:1px solid var(--line);border-radius:6px;font:700 13px var(--f-body);letter-spacing:.06em;text-transform:uppercase;touch-action:none}
 .touch button.on{background:var(--ember);border-color:var(--ember);color:#1a0b06}
 
@@ -165,6 +165,7 @@ html{background:#0a0c17}
       <button type="button" data-t="kick">Kick</button>
       <button type="button" data-t="block">Block</button>
       <button type="button" data-t="special">Special</button>
+      <button type="button" data-t="spear">Spear</button>
     </div>
   </div>
 
@@ -177,8 +178,9 @@ html{background:#0a0c17}
         <dt>Punch / Kick</dt><dd><kbd>F</kbd> <kbd>G</kbd></dd>
         <dt>Block</dt><dd><kbd>H</kbd></dd>
         <dt>Special</dt><dd><kbd>T</kbd></dd>
+        <dt>Spear</dt><dd><kbd>R</kbd></dd>
       </dl>
-      <p style="margin-top:10px">Against the CPU you can also use the arrow keys to move, and <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd> <kbd>I</kbd> for punch, kick, block, special.</p>
+      <p style="margin-top:10px">Against the CPU you can also use the arrow keys to move, and <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd> <kbd>I</kbd> <kbd>U</kbd> for punch, kick, block, special, spear.</p>
     </div>
     <div style="--c:#35d0ff">
       <h3>Player 2</h3>
@@ -188,6 +190,7 @@ html{background:#0a0c17}
         <dt>Punch / Kick</dt><dd><kbd>,</kbd> <kbd>.</kbd></dd>
         <dt>Block</dt><dd><kbd>/</kbd></dd>
         <dt>Special</dt><dd><kbd>M</kbd></dd>
+        <dt>Spear</dt><dd><kbd>N</kbd></dd>
       </dl>
     </div>
     <div>
@@ -195,8 +198,9 @@ html{background:#0a0c17}
       <p>Block stops almost all damage. Punches pass over a ducking fighter, kicks do not.</p>
       <p>Landing hits fills the SP meter. At 50 you can throw a projectile.</p>
       <p>Chain hits before the opponent recovers and each one hurts a little less. <kbd>P</kbd> or <kbd>Enter</kbd> pauses. <kbd>Enter</kbd> also starts a match and rematches.</p>
+      <p>Spear: lunge and tackle your opponent flat on the ground. It hits hard, but you end up on the ground too, a blocked spear leaves you wide open, and you can jump over it. There is a short wait before you can spear again.</p>
       <p>Moves buffer: press an attack a split second early and it comes out as soon as you recover.</p>
-      <p>Gamepad: D-pad or stick moves and jumps, X punch, A kick, B or a bumper blocks, Y special. Pad 1 plays Player 1, pad 2 plays Player 2.</p>
+      <p>Gamepad: D-pad or stick moves and jumps, X punch, A kick, B or the left bumper blocks, Y special, right bumper spear. Pad 1 plays Player 1, pad 2 plays Player 2.</p>
     </div>
   </section>
 </div>
@@ -229,7 +233,7 @@ const CHARS=[
 ];
 
 const G={phase:'menu',mode:1,diff:'normal',stage:0,charge:0,chargeF:null,slowT:0,sel:[2,0],round:1,wins:[0,0],fighters:[],proj:[],parts:[],hitstop:0,shake:0,flash:0,t:0,pt:0,timer:0,msg:null,msgT:0,slow:false,paused:false,combo:[{n:0,t:0},{n:0,t:0}]};
-const blank=()=>({left:false,right:false,down:false,block:false,pu:false,pp:false,pk:false,ps:false});
+const blank=()=>({left:false,right:false,down:false,block:false,pu:false,pp:false,pk:false,ps:false,pw:false});
 
 function makeFighter(side){
   const c=CHARS[G.sel[side]];
@@ -239,18 +243,21 @@ function makeFighter(side){
 function resetFighter(f){
   Object.assign(f,{x:f.side?W/2+170:W/2-170,y:GROUND,vx:0,vy:0,face:f.side?-1:1,hp:100,ghost:100,ghostDelay:0,meter:0,
     state:'idle',atk:null,hitstun:0,blockstun:0,grounded:true,crouch:false,crouchBlock:false,anim:0,koT:0,juggle:0,walkDir:0});
-  f.ai={t:0,plan:'hold',seen:0,blockDec:false,hold:0};f.buf={pp:0,pk:0,ps:0};
+  f.ai={t:0,plan:'hold',seen:0,blockDec:false,hold:0};f.buf={pp:0,pk:0,ps:0,pw:0};f.spCd=0;f.inv=0;f.down=0;
 }
 
 function atkDef(f,type){
   const c=f.c;
   if(type==='punch') return {type,su:4+c.slow,ac:3,rc:9+(c.slow>0?1:0),dmg:6*c.pow,hs:15,bs:9,kb:3.2,stop:5,box:[12,30+c.reach,-142,-108]};
   if(type==='kick') return {type,su:8+c.slow,ac:4,rc:15,dmg:10*c.pow,hs:22,bs:14,kb:6.5,stop:8,box:[12,44+c.reach,-90,-38]};
+  if(type==='spear') return {type,su:9,ac:14,rc:30,dmg:13*c.pow,hs:0,bs:16,kb:5,stop:9,lunge:10.5,box:[-8,72,-132,-28]};
   return {type:'special',su:14+c.slow,ac:0,rc:26,dmg:0,hs:0,bs:0,kb:0,stop:0,box:[0,0,0,0]};
 }
 function startAtk(f,type){
   if(type==='special'&&!f.grounded) return;
-  const a=atkDef(f,type);a.fr=0;a.hit=false;a.crouch=f.crouch;
+  if(type==='spear'&&(!f.grounded||f.spCd>0)) return;
+  const a=atkDef(f,type);a.fr=0;a.hit=false;a.crouch=type==='spear'?false:f.crouch;
+  if(type==='spear'){f.spCd=110;f.crouch=false}
   f.atk=a;f.state='atk';
   if(type==='special'){f.meter-=50;G.charge=CHARGE;G.chargeF=f;sfx('charge')}else sfx('whoosh');
 }
@@ -273,9 +280,9 @@ function chargeFx(){
 }
 
 /* ---------- Input ---------- */
-const K1A={left:['KeyA','ArrowLeft'],right:['KeyD','ArrowRight'],up:['KeyW','ArrowUp'],down:['KeyS','ArrowDown'],punch:['KeyF','KeyJ','KeyZ'],kick:['KeyG','KeyK','KeyX'],block:['KeyH','KeyL','KeyC'],special:['KeyT','KeyI','KeyV']};
-const K1B={left:['KeyA'],right:['KeyD'],up:['KeyW'],down:['KeyS'],punch:['KeyF'],kick:['KeyG'],block:['KeyH'],special:['KeyT']};
-const K2={left:['ArrowLeft'],right:['ArrowRight'],up:['ArrowUp'],down:['ArrowDown'],punch:['Comma'],kick:['Period'],block:['Slash'],special:['KeyM']};
+const K1A={left:['KeyA','ArrowLeft'],right:['KeyD','ArrowRight'],up:['KeyW','ArrowUp'],down:['KeyS','ArrowDown'],punch:['KeyF','KeyJ','KeyZ'],kick:['KeyG','KeyK','KeyX'],block:['KeyH','KeyL','KeyC'],special:['KeyT','KeyI','KeyV'],spear:['KeyR','KeyU','KeyB']};
+const K1B={left:['KeyA'],right:['KeyD'],up:['KeyW'],down:['KeyS'],punch:['KeyF'],kick:['KeyG'],block:['KeyH'],special:['KeyT'],spear:['KeyR']};
+const K2={left:['ArrowLeft'],right:['ArrowRight'],up:['ArrowUp'],down:['ArrowDown'],punch:['Comma'],kick:['Period'],block:['Slash'],special:['KeyM'],spear:['KeyN']};
 const GAMEKEYS=new Set(['Space','KeyP','Escape'].concat(...[K1A,K2].map(m=>[].concat(...Object.values(m)))));
 const held=new Set(),edge=new Set();
 const T={held:{},edge:new Set()};
@@ -310,23 +317,23 @@ function padState(i){
   if(!gp)return null;
   const b=n=>!!(gp.buttons[n]&&gp.buttons[n].pressed),ax=n=>gp.axes[n]||0;
   const cur={left:b(14)||ax(0)<-.5,right:b(15)||ax(0)>.5,up:b(12)||ax(1)<-.6,down:b(13)||ax(1)>.6,
-    punch:b(2),kick:b(0),block:b(1)||b(4)||b(5)||b(6)||b(7),special:b(3)};
+    punch:b(2),kick:b(0),block:b(1)||b(4)||b(6)||b(7),special:b(3),spear:b(5)};
   const pv=padPrev[i],r={left:cur.left,right:cur.right,down:cur.down,block:cur.block,
-    pu:cur.up&&!pv.up,pp:cur.punch&&!pv.punch,pk:cur.kick&&!pv.kick,ps:cur.special&&!pv.special};
+    pu:cur.up&&!pv.up,pp:cur.punch&&!pv.punch,pk:cur.kick&&!pv.kick,ps:cur.special&&!pv.special,pw:cur.spear&&!pv.spear};
   padPrev[i]=cur;return r;
 }
 function readHuman(map,touch,pad){
   const h=k=>map[k].some(c=>held.has(c))||(touch&&!!T.held[k]);
   const e=k=>map[k].some(c=>edge.has(c))||(touch&&T.edge.has(k));
-  const r={left:h('left'),right:h('right'),down:h('down'),block:h('block'),pu:e('up'),pp:e('punch'),pk:e('kick'),ps:e('special')};
+  const r={left:h('left'),right:h('right'),down:h('down'),block:h('block'),pu:e('up'),pp:e('punch'),pk:e('kick'),ps:e('special'),pw:e('spear')};
   const g=pad==null?null:padState(pad);
   if(g)for(const k in r)r[k]=r[k]||g[k];
   return r;
 }
 // Presses made during the last few frames of a recovery still count, so moves chain without frame-perfect timing.
 function bufInput(f,i){
-  const B=f.buf||(f.buf={pp:0,pk:0,ps:0});
-  for(const k of ['pp','pk','ps']){if(i[k])B[k]=6;else if(B[k]>0)B[k]--;i[k]=B[k]>0}
+  const B=f.buf||(f.buf={pp:0,pk:0,ps:0,pw:0});
+  for(const k of ['pp','pk','ps','pw']){if(i[k])B[k]=6;else if(B[k]>0)B[k]--;i[k]=B[k]>0}
   return i;
 }
 
@@ -351,7 +358,9 @@ function aiInput(f,o){
     else if(dist>135) A.plan=r<D.aggr?'approach':r<D.aggr+.18?'kick':r<.88?'hold':'retreat';
     else A.plan=r<D.aggr?(Math.random()<.55?'punch':'kick'):r<D.aggr+.15?'retreat':r<.93?'crouchblock':'hold';
   }
+  if(A.t>=Math.round(D.think*.6)&&dist>140&&dist<300&&f.grounded&&!f.spCd&&Math.random()<D.aggr*.2)A.plan='spear';
   switch(A.plan){
+    case 'spear':i.pw=true;A.plan='hold';A.t=Math.max(A.t,20);break;
     case 'approach':go(tw);break;
     case 'retreat':go(-tw);break;
     case 'jump':if(f.grounded){i.pu=true;go(tw)}A.plan='hold';break;
@@ -374,12 +383,25 @@ function stepFighter(f,o,inp){
     if(f.y>=GROUND){f.y=GROUND;if(f.vy>3){f.vy=-f.vy*.3;f.vx*=.6;dust(f.x,GROUND,8)}else{f.vy=0;f.vx*=.8}}
     f.x=clamp(f.x,XMIN,XMAX);return;
   }
+  if(f.spCd>0)f.spCd--;
+  if(f.inv>0)f.inv--;
+  if(f.down>0){
+    f.down--;f.state='down';f.crouch=false;f.atk=null;f.hitstun=0;f.blockstun=0;
+    if(!f.grounded){f.vy+=GRAV;f.y+=f.vy;if(f.y>=GROUND){f.y=GROUND;f.vy=0;f.grounded=true;dust(f.x,GROUND,10);G.shake=Math.max(G.shake,6)}}
+    f.x=clamp(f.x+f.vx,XMIN,XMAX);f.vx*=f.grounded?.88:.99;
+    if(f.down===0){f.state='idle';f.inv=22}
+    return;
+  }
   f.crouch=false;
   if(f.hitstun>0){f.hitstun--;f.state='hit'}
   else if(f.blockstun>0){f.blockstun--;f.state='block';f.crouch=f.crouchBlock}
   else if(f.atk){
     const a=f.atk;a.fr++;f.state='atk';f.crouch=a.crouch;
-    if(f.grounded)f.vx*=.7;
+    if(a.type==='spear'){
+      if(a.fr===a.su){dust(f.x,GROUND,6);sfx('kick')}
+      if(a.fr>=a.su&&a.fr<=a.su+a.ac)f.vx=f.face*a.lunge*(1-.45*(a.fr-a.su)/a.ac);
+      else f.vx*=a.fr>a.su+a.ac?.88:.5;
+    }else if(f.grounded)f.vx*=.7;
     if(a.type==='special'&&a.fr===a.su)spawnProj(f);
     if(a.fr>=a.su+a.ac+a.rc){f.atk=null;f.state=f.grounded?'idle':'jump'}
   }else{
@@ -393,7 +415,8 @@ function stepFighter(f,o,inp){
       if(inp.pu&&!inp.down){f.vy=-c.jump;f.grounded=false;f.vx=dir*c.speed*1.15;f.state='jump';dust(f.x,GROUND,4)}
     }else f.state='jump';
     if(!(f.grounded&&inp.block)){
-      if(inp.pp)startAtk(f,'punch');
+      if(inp.pw&&f.grounded&&!f.spCd)startAtk(f,'spear');
+      else if(inp.pp)startAtk(f,'punch');
       else if(inp.pk)startAtk(f,'kick');
       else if(inp.ps&&f.meter>=50&&f.grounded&&!G.proj.some(p=>p.owner===f))startAtk(f,'special');
     }
@@ -430,7 +453,7 @@ function collectHits(){
   const [a,b]=G.fighters,ev=[];
   for(const [att,def] of [[a,b],[b,a]]){
     const hb=boxOf(att),hu=hurt(def);
-    if(hb&&ov(hb,hu)){
+    if(hb&&ov(hb,hu)&&!def.down&&!def.inv){
       att.atk.hit=true;
       const top=Math.max(hb.y,hu.y),bot=Math.min(hb.y+hb.h,hu.y+hu.h);
       ev.push({att,def,p:att.atk,dir:sgn(def.x-att.x),y:(top+bot)/2});
@@ -439,7 +462,7 @@ function collectHits(){
   for(const p of G.proj){
     if(p.dead)continue;
     const def=p.owner===a?b:a;
-    if(ov({x:p.x-22,y:p.y-22,w:44,h:44},hurt(def))){
+    if(!def.down&&!def.inv&&ov({x:p.x-22,y:p.y-22,w:44,h:44},hurt(def))){
       p.dead=true;
       ev.push({att:p.owner,def,p:{dmg:p.dmg,hs:26,bs:14,kb:6,stop:6,type:'proj'},dir:sgn(p.vx),y:p.y});
     }
@@ -463,6 +486,7 @@ function applyHit(e){
     def.hp=Math.max(1,def.hp-chip);def.ghostDelay=20;
     def.blockstun=p.bs;def.vx=dir*p.kb*.9;
     att.meter=Math.min(100,att.meter+3);def.meter=Math.min(100,def.meter+2);
+    if(p.type==='spear'&&att.atk){att.vx=-dir*3;att.atk.rc+=16;att.atk.fr=Math.max(att.atk.fr,att.atk.su+att.atk.ac)}
     spark(sx,e.y,'block',dir);sfx('block');G.shake=Math.max(G.shake,3);
     G.hitstop=Math.max(G.hitstop,3);
     return;
@@ -478,10 +502,15 @@ function applyHit(e){
   const dmg=Math.max(1,Math.round(p.dmg*scaleD));
   def.hp-=dmg;def.ghostDelay=26;
   def.hitstun=p.hs;def.atk=null;def.state='hit';def.vx=dir*p.kb;
+  if(p.type==='spear'){
+    def.hitstun=0;def.state='down';def.down=66;def.vx=dir*8;def.vy=-6;def.grounded=false;att.vx*=.45;
+    for(let k=0;k<2;k++)G.parts.push({x:sx,y:e.y,ring:true,r:8+k*12,life:12+k*4,max:16});
+    for(let k=0;k<3;k++)spark(sx+rnd(-18,18),e.y+rnd(-30,30),'hit',dir);
+  }
   att.meter=Math.min(100,att.meter+7);def.meter=Math.min(100,def.meter+5);
   spark(sx,e.y,'hit',dir);
-  sfx(p.type==='kick'?'kick':p.type==='proj'?'projhit':'punch');
-  G.shake=Math.max(G.shake,p.type==='kick'?9:6);
+  sfx(p.type==='kick'||p.type==='spear'?'kick':p.type==='proj'?'projhit':'punch');
+  G.shake=Math.max(G.shake,p.type==='spear'?13:p.type==='kick'?9:6);
   G.hitstop=Math.max(G.hitstop,p.stop);
   if(def.juggle>=2)G.combo[att.side]={n:def.juggle,t:100};
   if(def.hp<=0){
@@ -517,7 +546,7 @@ function simStep(){
       const i0=bufInput(a,readHuman(G.mode===1?K1A:K1B,true,0));
       const i1=b.cpu?aiInput(b,a):bufInput(b,readHuman(K2,false,1));
       stepFighter(a,b,i0);stepFighter(b,a,i1);
-      for(const f of [a,b])if(f.buf&&f.atk&&f.atk.fr===0)f.buf.pp=f.buf.pk=f.buf.ps=0;
+      for(const f of [a,b])if(f.buf&&f.atk&&f.atk.fr===0)f.buf.pp=f.buf.pk=f.buf.ps=f.buf.pw=0;
       for(const p of G.proj){p.x+=p.vx;p.age++;if(p.x<-40||p.x>W+40)p.dead=true}
       collectHits();
       pushApart(a,b);
@@ -646,6 +675,9 @@ function poseOf(f){
       P.sh.x-=2;P.hd.x-=1;
       P.hF.x=f.crouch?30:28;P.hF.y=f.crouch?-104:-136;P.hB.x=f.crouch?26:24;P.hB.y=f.crouch?-90:-112;
       break;
+    case 'down':
+      P.hip.x=-4;P.hip.y=-16;P.sh.x=-40;P.sh.y=-20;P.hd.x=-70;P.hd.y=-22;P.hF.x=-20;P.hF.y=-40;P.hB.x=-48;P.hB.y=-34;P.fF.x=34;P.fF.y=-10;P.fB.x=22;P.fB.y=-4;
+      break;
     case 'hit':case 'ko':
       P.sh.x=-12;P.sh.y=-124;P.hd.x=-14;P.hd.y=-146;P.hip.x=-6;P.hF.x=10;P.hF.y=-100;P.hB.x=-4;P.hB.y=-98;P.fF.x=14;P.fB.x=-24;
       break;
@@ -659,6 +691,9 @@ function poseOf(f){
       }else if(a.type==='kick'){
         P.fF.x=lerp(22,56+c.reach,e);P.fF.y=lerp(f.grounded?0:-36,f.crouch?-30:f.grounded?-64:-52,e);
         P.sh.x-=e*14;P.hd.x-=e*16;P.hip.x-=e*8;P.hF.y-=e*6;P.fB.x=lerp(P.fB.x,-24,e);
+      }else if(a.type==='spear'){
+        const D={hip:{x:-30,y:-34},sh:{x:12,y:-42},hd:{x:44,y:-48},hF:{x:62,y:-52},hB:{x:56,y:-38},fF:{x:-60,y:-20},fB:{x:-72,y:-12}};
+        for(const k in D){P[k].x=lerp(P[k].x,D[k].x,e);P[k].y=lerp(P[k].y,D[k].y,e)}
       }else{
         P.hF.x=lerp(30,58,e);P.hF.y=-112;P.hB.x=lerp(16,46,e);P.hB.y=-108;P.sh.x+=e*8;P.hd.x+=e*6;
       }
@@ -1053,7 +1088,7 @@ function render(){
     c.fillStyle=SIDE[f.side];c.globalAlpha=.28*(1-h*.6);
     c.beginPath();c.ellipse(f.x,GROUND+5,44*(1-h*.4),9*(1-h*.4),0,0,Math.PI*2);c.fill();c.globalAlpha=1;
   }
-  const pr=f=>f.state==='ko'?0:f.state==='hit'?1:f.state==='atk'?3:2;
+  const pr=f=>f.state==='ko'||f.state==='down'?0:f.state==='hit'?1:f.state==='atk'?3:2;
   const order=[...G.fighters].sort((x,y)=>pr(x)-pr(y));
   if(G.charge>0&&G.chargeF){
     order.filter(f=>f!==G.chargeF).forEach(f=>drawFighter(c,f));
