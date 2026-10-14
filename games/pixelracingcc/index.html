@@ -55,7 +55,7 @@
     <div id="infoModal" style="display:none;">
       <div class="head"><span>Pixel Racing</span><span class="close" onclick="toggleInfo()">&times;</span></div>
       <p>A retro pseudo-3D racer based on Jake Gordon's JavaScript Racer.</p>
-      <p>The gas is automatic. Steer with the left and right arrows (or A and D), or touch the left or right side of the screen. Hold Up or W to coast. Hold Down, S or Space, or touch and hold the lap map, to brake. Enter or Esc pauses, T lets the computer drive. The Pad button shows an on-screen joystick (steer, up to coast, down to brake) with Coast and Brake buttons.</p>
+      <p>The gas is automatic. Steer with the left and right arrows (or A and D), or touch the left or right side of the screen. Hold Up or W to coast. Hold Down, S or Space, or touch and hold the lap map, to brake. Enter or Esc pauses, T lets the computer drive. The Pad button shows an on-screen joystick (steer left and right) with Coast and Brake buttons.</p>
       <h3>Credits</h3>
       <div><a href="https://github.com/yauhahu/pixelracingcc" target="_blank" rel="noopener">Source on GitHub</a></div>
       <div><a href="https://jakesgordon.com/writing/javascript-racer/" target="_blank" rel="noopener">Original by Jake Gordon</a></div>
@@ -992,18 +992,18 @@
     <div id="padBrake" class="padBtn">BRAKE</div>
   </div>
   <script>
-    // on-screen pad: joystick on the left (steer, up = coast, down = brake) and buttons on the right.
+    // on-screen pad: joystick on the left (steer only) and buttons on the right.
     // it drives the same key flags as the keyboard. toggle it with the Pad button; the choice is remembered.
     (function() {
       var pad = document.getElementById('pad'), stick = document.getElementById('stick'), knob = document.getElementById('knob');
       var brakeBtn = document.getElementById('padBrake'), coastBtn = document.getElementById('padCoast'), toggleBtn = document.getElementById('padToggle');
-      var stickId = null, stickBrake = false, stickCoast = false, btnBrake = false, btnCoast = false;
+      var stickId = null, btnBrake = false, btnCoast = false;
       var DEAD = 0.25;   // fraction of the stick radius before it registers
 
       function apply() {
         if (demo) stopDemo();
-        keySlower = stickBrake || btnBrake;
-        keyCoast  = stickCoast || btnCoast;
+        keySlower = btnBrake;
+        keyCoast  = btnCoast;
       }
       function moveStick(e) {
         var r = stick.getBoundingClientRect(), R = r.width / 2;
@@ -1011,16 +1011,14 @@
         var len = Math.sqrt(dx*dx + dy*dy), lim = R - 26;
         if (len > lim) { dx *= lim/len; dy *= lim/len; }
         knob.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
-        var nx = dx / R, ny = dy / R;
+        var nx = dx / R;   // only the sideways push counts; up and down do nothing
         keyLeft  = nx < -DEAD;
         keyRight = nx >  DEAD;
-        stickCoast = ny < -DEAD * 1.5 && Math.abs(ny) > Math.abs(nx);
-        stickBrake = ny >  DEAD * 1.5 && Math.abs(ny) > Math.abs(nx);
         apply();
       }
       function releaseStick() {
         stickId = null; knob.style.transform = '';
-        keyLeft = keyRight = false; stickBrake = stickCoast = false; apply();
+        keyLeft = keyRight = false; apply();
       }
       stick.addEventListener('pointerdown', function(e) { e.preventDefault(); stickId = e.pointerId; stick.setPointerCapture(e.pointerId); moveStick(e); });
       stick.addEventListener('pointermove', function(e) { if (e.pointerId === stickId) { e.preventDefault(); moveStick(e); } });
