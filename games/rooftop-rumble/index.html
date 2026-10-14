@@ -75,11 +75,11 @@ button{font:inherit;color:inherit;cursor:pointer}
 /* on-screen pad: joystick on the left, four action buttons on the right, floating over the bottom of the screen */
 .touch{position:fixed;left:0;right:0;bottom:0;height:0;z-index:5;pointer-events:none;touch-action:none;user-select:none;-webkit-user-select:none}
 .touch>*{pointer-events:auto}
-.stick{position:absolute;left:36px;bottom:36px;width:170px;height:170px;border-radius:50%;background:rgba(16,22,40,.5);border:2px solid rgba(255,255,255,.35);touch-action:none}
-.knob{position:absolute;left:50%;top:50%;width:72px;height:72px;margin:-36px 0 0 -36px;border-radius:50%;background:rgba(255,255,255,.55);border:2px solid rgba(255,255,255,.8);pointer-events:none}
+.stick{position:absolute;left:36px;bottom:36px;width:170px;height:170px;border-radius:50%;background:rgba(16,22,40,.12);border:2px solid rgba(255,255,255,.18);touch-action:none}
+.knob{position:absolute;left:50%;top:50%;width:72px;height:72px;margin:-36px 0 0 -36px;border-radius:50%;background:rgba(255,255,255,.22);border:2px solid rgba(255,255,255,.35);pointer-events:none}
 .acts{position:absolute;right:30px;bottom:36px;width:256px;height:256px}
-.acts button{position:absolute;width:104px;height:104px;border-radius:50%;background:rgba(16,22,40,.55);border:2px solid rgba(255,255,255,.4);color:#fff;font:700 14px var(--f-body);letter-spacing:.06em;text-transform:uppercase;touch-action:none;user-select:none;-webkit-user-select:none}
-.acts button.on{background:var(--ember);border-color:var(--ember);color:#1a0b06}
+.acts button{position:absolute;width:104px;height:104px;border-radius:50%;background:rgba(16,22,40,.1);border:2px solid rgba(255,255,255,.2);color:rgba(255,255,255,.5);font:700 14px var(--f-body);letter-spacing:.06em;text-transform:uppercase;touch-action:none;user-select:none;-webkit-user-select:none}
+.acts button.on{background:rgba(255,106,61,.6);border-color:rgba(255,106,61,.9);color:#fff}
 /* four buttons on a diamond: Special top, Block left, Punch right, Kick bottom */
 .acts [data-t="special"]{left:76px;top:0}
 .acts [data-t="block"]{left:0;top:76px}
@@ -257,9 +257,9 @@ function resetFighter(f){
 
 function atkDef(f,type){
   const c=f.c;
-  if(type==='punch') return {type,su:4+c.slow,ac:3,rc:9+(c.slow>0?1:0),dmg:6*c.pow,hs:15,bs:9,kb:3.2,stop:5,box:[12,30+c.reach,-142,-108]};
-  if(type==='kick') return {type,su:8+c.slow,ac:4,rc:15,dmg:10*c.pow,hs:22,bs:14,kb:6.5,stop:8,box:[12,44+c.reach,-90,-38]};
-  if(type==='spear') return {type,su:9,ac:14,rc:30,dmg:13*c.pow,hs:0,bs:16,kb:5,stop:9,lunge:10.5,box:[-8,72,-132,-28]};
+  if(type==='punch') return {type,su:4+c.slow,ac:3,rc:9+(c.slow>0?1:0),dmg:6*c.pow,hs:15,bs:9,kb:3.2,stop:5,box:[12,24+c.reach,-142,-108]};
+  if(type==='kick') return {type,su:8+c.slow,ac:4,rc:15,dmg:10*c.pow,hs:22,bs:14,kb:6.5,stop:8,box:[12,36+c.reach,-90,-38]};
+  if(type==='spear') return {type,su:9,ac:14,rc:30,dmg:13*c.pow,hs:0,bs:16,kb:5,stop:9,lunge:6.5,box:[-8,58,-132,-28]};
   return {type:'special',su:14+c.slow,ac:0,rc:26,dmg:0,hs:0,bs:0,kb:0,stop:0,box:[0,0,0,0]};
 }
 function startAtk(f,type){
@@ -388,7 +388,7 @@ function aiInput(f,o){
     else if(dist>135) A.plan=r<D.aggr?'approach':r<D.aggr+.18?'kick':r<.88?'hold':'retreat';
     else A.plan=r<D.aggr?(Math.random()<.55?'punch':'kick'):r<D.aggr+.15?'retreat':r<.93?'crouchblock':'hold';
   }
-  if(A.t>=Math.round(D.think*.6)&&dist>140&&dist<300&&f.grounded&&!f.spCd&&f.meter<50&&Math.random()<D.aggr*.2)A.plan='spear';
+  if(A.t>=Math.round(D.think*.6)&&dist>90&&dist<190&&f.grounded&&!f.spCd&&f.meter<50&&Math.random()<D.aggr*.2)A.plan='spear';
   switch(A.plan){
     case 'spear':i.ps=true;A.plan='hold';A.t=Math.max(A.t,20);break;
     case 'approach':go(tw);break;
@@ -396,7 +396,7 @@ function aiInput(f,o){
     case 'jump':if(f.grounded){i.pu=true;go(tw)}A.plan='hold';break;
     case 'special':if(f.meter>=50)i.ps=true;A.plan='hold';break;
     case 'punch':case 'kick':{
-      const r=A.plan==='punch'?30+f.c.reach+18:44+f.c.reach+18;
+      const r=A.plan==='punch'?24+f.c.reach+18:36+f.c.reach+18;
       if(dist<=r){if(A.plan==='punch')i.pp=true;else i.pk=true;A.plan='hold';A.t=Math.max(A.t,8)}else go(tw);
       break;}
     case 'crouchblock':i.block=true;i.down=true;break;
