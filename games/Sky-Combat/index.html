@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover">
     <title>Sky Combat</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap">
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
@@ -43,34 +44,41 @@
       #gameArea{position:relative;flex:1 1 auto;min-height:0;overflow:hidden;background:#000}
       #gameArea canvas{display:block}
       #padFooter[hidden]{display:none!important}
-      #padFooter{--fh:clamp(168px,36vh,250px);--fh:clamp(168px,36dvh,250px);--s:min(calc(var(--fh)*.8),170px);--b:min(calc(var(--fh)*.36),84px);
-        flex:0 0 auto;height:var(--fh);box-sizing:border-box;display:flex;align-items:center;justify-content:flex-start;gap:10px;
-        padding:6px max(10px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));
-        background:#0a0d18;border-top:2px solid #1c2440;touch-action:none;-webkit-user-select:none;user-select:none;position:relative;z-index:30}
-      /* left: the whole zone is the joystick; the ring appears under your thumb */
-      #stickZone{position:relative;flex:0 0 auto;width:calc(var(--s)*1.35);height:100%;border-radius:14px;background:rgba(255,255,255,.035);border:1px dashed rgba(255,255,255,.14);touch-action:none}
-      #stickZone .zl{position:absolute;left:10px;top:6px;font:700 10px sans-serif;letter-spacing:.1em;color:rgba(255,255,255,.3);pointer-events:none}
-      .stick{position:absolute;left:calc(var(--s)/2 + 14px);top:50%;width:var(--s);height:var(--s);margin:calc(var(--s)/-2) 0 0 calc(var(--s)/-2);border-radius:50%;background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.28);pointer-events:none}
-      .knob{position:absolute;left:50%;top:50%;width:42%;height:42%;margin:-21% 0 0 -21%;border-radius:50%;background:rgba(255,255,255,.3);border:2px solid rgba(255,255,255,.5);pointer-events:none}
+      /* Look copied from Pixel Racing's pad: dark translucent circles, light borders, bright knob, mono labels,
+         a colour per button when pressed. The footer is short and the controls sit on its bottom edge. */
+      #padFooter{--fh:clamp(112px,22vh,176px);--fh:clamp(112px,22dvh,176px);--s:min(calc(var(--fh)*.9),150px);--b:min(calc(var(--fh)*.36),78px);
+        flex:0 0 auto;height:var(--fh);box-sizing:border-box;display:flex;align-items:flex-end;justify-content:flex-start;gap:10px;
+        padding:4px max(10px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));
+        background:#05070c;touch-action:none;-webkit-user-select:none;user-select:none;position:relative;z-index:30}
+      /* left: the whole zone is the joystick (invisible); the ring rests bottom-left and jumps under your thumb */
+      #stickZone{position:relative;flex:0 0 auto;width:calc(var(--s)*1.35);height:100%;touch-action:none}
+      .stick{position:absolute;left:4px;bottom:0;width:var(--s);height:var(--s);border-radius:50%;background:rgba(16,31,37,.45);border:2px solid rgba(255,255,255,.35);pointer-events:none}
+      .knob{position:absolute;left:50%;top:50%;width:42%;height:42%;margin:-21% 0 0 -21%;border-radius:50%;background:rgba(255,255,255,.55);border:2px solid rgba(255,255,255,.8);pointer-events:none}
       /* right: four buttons on a diamond */
-      .acts{position:relative;flex:0 0 auto;margin-left:auto;width:calc(var(--b)*2.45);height:calc(var(--b)*2.45)}
+      .acts{position:relative;flex:0 0 auto;margin-left:auto;width:calc(var(--b)*2.45);height:calc(var(--b)*2.45);align-self:flex-end}
       /* left-hand fire buttons, right next to the joystick (Pad 1 only; Pad 2 leaves them out) */
-      .lacts{flex:0 0 auto;display:flex;flex-direction:column;justify-content:center;gap:8px;height:100%}
+      .lacts{flex:0 0 auto;display:flex;flex-direction:column;justify-content:flex-end;gap:8px;height:100%}
       body.pad2 .lacts{display:none}
-      .acts button,.lacts button{position:absolute;width:var(--b);height:var(--b);border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.3);color:rgba(255,255,255,.85);font:700 clamp(9px,2.2vmin,12px) sans-serif;letter-spacing:.04em;text-transform:uppercase;touch-action:none;-webkit-user-select:none;user-select:none;padding:0}
+      .acts button,.lacts button{position:absolute;width:var(--b);height:var(--b);border-radius:50%;display:flex;align-items:center;justify-content:center;
+        background:rgba(16,31,37,.55);border:2px solid rgba(255,255,255,.4);color:#fff;font:700 clamp(9px,2.1vmin,13px) 'DM Mono',monospace;letter-spacing:.05em;text-transform:uppercase;
+        touch-action:none;-webkit-user-select:none;user-select:none;padding:0}
       .lacts button{position:relative}
-      .acts button.on,.lacts button.on{background:rgba(255,106,61,.65);border-color:rgba(255,106,61,.95);color:#fff}
+      /* pressed colours (like ACCEL green / BRAKE red in Pixel Racing) */
+      [data-t="missile"].on{background:rgba(255,106,61,.6);border-color:#ff6a3d}
+      [data-t="gun"].on{background:rgba(255,205,60,.55);border-color:#ffcd3c}
+      [data-t="roll"].on{background:rgba(61,180,255,.55);border-color:#3db4ff}
+      [data-t="thr"].on{background:rgba(40,200,80,.55);border-color:#3ddc66}
       .acts [data-t="missile"]{left:calc(var(--b)*.725);top:0}
       .acts [data-t="gun"]{left:0;top:calc(var(--b)*.725)}
       .acts [data-t="roll"]{right:0;top:calc(var(--b)*.725)}
       .acts [data-t="thr"]{left:calc(var(--b)*.86);bottom:0;width:calc(var(--b)*.74);height:calc(var(--b)*.74)}
       /* short landscape phones: a footer would eat the picture, so the pad floats over the corners instead */
       @media (max-height:470px) and (orientation:landscape){
-        #padFooter{position:fixed;left:0;right:0;bottom:0;height:0;padding:0;background:none;border:0;display:block;pointer-events:none;--fh:min(46vh,190px)}
-        #stickZone{position:absolute;left:0;bottom:0;width:calc(var(--s)*1.35);height:var(--fh);background:none;border:0;pointer-events:auto}
-        .lacts{position:absolute;left:calc(var(--s)*1.35 + 8px);bottom:10px;height:auto;pointer-events:auto}
-        #stickZone .zl{display:none}
-        .acts{position:absolute;right:max(10px,env(safe-area-inset-right));bottom:10px;pointer-events:auto}
+        #padFooter{position:fixed;left:0;right:0;bottom:0;height:0;padding:0;background:none;border:0;display:block;pointer-events:none;--fh:min(46vh,170px)}
+        #stickZone{position:absolute;left:0;bottom:0;width:calc(var(--s)*1.35);height:var(--fh);pointer-events:auto}
+        .stick{left:max(10px,env(safe-area-inset-left));bottom:8px}
+        .lacts{position:absolute;left:calc(var(--s)*1.35 + 8px);bottom:8px;height:auto;pointer-events:auto}
+        .acts{position:absolute;right:max(10px,env(safe-area-inset-right));bottom:8px;pointer-events:auto}
         body.padon #radarBox{bottom:auto;top:132px;right:auto;left:12px}
       }
       /* shows where your swipe started and where your finger is */
@@ -78,8 +86,8 @@
       .dragui:before{content:"";position:absolute;left:-26px;top:-26px;width:52px;height:52px;border-radius:50%;border:2px solid rgba(125,255,154,.7)}
       .dragui i{position:absolute;left:-9px;top:-9px;width:18px;height:18px;border-radius:50%;background:rgba(125,255,154,.85)}
       .padtop{position:absolute;top:92px;left:12px;z-index:31;display:flex;gap:6px}
-      .padtop button{background:rgba(16,22,40,.55);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:6px;padding:6px 10px;font:700 12px sans-serif;letter-spacing:.06em}
-      .padtop button[aria-pressed="true"]{background:rgba(255,106,61,.6)}
+      .padtop button{background:rgba(16,31,37,.75);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:5px 12px;font:500 12px 'DM Mono',monospace;letter-spacing:.05em}
+      .padtop button[aria-pressed="true"]{border-color:#ffcd3c;color:#ffcd3c}
       body.padon #radar{width:110px;height:110px}
       body.padon #controlsHint{display:none}
     </style>
@@ -161,7 +169,6 @@
     <!-- Touch footer: floating joystick zone on the left, buttons on the right -->
     <div id="padFooter" hidden>
       <div id="stickZone" aria-label="Joystick: touch anywhere here; drag to turn, climb and dive">
-        <span class="zl">TURN &middot; CLIMB &middot; DIVE</span>
         <div id="stick" class="stick"><div id="knob" class="knob"></div></div>
       </div>
       <div class="lacts">

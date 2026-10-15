@@ -61,10 +61,11 @@ let touchLookYaw = 0, touchLookPitch = 0, touchLookHold = 0;
     function dead(v) { return Math.abs(v) < 0.2 ? 0 : (v - Math.sign(v) * 0.2) / 0.8; }
     function stickR() { return (stickEl.offsetWidth || 140) / 2; }
     function stickStart(e) {
-        const zr = zone.getBoundingClientRect();
+        const zr = zone.getBoundingClientRect(), R = stickR();
         // ring centre = exactly the touch point (it may overhang the zone edge; that's fine)
-        stickEl.style.left = (e.clientX - zr.left) + 'px';
-        stickEl.style.top  = (e.clientY - zr.top) + 'px';
+        stickEl.style.left   = (e.clientX - zr.left - R) + 'px';
+        stickEl.style.top    = (e.clientY - zr.top  - R) + 'px';
+        stickEl.style.bottom = 'auto';
         stick = { id: e.pointerId, x: e.clientX, y: e.clientY };
         padDebug('stick start ' + Math.round(e.clientX) + ',' + Math.round(e.clientY));
         stickMove(e);
@@ -81,7 +82,7 @@ let touchLookYaw = 0, touchLookPitch = 0, touchLookHold = 0;
     }
     function releaseStick() {
         stick = null; knob.style.transform = '';
-        stickEl.style.left = ''; stickEl.style.top = '';   // back to the middle of the zone
+        stickEl.style.left = ''; stickEl.style.top = ''; stickEl.style.bottom = '';   // back to resting bottom-left
         touchYaw = 0; touchPitch = 0;
     }
     zone.addEventListener('pointerdown', e => {
