@@ -64,7 +64,7 @@ function updateFlight(delta) {
     // (pilot's left must stay screen-left). Sampled once per frame.
     const flipYaw = Math.cos(dronePitch) < 0 ? -1 : 1;
     // --- Throttle: W accelerates, S brakes, neither = drift back to cruise speed ---
-    if (keys['KeyW']) {
+    if (keys['KeyW'] || keys['KeyT']) {   // W or T = throttle up
         const accelFactor = 1 - (droneSpeed / MAX_SPEED) * 0.65;
         droneSpeed = Math.min(droneSpeed + THROTTLE_ACCEL * accelFactor * delta, MAX_SPEED);
     } else if (keys['KeyS']) {

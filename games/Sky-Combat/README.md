@@ -32,7 +32,7 @@ python3 -m http.server 8080
 
 | Input | Action |
 |---|---|
-| `W` | Throttle up (accelerate) |
+| `W` or `T` (hold) | Throttle up (accelerate) |
 | `S` | Throttle down (decelerate) |
 | `A` / `D` | Bank and turn left / right |
 | `Arrow Up` / `Arrow Down` | Nose up / nose down (auto-levels when released) |
