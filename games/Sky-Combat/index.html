@@ -34,7 +34,7 @@
 </head>
 <body class="bg-black">
 
-    <!-- On-screen pad (touch): joystick = WASD, buttons right, drag the sky to pitch. Wired up in js/touch.js -->
+    <!-- On-screen pad (touch): joystick = turn + climb/dive, buttons right, swipe the sky to look. Wired up in js/touch.js -->
     <style>
       html,body{touch-action:none;-webkit-user-select:none;user-select:none}
       .touch{position:fixed;left:0;right:0;bottom:0;height:0;z-index:30;pointer-events:none;touch-action:none}
@@ -48,7 +48,7 @@
       .acts [data-t="missile"]{left:calc(var(--b)*.725);top:0}
       .acts [data-t="gun"]{left:0;top:calc(var(--b)*.725)}
       .acts [data-t="roll"]{right:0;top:calc(var(--b)*.725)}
-      .acts [data-t="tgt"]{left:calc(var(--b)*.86);bottom:0;width:calc(var(--b)*.74);height:calc(var(--b)*.74)}
+      .acts [data-t="thr"]{left:calc(var(--b)*.86);bottom:0;width:calc(var(--b)*.74);height:calc(var(--b)*.74)}
       /* shows where your swipe started and where your finger is */
       .dragui{display:none;position:fixed;z-index:32;width:0;height:0;pointer-events:none}
       .dragui:before{content:"";position:absolute;left:-26px;top:-26px;width:52px;height:52px;border-radius:50%;border:2px solid rgba(125,255,154,.7)}
@@ -62,16 +62,17 @@
       body.padon #controlsHint{display:none}
     </style>
     <div id="touch" class="touch" hidden>
-      <div id="stick" class="stick" aria-label="Joystick: up speed up, down slow down, left and right bank"><div id="knob" class="knob"></div></div>
+      <div id="stick" class="stick" aria-label="Joystick: left and right turn, up climbs, down dives"><div id="knob" class="knob"></div></div>
       <div class="acts">
         <button type="button" data-t="missile">Missile</button>
         <button type="button" data-t="gun">Gun</button>
         <button type="button" data-t="roll">Roll</button>
-        <button type="button" data-t="tgt">Tgt</button>
+        <button type="button" data-t="thr">Thr</button>
       </div>
     </div>
     <div id="dragUI" class="dragui"><i id="dragDot"></i></div>
     <div class="padtop"><button id="padBtn" type="button" aria-pressed="false" hidden>Pad</button><button id="padPause" type="button" hidden>&#10074;&#10074;</button></div>
+    <div id="padDbg" style="position:fixed;top:120px;left:12px;z-index:31;color:rgba(125,255,154,.8);font:11px monospace;text-shadow:0 1px 3px #000;pointer-events:none;"></div>
 
     <!-- HUD (visible during gameplay) -->
     <div id="hud" class="fixed inset-0 pointer-events-none z-10 hidden">
