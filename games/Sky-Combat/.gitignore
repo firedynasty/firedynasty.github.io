@@ -1,0 +1,34 @@
+##################
+#JUNK
+##################
+.DS_STORE
+venv/
+.env.example
+__pycache__/
+
+##################
+#SECRETS
+##################
+.env
+
+##################
+#HEAVY / NON-RELEVANT
+##################
+**/*.png
+**/*.jpeg
+**/*.pdf
+plans/
+docs/
+game-idea.txt
+# **/*.glbs
+
+
+##################
+#AI + MCPs
+##################
+.claude
+.serena
+CLAUDE.md
+.superpowers/
+.worktrees/
+.understand*

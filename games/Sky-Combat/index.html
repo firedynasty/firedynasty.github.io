@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <title>Sky Combat</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+        @keyframes missileWarnBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        @keyframes winPulse {
+            0%   { text-shadow: 0 0 40px rgba(0,255,180,0.9), 0 0 80px rgba(0,200,255,0.5); }
+            50%  { text-shadow: 0 0 60px rgba(0,255,200,1.0), 0 0 120px rgba(0,180,255,0.8); }
+            100% { text-shadow: 0 0 40px rgba(0,255,180,0.9), 0 0 80px rgba(0,200,255,0.5); }
+        }
+        @keyframes gameOverPulse {
+            0%,100% { text-shadow: 0 0 20px rgba(255,30,0,0.9), 0 0 50px rgba(255,0,0,0.6), 0 0 100px rgba(180,0,0,0.4); }
+            50%     { text-shadow: 0 0 35px rgba(255,60,0,1.0), 0 0 75px rgba(255,0,0,0.85), 0 0 150px rgba(200,0,0,0.6); }
+        }
+        @keyframes winSlideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes healPop {
+            0%   { opacity: 0; transform: translateY(6px) scale(0.8); }
+            30%  { opacity: 1; transform: translateY(0)   scale(1.1); }
+            80%  { opacity: 1; }
+            100% { opacity: 0.8; }
+        }
+    </style>
+</head>
+<body class="bg-black">
+
+    <!-- On-screen pad (touch): joystick = WASD, buttons right, drag the sky to pitch. Wired up in js/touch.js -->
+    <style>
+      html,body{touch-action:none;-webkit-user-select:none;user-select:none}
+      .touch{position:fixed;left:0;right:0;bottom:0;height:0;z-index:30;pointer-events:none;touch-action:none}
+      .touch>*{pointer-events:auto}
+      .stick{position:absolute;left:max(24px,env(safe-area-inset-left));bottom:30px;width:170px;height:170px;border-radius:50%;background:rgba(16,22,40,.18);border:2px solid rgba(255,255,255,.25);touch-action:none}
+      .knob{position:absolute;left:50%;top:50%;width:72px;height:72px;margin:-36px 0 0 -36px;border-radius:50%;background:rgba(255,255,255,.25);border:2px solid rgba(255,255,255,.4);pointer-events:none}
+      .acts{position:absolute;right:max(16px,env(safe-area-inset-right));bottom:30px;width:236px;height:236px}
+      .acts button{position:absolute;width:96px;height:96px;border-radius:50%;background:rgba(16,22,40,.22);border:2px solid rgba(255,255,255,.3);color:rgba(255,255,255,.75);font:700 13px sans-serif;letter-spacing:.06em;text-transform:uppercase;touch-action:none;-webkit-user-select:none;user-select:none}
+      .acts button.on{background:rgba(255,106,61,.65);border-color:rgba(255,106,61,.95);color:#fff}
+      .acts [data-t="missile"]{left:70px;top:0}
+      .acts [data-t="gun"]{left:0;top:70px}
+      .acts [data-t="roll"]{right:0;top:70px}
+      .acts [data-t="tgt"]{left:70px;bottom:0;width:78px;height:78px;margin:9px}
+      @media (max-width:520px){
+        .stick{left:14px;bottom:20px;width:130px;height:130px}.knob{width:56px;height:56px;margin:-28px 0 0 -28px}
+        .acts{right:8px;bottom:20px;width:190px;height:190px}.acts button{width:76px;height:76px;font-size:11px}
+        .acts [data-t="missile"]{left:57px}.acts [data-t="gun"]{top:57px}.acts [data-t="roll"]{top:57px}.acts [data-t="tgt"]{left:57px;width:62px;height:62px;margin:7px}
+      }
+      .padtop{position:fixed;top:92px;left:12px;z-index:31;display:flex;gap:6px}
+      .padtop button{background:rgba(16,22,40,.55);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:6px;padding:6px 10px;font:700 12px sans-serif;letter-spacing:.06em}
+      .padtop button[aria-pressed="true"]{background:rgba(255,106,61,.6)}
+      /* pad on: radar moves up out of the way of the buttons, keyboard hint is hidden */
+      body.padon #radarBox{bottom:auto;top:132px;right:auto;left:12px}
+      body.padon #radar{width:100px;height:100px}
+      body.padon #controlsHint{display:none}
+    </style>
+    <div id="touch" class="touch" hidden>
+      <div id="stick" class="stick" aria-label="Joystick: up speed up, down slow down, left and right bank"><div id="knob" class="knob"></div></div>
+      <div class="acts">
+        <button type="button" data-t="missile">Missile</button>
+        <button type="button" data-t="gun">Gun</button>
+        <button type="button" data-t="roll">Roll</button>
+        <button type="button" data-t="tgt">Tgt</button>
+      </div>
+    </div>
+    <div class="padtop"><button id="padBtn" type="button" aria-pressed="false" hidden>Pad</button><button id="padPause" type="button" hidden>&#10074;&#10074;</button></div>
+
+    <!-- HUD (visible during gameplay) -->
+    <div id="hud" class="fixed inset-0 pointer-events-none z-10 hidden">
+        <!-- Crosshair -->
+        <div id="crosshair" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;transition:left 0.02s,top 0.02s;">
+          <div style="width:20px;height:2px;background:rgba(255,255,255,0.8);margin:auto;"></div>
+          <div style="width:2px;height:20px;background:rgba(255,255,255,0.8);margin:-11px auto 0;"></div>
+          <div id="hitMarker" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0;color:#ff4444;font-size:18px;font-weight:bold;transition:opacity 0.15s;">✕</div>
+        </div>
+
+        <!-- Aim dot — static indicator for bullet trajectory (follows jet forward vector) -->
+        <div id="aimDot" style="position:absolute;width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.9);box-shadow:0 0 4px #00ffff;pointer-events:none;transform:translate(-50%,-50%);display:none;"></div>
+
+        <!-- HP Bar (top-left) -->
+        <div style="position:absolute;top:16px;left:16px;min-width:200px;">
+          <div style="color:rgba(255,255,255,0.9);font-size:13px;font-weight:bold;letter-spacing:2px;margin-bottom:5px;text-shadow:0 0 8px rgba(0,255,100,0.5);">HP</div>
+          <div style="background:rgba(0,0,0,0.5);border-radius:4px;height:13px;width:200px;overflow:hidden;box-shadow:0 0 6px rgba(0,0,0,0.6);">
+            <div id="hudHPBar" style="height:100%;width:100%;background:#00ff66;transition:width 0.15s,background 0.3s;border-radius:4px;"></div>
+          </div>
+          <div id="hudHPText" style="color:#fff;font-size:16px;font-weight:bold;margin-top:4px;text-shadow:0 1px 4px rgba(0,0,0,0.9);">100 / 100</div>
+        </div>
+
+        <!-- Wave + Enemy counter (top-center) -->
+        <div style="position:absolute;top:16px;left:50%;transform:translateX(-50%);text-align:center;">
+          <div id="hudWave" style="color:#fff;font-size:18px;font-weight:bold;letter-spacing:2px;">WAVE 1 / 3</div>
+          <div id="hudEnemies" style="color:rgba(255,80,80,0.9);font-size:14px;margin-top:2px;">Enemies: 0</div>
+        </div>
+
+        <!-- Speed gauge (top-right) — canvas airspeed indicator -->
+        <div style="position:absolute;top:8px;right:12px;text-align:center;">
+          <canvas id="speedGauge" width="110" height="110"></canvas>
+        </div>
+
+        <!-- Terrain warning + radar altitude -->
+        <div id="pullUp" style="display:none;position:absolute;top:34%;left:50%;transform:translateX(-50%);color:#ff3b2e;font-size:34px;font-weight:bold;letter-spacing:6px;text-shadow:0 0 18px #ff2200;animation:missileWarnBlink 0.3s step-start infinite;white-space:nowrap;pointer-events:none;">PULL UP &mdash; TERRAIN</div>
+        <div id="altReadout" style="position:absolute;right:16px;top:128px;color:#7dff9a;font-size:13px;font-family:monospace;text-align:right;text-shadow:0 1px 4px #000;line-height:1.5;">ALT 0 m<br>AGL 0 m</div>
+
+        <!-- Missile incoming warning -->
+        <div id="missileWarning" style="display:none;position:absolute;top:22%;left:50%;transform:translateX(-50%);color:#ff2200;font-size:26px;font-weight:bold;letter-spacing:3px;text-shadow:0 0 20px #ff2200,0 0 40px #ff0000;animation:missileWarnBlink 0.35s step-start infinite;white-space:nowrap;pointer-events:none;">&#9888; MISSILE INCOMING &#9888;</div>
+
+        <!-- Bullet heat + Missile cooldown + Roll cooldown (bottom-center) -->
+        <div style="position:absolute;bottom:30px;left:50%;transform:translateX(-50%);text-align:center;">
+          <div id="hudBulletHeatLabel" style="color:rgba(0,200,255,0.7);font-size:11px;letter-spacing:1px;margin-bottom:4px;">GUN</div>
+          <div style="background:rgba(0,0,0,0.4);border-radius:10px;height:6px;width:80px;overflow:hidden;margin-bottom:8px;">
+            <div id="hudBulletHeatBar" style="height:100%;width:0%;background:#00ccff;transition:width 0.08s,background 0.2s,box-shadow 0.2s;border-radius:10px;"></div>
+          </div>
+          <div style="color:rgba(255,255,255,0.6);font-size:11px;letter-spacing:1px;margin-bottom:4px;">MISSILE</div>
+          <div style="background:rgba(0,0,0,0.4);border-radius:10px;height:6px;width:80px;overflow:hidden;margin-bottom:8px;">
+            <div id="hudMissileBar" style="height:100%;width:100%;background:#ff6600;transition:width 0.05s;border-radius:10px;"></div>
+          </div>
+          <div style="color:rgba(0,170,255,0.7);font-size:10px;letter-spacing:1px;margin-bottom:3px;">R: ROLL</div>
+          <div style="background:rgba(0,0,0,0.4);border-radius:10px;height:4px;width:60px;overflow:hidden;">
+            <div id="hudFlipBar" style="height:100%;width:100%;background:#00aaff;transition:width 0.1s;border-radius:10px;"></div>
+          </div>
+        </div>
+
+        <!-- Radar (bottom-right) -->
+        <div id="radarBox" style="position:absolute;bottom:16px;right:16px;">
+          <canvas id="radar" width="160" height="160" style="border-radius:50%;border:1px solid rgba(0,255,100,0.3);background:rgba(0,0,0,0.5);"></canvas>
+        </div>
+
+        <!-- Hit flash overlay -->
+        <div id="hitFlash" style="position:absolute;inset:0;background:rgba(255,0,0,0);pointer-events:none;transition:background 0.15s;"></div>
+
+        <!-- Controls hint (fades after 5s) -->
+        <div id="controlsHint" style="position:absolute;bottom:100px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,0.5);font-size:13px;text-align:center;transition:opacity 1s;">
+          W: speed up &nbsp;|&nbsp; S: slow down &nbsp;|&nbsp; A/D: bank &amp; turn &nbsp;|&nbsp; <span style="color:#7dff9a;">&uarr;/&darr;: nose up/down</span> &nbsp;|&nbsp; Space: bullets &nbsp;|&nbsp; <span style="color:#ff6666;">Red ring = locked on</span> &nbsp;|&nbsp; LMB / F: missile &nbsp;|&nbsp; Tab: next target &nbsp;|&nbsp; <span style="color:#00aaff;">R: Barrel Roll</span>
+        </div>
+    </div>
+
+    <!-- Enemy lock indicator -->
+    <div id="lockIndicator" style="position:fixed;width:40px;height:40px;border:2px solid #ff3333;border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;box-shadow:0 0 10px rgba(255,50,50,0.7),inset 0 0 6px rgba(255,50,50,0.3);display:none;z-index:15;"></div>
+
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="fixed inset-0 bg-black flex flex-col items-center justify-center z-50">
+        <div class="text-center">
+            <h1 class="text-4xl font-bold mb-8 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">SKY COMBAT</h1>
+            <div class="w-64 h-1.5 bg-gray-800 rounded-full overflow-hidden mb-4">
+                <div id="loadingBar" class="h-full rounded-full bg-gradient-to-r from-pink-500 to-cyan-500 transition-all duration-300" style="width: 0%"></div>
+            </div>
+            <div id="loadingText" class="text-gray-500 text-sm">Loading assets...</div>
+        </div>
+    </div>
+
+    <!-- Start Screen -->
+    <div id="startScreen" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-20">
+        <div class="flex flex-col items-center text-center text-white">
+            <h1 class="text-5xl font-bold text-white mb-2" style="letter-spacing:4px;">SKY COMBAT</h1>
+            <p class="text-gray-400 mb-8">Select a level to begin</p>
+            <!-- Continue button — only shown when game is paused -->
+            <button id="continueBtn" class="hidden w-80 mb-4 py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl text-lg transition-colors cursor-pointer" style="letter-spacing:1px;">&#9654; Continue</button>
+            <div id="levelSelectGrid" class="grid grid-cols-1 gap-3 w-80">
+              <!-- Populated by renderLevelSelect() in ui.js -->
+            </div>
+            <!-- How To Play + Credits -->
+            <div class="flex gap-3 mt-6">
+                <button id="howToPlayBtn" class="px-5 py-2 rounded-xl border border-cyan-600 text-cyan-300 hover:bg-cyan-900/30 text-sm font-semibold transition-colors cursor-pointer">How To Play</button>
+                <button id="creditsBtn"   class="px-5 py-2 rounded-xl border border-gray-600 text-gray-400 hover:bg-gray-800/40 text-sm font-semibold transition-colors cursor-pointer">Credits</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wave Cleared Banner -->
+    <div id="waveClearedBanner" class="hidden" style="position:fixed;inset:0;align-items:center;justify-content:center;pointer-events:none;z-index:50;">
+      <div style="text-align:center;">
+        <div id="waveClearedText" style="color:#00ff88;font-size:48px;font-weight:bold;letter-spacing:4px;text-shadow:0 0 20px #00ff88;">WAVE CLEARED</div>
+        <div id="waveClearedHeal" style="color:#00ffaa;font-size:22px;font-weight:bold;letter-spacing:2px;margin-top:6px;text-shadow:0 0 12px #00ff88;animation:healPop 0.6s ease-out forwards;"></div>
+        <div id="waveClearedSub" style="color:rgba(255,255,255,0.6);font-size:18px;margin-top:6px;"></div>
+      </div>
+    </div>
+
+    <!-- Countdown -->
+    <div id="countdownScreen" class="fixed inset-0 flex items-center justify-center z-20 hidden">
+        <div id="countdownText" class="text-9xl font-bold text-white" style="text-shadow: 0 0 40px rgba(0,255,255,0.8);"></div>
+    </div>
+
+    <!-- Game Over Screen — starts transparent, fades in via JS -->
+    <div id="gameOverScreen" class="fixed inset-0 hidden items-center justify-center z-20"
+         style="opacity:0;transition:opacity 0.9s ease-in;background:rgba(0,0,0,0.76);">
+        <div class="text-center" style="animation:winSlideUp 0.7s 0.2s ease-out both;">
+            <h1 style="font-size:84px;font-weight:900;letter-spacing:7px;color:#ff1a00;
+                       animation:gameOverPulse 2s ease-in-out infinite;
+                       margin:0 0 4px;line-height:1;">GAME OVER</h1>
+            <div style="height:3px;width:340px;margin:14px auto;
+                        background:linear-gradient(90deg,transparent,#ff2200,#ff6600,#ff2200,transparent);"></div>
+            <div style="font-size:12px;letter-spacing:5px;color:rgba(255,120,80,0.75);
+                        text-transform:uppercase;margin-bottom:8px;">aircraft destroyed</div>
+            <div id="gameOverWave" style="color:rgba(255,255,255,0.45);font-size:16px;margin-bottom:30px;letter-spacing:1px;">Reached wave 1</div>
+            <button id="retryBtn"
+                    style="display:block;width:270px;margin:0 auto 12px;padding:15px 0;
+                           background:linear-gradient(135deg,#cc0000,#ff2200);
+                           border:none;border-radius:12px;color:#fff;font-size:19px;font-weight:800;
+                           letter-spacing:2px;cursor:pointer;
+                           box-shadow:0 0 22px rgba(255,30,0,0.55),0 4px 16px rgba(0,0,0,0.5);
+                           transition:filter 0.2s;"
+                    onmouseover="this.style.filter='brightness(1.2)'"
+                    onmouseout="this.style.filter='brightness(1)'">RETRY</button>
+            <button id="menuBtnOver"
+                    style="display:block;width:270px;margin:0 auto;padding:13px 0;
+                           background:rgba(55,55,65,0.85);border:1px solid rgba(255,255,255,0.12);
+                           border-radius:12px;color:rgba(255,255,255,0.65);font-size:15px;font-weight:600;
+                           letter-spacing:1px;cursor:pointer;transition:filter 0.2s;"
+                    onmouseover="this.style.filter='brightness(1.3)'"
+                    onmouseout="this.style.filter='brightness(1)'">Level Select</button>
+        </div>
+    </div>
+
+    <!-- Win Screen — starts transparent, fades in via JS -->
+    <div id="winScreen" class="fixed inset-0 hidden items-center justify-center z-20"
+         style="opacity:0;transition:opacity 0.8s ease-in;background:rgba(0,0,0,0.72);">
+        <div class="text-center" style="animation:winSlideUp 0.7s 0.15s ease-out both;">
+            <div style="font-size:13px;letter-spacing:6px;color:#00eeff;margin-bottom:10px;text-transform:uppercase;opacity:0.8;">Mission Accomplished</div>
+            <h1 style="font-size:68px;font-weight:900;letter-spacing:5px;color:#ffffff;animation:winPulse 2.5s ease-in-out infinite;margin-bottom:6px;">LEVEL COMPLETE</h1>
+            <div style="height:2px;width:340px;margin:14px auto 24px;background:linear-gradient(90deg,transparent,#00eeff,transparent);opacity:0.7;"></div>
+            <button id="nextLevelBtn"  class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold px-8 py-3 rounded-xl text-lg mb-3 block w-64 transition-colors cursor-pointer mx-auto">Next Level</button>
+            <button id="levelSelectBtn" class="bg-gray-700 hover:bg-gray-600 text-white font-bold px-8 py-3 rounded-xl text-lg block w-64 transition-colors cursor-pointer mx-auto">Level Select</button>
+        </div>
+    </div>
+
+    <!-- Customization Modal -->
+    <div id="customizeModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-30">
+        <div class="bg-gray-900 border border-cyan-500/30 rounded-2xl p-8 max-w-md w-full mx-4">
+            <h2 class="text-2xl font-bold text-white mb-6 text-center">Customize Jet</h2>
+            <div id="presetGrid" class="grid grid-cols-2 gap-3 mb-6">
+                <!-- Filled dynamically by ui.js -->
+            </div>
+            <button id="customizeCloseBtn" class="w-full py-3 bg-cyan-500 text-black font-bold rounded-full hover:bg-cyan-400 transition-colors cursor-pointer">
+                Confirm
+            </button>
+        </div>
+    </div>
+
+    <!-- How To Play Modal -->
+    <div id="howToPlayModal" class="fixed inset-0 bg-black/85 hidden items-center justify-center z-30">
+        <div class="bg-gray-900 border border-cyan-500/30 rounded-2xl p-8 max-w-sm w-full mx-4 text-white">
+            <h2 class="text-2xl font-bold mb-6 text-center text-cyan-300" style="letter-spacing:3px;">HOW TO PLAY</h2>
+            <div class="space-y-3 text-sm">
+                <div class="flex justify-between border-b border-gray-700 pb-2"><span class="text-gray-400">W / S</span><span>Speed up / Slow down</span></div>
+                <div class="flex justify-between border-b border-gray-700 pb-2"><span class="text-gray-400">A / D</span><span>Turn left / right</span></div>
+                <div class="flex justify-between border-b border-gray-700 pb-2"><span class="text-gray-400">Space (hold)</span><span>Fire bullets</span></div>
+                <div class="flex justify-between border-b border-gray-700 pb-2"><span class="text-gray-400">LMB / F</span><span>Fire homing missile at lock</span></div>
+                <div class="flex justify-between border-b border-gray-700 pb-2"><span class="text-gray-400">&uarr; / &darr;</span><span>Nose up / down (auto-levels)</span></div>
+                <div class="flex justify-between border-b border-gray-700 pb-2"><span class="text-gray-400">Tab</span><span>Switch lock target</span></div>
+                <div class="flex justify-between border-b border-gray-700 pb-2"><span class="text-cyan-400">R</span><span class="text-cyan-200">Barrel roll dodge</span></div>
+                <div class="flex justify-between"><span class="text-gray-400">ESC</span><span>Pause / Menu</span></div>
+            </div>
+            <p class="text-gray-500 text-xs text-center mt-5">Tip: press R when a missile is incoming!</p>
+            <button id="howToPlayClose" class="w-full mt-6 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl transition-colors cursor-pointer">Got it</button>
+        </div>
+    </div>
+
+    <!-- Credits Modal -->
+    <div id="creditsModal" class="fixed inset-0 bg-black/85 hidden items-center justify-center z-30">
+        <div class="bg-gray-900 border border-gray-600/40 rounded-2xl p-7 max-w-sm w-full mx-4 text-white" style="max-height:90vh;overflow-y:auto;">
+            <h2 class="text-2xl font-bold mb-5 text-center text-gray-300" style="letter-spacing:3px;">CREDITS</h2>
+
+            <!-- Developer -->
+            <div class="mb-5 pb-4 border-b border-gray-700">
+                <div class="text-xs text-gray-500 uppercase tracking-widest mb-2">Developer</div>
+                <div class="text-white font-bold text-lg">Gal Lind</div>
+                <div class="text-gray-400 text-sm mt-1">"From Idea to App" — Assignment 1, Exercise 4</div>
+                <div class="text-gray-500 text-xs mt-0.5">Reichman University · 2026</div>
+            </div>
+
+            <!-- Tech Stack -->
+            <div class="mb-5 pb-4 border-b border-gray-700">
+                <div class="text-xs text-gray-500 uppercase tracking-widest mb-2">Tech Stack</div>
+                <div class="space-y-1.5 text-sm">
+                    <div class="flex justify-between"><span class="text-cyan-400">Three.js r128</span><span class="text-gray-400">3D rendering engine</span></div>
+                    <div class="flex justify-between"><span class="text-cyan-400">Tailwind CSS v4</span><span class="text-gray-400">UI &amp; overlay styling</span></div>
+                    <div class="flex justify-between"><span class="text-cyan-400">Web Audio API</span><span class="text-gray-400">SFX &amp; engine audio</span></div>
+                    <div class="flex justify-between"><span class="text-cyan-400">HTML5 Canvas</span><span class="text-gray-400">HUD gauges &amp; radar</span></div>
+                    <div class="flex justify-between"><span class="text-cyan-400">Vanilla JS</span><span class="text-gray-400">Game logic</span></div>
+                </div>
+            </div>
+
+            <!-- Audio -->
+            <div class="mb-5 pb-4 border-b border-gray-700">
+                <div class="text-xs text-gray-500 uppercase tracking-widest mb-2">Audio</div>
+                <div class="flex flex-wrap gap-1.5">
+                    <span class="text-gray-300 text-xs bg-gray-800 px-2 py-0.5 rounded">18hiltc</span>
+                    <span class="text-gray-300 text-xs bg-gray-800 px-2 py-0.5 rounded">morganpurkis</span>
+                    <span class="text-gray-300 text-xs bg-gray-800 px-2 py-0.5 rounded">toxicwafflezz</span>
+                    <span class="text-gray-300 text-xs bg-gray-800 px-2 py-0.5 rounded">Rudmer_Rotteveel</span>
+                    <span class="text-gray-300 text-xs bg-gray-800 px-2 py-0.5 rounded">alex36917</span>
+                    <span class="text-gray-300 text-xs bg-gray-800 px-2 py-0.5 rounded">jriches1</span>
+                    <span class="text-gray-300 text-xs bg-gray-800 px-2 py-0.5 rounded">Mellau</span>
+                    <span class="text-gray-300 text-xs bg-gray-800 px-2 py-0.5 rounded">adh.dreaming</span>
+                    <span class="text-gray-300 text-xs bg-gray-800 px-2 py-0.5 rounded">bruce965</span>
+                    <span class="text-gray-300 text-xs bg-gray-800 px-2 py-0.5 rounded">satchdev</span>
+                    <span class="text-gray-300 text-xs bg-gray-800 px-2 py-0.5 rounded">theeinfernalpractice</span>
+                    <span class="text-gray-300 text-xs bg-gray-800 px-2 py-0.5 rounded">SilverIllusionist</span>
+                    <span class="text-gray-300 text-xs bg-gray-800 px-2 py-0.5 rounded">JoanStar</span>
+                </div>
+                <div class="text-gray-600 text-xs mt-1.5">via freesound.org</div>
+            </div>
+
+            <!-- 3D Models -->
+            <div class="mb-5 pb-4 border-b border-gray-700">
+                <div class="text-xs text-gray-500 uppercase tracking-widest mb-2">3D Models</div>
+                <div class="flex flex-wrap gap-1.5">
+                    <span class="text-gray-300 text-xs bg-gray-800 px-2 py-0.5 rounded">OPREXT</span>
+                    <span class="text-gray-300 text-xs bg-gray-800 px-2 py-0.5 rounded">inetherr</span>
+                    <span class="text-gray-300 text-xs bg-gray-800 px-2 py-0.5 rounded">farhad.Guli</span>
+                    <span class="text-gray-300 text-xs bg-gray-800 px-2 py-0.5 rounded">Node_Art</span>
+                    <span class="text-gray-300 text-xs bg-gray-800 px-2 py-0.5 rounded">Martini-SF</span>
+                    <span class="text-gray-300 text-xs bg-gray-800 px-2 py-0.5 rounded">rickslash</span>
+                    <span class="text-gray-300 text-xs bg-gray-800 px-2 py-0.5 rounded">Tim Samedov</span>
+                    <span class="text-gray-300 text-xs bg-gray-800 px-2 py-0.5 rounded">Paul</span>
+                    <span class="text-gray-300 text-xs bg-gray-800 px-2 py-0.5 rounded">shangus930</span>
+                    <span class="text-gray-300 text-xs bg-gray-800 px-2 py-0.5 rounded">LaVADraGoN</span>
+                </div>
+                <div class="text-gray-600 text-xs mt-1.5">via sketchfab.com</div>
+            </div>
+
+            <!-- Based on -->
+            <div class="mb-5 pb-4 border-b border-gray-700">
+                <div class="text-xs text-gray-500 uppercase tracking-widest mb-2">Based on</div>
+                <div class="text-gray-300 text-sm"><a class="underline" href="https://github.com/Gallind/Sky-Combat" target="_blank" rel="noopener">Gallind/Sky-Combat</a> &mdash; the original 3D aerial combat game (Three.js)</div>
+                <div class="text-gray-400 text-xs mt-2">Free-flight, terrain and flying ideas inspired by <a class="underline" href="https://github.com/cedrickchee/vibe-jet" target="_blank" rel="noopener">cedrickchee/vibe-jet</a></div>
+                <div class="text-gray-500 text-xs mt-2">This version adds lock-on, 3D pitch flight, mountains, big explosions and touch controls.</div>
+            </div>
+
+            <!-- 2D Assets -->
+            <div class="mb-5">
+                <div class="text-xs text-gray-500 uppercase tracking-widest mb-2">2D Assets</div>
+                <div class="flex flex-wrap gap-1.5">
+                    <span class="text-gray-300 text-xs bg-gray-800 px-2 py-0.5 rounded">yayimage</span>
+                </div>
+            </div>
+
+            <button id="creditsClose" class="w-full py-2.5 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-xl transition-colors cursor-pointer">Close</button>
+        </div>
+    </div>
+
+    <!-- Scripts in dependency order -->
+    <script src="js/config.js"></script>
+    <script src="js/input.js"></script>
+    <script src="js/terrain.js"></script>
+    <script src="js/flight.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/effects.js"></script>
+    <script src="js/explosions.js"></script>
+    <script src="js/drone.js"></script>
+    <script src="js/contrails.js"></script>
+    <script src="js/enemies.js"></script>
+    <script src="js/weapons.js"></script>
+    <script src="js/levels.js"></script>
+    <script src="js/combat.js"></script>
+    <script src="js/course.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/touch.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

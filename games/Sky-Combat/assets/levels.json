@@ -1,0 +1,261 @@
+{
+  "levels": [
+    {
+      "id": 0,
+      "name": "First Contact - TESTING",
+      "description": "Drone swarms incoming.",
+      "waves": [
+        {
+          "wave": 1,
+          "drones": 4,
+          "jets": 0
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "name": "First Contact",
+      "description": "Drone swarms incoming.",
+      "waves": [
+        {
+          "wave": 1,
+          "drones": 2,
+          "jets": 1
+        },
+        {
+          "wave": 2,
+          "drones": 2,
+          "jets": 1
+        },
+        {
+          "wave": 3,
+          "drones": 3,
+          "jets": 1
+        },
+        {
+          "wave": 4,
+          "drones": 4,
+          "jets": 1
+        },
+        {
+          "wave": 5,
+          "drones": 4,
+          "jets": 1
+        },
+        {
+          "wave": 6,
+          "drones": 5,
+          "jets": 2
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Interceptors",
+      "description": "Enemy jets spotted.",
+      "waves": [
+        {
+          "wave": 1,
+          "drones": 2,
+          "jets": 1
+        },
+        {
+          "wave": 2,
+          "drones": 3,
+          "jets": 2
+        },
+        {
+          "wave": 3,
+          "drones": 4,
+          "jets": 2
+        },
+        {
+          "wave": 4,
+          "drones": 5,
+          "jets": 2
+        },
+        {
+          "wave": 5,
+          "drones": 6,
+          "jets": 3
+        },
+        {
+          "wave": 6,
+          "drones": 7,
+          "jets": 3
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Ace Squadron",
+      "description": "Elite jets lead the assault.",
+      "waves": [
+        {
+          "wave": 1,
+          "drones": 3,
+          "jets": 2
+        },
+        {
+          "wave": 2,
+          "drones": 4,
+          "jets": 2
+        },
+        {
+          "wave": 3,
+          "drones": 5,
+          "jets": 3
+        },
+        {
+          "wave": 4,
+          "drones": 5,
+          "jets": 4
+        },
+        {
+          "wave": 5,
+          "drones": 6,
+          "jets": 4
+        },
+        {
+          "wave": 6,
+          "drones": 7,
+          "jets": 5
+        },
+        {
+          "wave": 7,
+          "drones": 8,
+          "jets": 5
+        },
+        {
+          "wave": 8,
+          "drones": 8,
+          "jets": 6
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Full Assault",
+      "description": "Overwhelming numbers. Survive.",
+      "waves": [
+        {
+          "wave": 1,
+          "drones": 6,
+          "jets": 3
+        },
+        {
+          "wave": 2,
+          "drones": 7,
+          "jets": 4
+        },
+        {
+          "wave": 3,
+          "drones": 8,
+          "jets": 4
+        },
+        {
+          "wave": 4,
+          "drones": 10,
+          "jets": 5
+        },
+        {
+          "wave": 5,
+          "drones": 11,
+          "jets": 6
+        },
+        {
+          "wave": 6,
+          "drones": 12,
+          "jets": 6
+        },
+        {
+          "wave": 7,
+          "drones": 13,
+          "jets": 7
+        },
+        {
+          "wave": 8,
+          "drones": 15,
+          "jets": 8
+        },
+        {
+          "wave": 9,
+          "drones": 16,
+          "jets": 8
+        },
+        {
+          "wave": 10,
+          "drones": 17,
+          "jets": 9
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Last Stand",
+      "description": "The final wave. No mercy.",
+      "waves": [
+        {
+          "wave": 1,
+          "drones": 8,
+          "jets": 3
+        },
+        {
+          "wave": 2,
+          "drones": 9,
+          "jets": 4
+        },
+        {
+          "wave": 3,
+          "drones": 10,
+          "jets": 4
+        },
+        {
+          "wave": 4,
+          "drones": 12,
+          "jets": 5
+        },
+        {
+          "wave": 5,
+          "drones": 13,
+          "jets": 6
+        },
+        {
+          "wave": 6,
+          "drones": 14,
+          "jets": 6
+        },
+        {
+          "wave": 7,
+          "drones": 16,
+          "jets": 7
+        },
+        {
+          "wave": 8,
+          "drones": 17,
+          "jets": 7
+        },
+        {
+          "wave": 9,
+          "drones": 18,
+          "jets": 8
+        },
+        {
+          "wave": 10,
+          "drones": 19,
+          "jets": 8
+        },
+        {
+          "wave": 11,
+          "drones": 21,
+          "jets": 9
+        },
+        {
+          "wave": 12,
+          "drones": 22,
+          "jets": 10
+        }
+      ]
+    }
+  ]
+}
