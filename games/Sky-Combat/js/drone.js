@@ -98,7 +98,7 @@ function updateDroneVisuals(delta) {
     if (typeof droneFlipRoll !== 'undefined' && Math.abs(droneFlipRoll) > 0.05) {
         drone.rotation.z = droneFlipRoll;
     } else {
-        const bankTarget = (typeof _yawVelocity !== 'undefined' ? _yawVelocity / YAW_SPEED : 0) * BANK_ANGLE;
+        const bankTarget = ((typeof _yawVelocity !== 'undefined' ? _yawVelocity / YAW_SPEED : 0) + (typeof lookBank !== 'undefined' ? lookBank * 0.6 : 0)) * BANK_ANGLE;
         drone.rotation.z = THREE.MathUtils.lerp(drone.rotation.z || 0, bankTarget, BANK_LERP);
     }
 }

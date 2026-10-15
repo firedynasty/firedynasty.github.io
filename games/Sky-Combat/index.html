@@ -39,20 +39,20 @@
       html,body{touch-action:none;-webkit-user-select:none;user-select:none}
       .touch{position:fixed;left:0;right:0;bottom:0;height:0;z-index:30;pointer-events:none;touch-action:none}
       .touch>*{pointer-events:auto}
-      .stick{position:absolute;left:max(24px,env(safe-area-inset-left));bottom:30px;width:170px;height:170px;border-radius:50%;background:rgba(16,22,40,.18);border:2px solid rgba(255,255,255,.25);touch-action:none}
-      .knob{position:absolute;left:50%;top:50%;width:72px;height:72px;margin:-36px 0 0 -36px;border-radius:50%;background:rgba(255,255,255,.25);border:2px solid rgba(255,255,255,.4);pointer-events:none}
-      .acts{position:absolute;right:max(16px,env(safe-area-inset-right));bottom:30px;width:236px;height:236px}
-      .acts button{position:absolute;width:96px;height:96px;border-radius:50%;background:rgba(16,22,40,.22);border:2px solid rgba(255,255,255,.3);color:rgba(255,255,255,.75);font:700 13px sans-serif;letter-spacing:.06em;text-transform:uppercase;touch-action:none;-webkit-user-select:none;user-select:none}
+      /* sizes follow the screen's shorter side so the pad is never huge on a Fold / phone */
+      .stick{position:absolute;left:max(16px,env(safe-area-inset-left));bottom:max(16px,env(safe-area-inset-bottom));width:clamp(96px,26vmin,150px);height:clamp(96px,26vmin,150px);border-radius:50%;background:rgba(16,22,40,.18);border:2px solid rgba(255,255,255,.25);touch-action:none}
+      .knob{position:absolute;left:50%;top:50%;width:42%;height:42%;margin:-21% 0 0 -21%;border-radius:50%;background:rgba(255,255,255,.28);border:2px solid rgba(255,255,255,.45);pointer-events:none}
+      .acts{position:absolute;right:max(10px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));--b:clamp(58px,15vmin,86px);width:calc(var(--b)*2.45);height:calc(var(--b)*2.45)}
+      .acts button{position:absolute;width:var(--b);height:var(--b);border-radius:50%;background:rgba(16,22,40,.22);border:2px solid rgba(255,255,255,.3);color:rgba(255,255,255,.8);font:700 clamp(9px,2.2vmin,12px) sans-serif;letter-spacing:.04em;text-transform:uppercase;touch-action:none;-webkit-user-select:none;user-select:none;padding:0}
       .acts button.on{background:rgba(255,106,61,.65);border-color:rgba(255,106,61,.95);color:#fff}
-      .acts [data-t="missile"]{left:70px;top:0}
-      .acts [data-t="gun"]{left:0;top:70px}
-      .acts [data-t="roll"]{right:0;top:70px}
-      .acts [data-t="tgt"]{left:70px;bottom:0;width:78px;height:78px;margin:9px}
-      @media (max-width:520px){
-        .stick{left:14px;bottom:20px;width:130px;height:130px}.knob{width:56px;height:56px;margin:-28px 0 0 -28px}
-        .acts{right:8px;bottom:20px;width:190px;height:190px}.acts button{width:76px;height:76px;font-size:11px}
-        .acts [data-t="missile"]{left:57px}.acts [data-t="gun"]{top:57px}.acts [data-t="roll"]{top:57px}.acts [data-t="tgt"]{left:57px;width:62px;height:62px;margin:7px}
-      }
+      .acts [data-t="missile"]{left:calc(var(--b)*.725);top:0}
+      .acts [data-t="gun"]{left:0;top:calc(var(--b)*.725)}
+      .acts [data-t="roll"]{right:0;top:calc(var(--b)*.725)}
+      .acts [data-t="tgt"]{left:calc(var(--b)*.86);bottom:0;width:calc(var(--b)*.74);height:calc(var(--b)*.74)}
+      /* shows where your swipe started and where your finger is */
+      .dragui{display:none;position:fixed;z-index:32;width:0;height:0;pointer-events:none}
+      .dragui:before{content:"";position:absolute;left:-26px;top:-26px;width:52px;height:52px;border-radius:50%;border:2px solid rgba(125,255,154,.7)}
+      .dragui i{position:absolute;left:-9px;top:-9px;width:18px;height:18px;border-radius:50%;background:rgba(125,255,154,.85)}
       .padtop{position:fixed;top:92px;left:12px;z-index:31;display:flex;gap:6px}
       .padtop button{background:rgba(16,22,40,.55);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:6px;padding:6px 10px;font:700 12px sans-serif;letter-spacing:.06em}
       .padtop button[aria-pressed="true"]{background:rgba(255,106,61,.6)}
@@ -70,6 +70,7 @@
         <button type="button" data-t="tgt">Tgt</button>
       </div>
     </div>
+    <div id="dragUI" class="dragui"><i id="dragDot"></i></div>
     <div class="padtop"><button id="padBtn" type="button" aria-pressed="false" hidden>Pad</button><button id="padPause" type="button" hidden>&#10074;&#10074;</button></div>
 
     <!-- HUD (visible during gameplay) -->

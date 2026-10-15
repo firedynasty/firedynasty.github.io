@@ -21,6 +21,7 @@ let _yawVelocity  = 0;   // current yaw rate — smoothed toward target to preve
 let _pitchVelocity = 0;  // current pitch rate
 let groundWarning = 0;   // 0 = clear, 1 = terrain ahead, 2 = imminent (auto pull-up active)
 let groundCrashTimer = 0;
+let lookBank = 0;        // visual bank from swiping (decays)
 let droneAGL = 999;      // altitude above ground level (for the HUD)
 
 const _flightFwd = new THREE.Vector3();
@@ -67,6 +68,17 @@ function updateFlight(delta) {
     // Gravity: dive = faster, climb = slower
     droneSpeed = Math.max(MIN_SPEED, Math.min(MAX_SPEED * 1.15, droneSpeed - Math.sin(dronePitch) * PITCH_GRAVITY * delta));
 
+    // --- Swipe look (touch): turn / pitch by exactly how far the finger moved, like Gore Rush ---
+    if (typeof touchLookYaw !== 'undefined') {
+        droneYaw += touchLookYaw;
+        dronePitch = Math.max(-PITCH_MAX, Math.min(PITCH_MAX, dronePitch + touchLookPitch));
+        lookBank = THREE.MathUtils.lerp(lookBank, Math.max(-1, Math.min(1, touchLookYaw / Math.max(delta, 0.001) / YAW_SPEED)), 0.3);
+        touchLookYaw = 0; touchLookPitch = 0;
+        if (touchLookHold > 0) touchLookHold -= delta;
+    }
+    const lookActive = typeof touchLookHold !== 'undefined' && touchLookHold > 0;
+    lookBank *= Math.pow(0.02, delta);
+
     // --- Yaw (bank turn): A left, D right ---
     let _targetYawVel = Math.max(-1, Math.min(1, (keys['KeyA'] ? 1 : keys['KeyD'] ? -1 : 0) + (typeof touchYaw !== 'undefined' ? touchYaw : 0))) * YAW_SPEED;
     // --- Pitch: arrows ---
@@ -78,18 +90,18 @@ function updateFlight(delta) {
         const dx = lockedTarget.mesh.position.x - drone.position.x;
         const dy = lockedTarget.mesh.position.y - drone.position.y;
         const dz = lockedTarget.mesh.position.z - drone.position.z;
-        if (_targetYawVel === 0) {
+        if (_targetYawVel === 0 && !lookActive) {
             let diff = Math.atan2(-dx, -dz) - droneYaw;
             diff = Math.atan2(Math.sin(diff), Math.cos(diff));
             if (Math.abs(diff) < LOCK_STEER_CONE * Math.PI / 180)
                 _targetYawVel = Math.max(-1, Math.min(1, diff * LOCK_STEER_GAIN)) * YAW_SPEED;
         }
-        if (pitchInput === 0) {
+        if (pitchInput === 0 && !lookActive) {
             const diff = Math.atan2(dy, Math.hypot(dx, dz)) - dronePitch;
             if (Math.abs(diff) < LOCK_STEER_CONE * Math.PI / 180)
                 _targetPitchVel = Math.max(-1, Math.min(1, diff * LOCK_STEER_GAIN)) * PITCH_RATE;
         }
-    } else if (pitchInput === 0) {
+    } else if (pitchInput === 0 && !lookActive) {
         _targetPitchVel = -dronePitch * PITCH_AUTOLEVEL * 3;   // gentle auto-level
         _targetPitchVel = Math.max(-PITCH_AUTOLEVEL, Math.min(PITCH_AUTOLEVEL, _targetPitchVel));
     }
