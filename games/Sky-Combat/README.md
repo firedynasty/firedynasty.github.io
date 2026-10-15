@@ -51,7 +51,7 @@ The game view sits in a box with the controls in a footer underneath (like Rooft
 | Input | Action |
 |---|---|
 | Footer, left zone | Joystick — touch anywhere, ring appears under your thumb. Left/right = turn, up = climb, down = dive |
-| `MISSILE` | Fire missile at the lock |
+| `MISSILE` | Fire missile at the lock (there is a second pair of Missile / Gun buttons next to the joystick for the left hand) |
 | `GUN` (hold) | Fire bullets |
 | `ROLL` | Barrel roll |
 | `THR` (hold) | Speed up |

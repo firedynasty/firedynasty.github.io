@@ -44,18 +44,21 @@
       #gameArea canvas{display:block}
       #padFooter[hidden]{display:none!important}
       #padFooter{--fh:clamp(168px,36vh,250px);--fh:clamp(168px,36dvh,250px);--s:min(calc(var(--fh)*.8),170px);--b:min(calc(var(--fh)*.36),84px);
-        flex:0 0 auto;height:var(--fh);box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;gap:10px;
+        flex:0 0 auto;height:var(--fh);box-sizing:border-box;display:flex;align-items:center;justify-content:flex-start;gap:10px;
         padding:6px max(10px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));
         background:#0a0d18;border-top:2px solid #1c2440;touch-action:none;-webkit-user-select:none;user-select:none;position:relative;z-index:30}
       /* left: the whole zone is the joystick; the ring appears under your thumb */
-      #stickZone{position:relative;flex:1 1 52%;height:100%;border-radius:14px;background:rgba(255,255,255,.035);border:1px dashed rgba(255,255,255,.14);touch-action:none}
+      #stickZone{position:relative;flex:0 0 auto;width:calc(var(--s)*1.35);height:100%;border-radius:14px;background:rgba(255,255,255,.035);border:1px dashed rgba(255,255,255,.14);touch-action:none}
       #stickZone .zl{position:absolute;left:10px;top:6px;font:700 10px sans-serif;letter-spacing:.1em;color:rgba(255,255,255,.3);pointer-events:none}
-      .stick{position:absolute;left:50%;top:50%;width:var(--s);height:var(--s);margin:calc(var(--s)/-2) 0 0 calc(var(--s)/-2);border-radius:50%;background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.28);pointer-events:none}
+      .stick{position:absolute;left:calc(var(--s)/2 + 14px);top:50%;width:var(--s);height:var(--s);margin:calc(var(--s)/-2) 0 0 calc(var(--s)/-2);border-radius:50%;background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.28);pointer-events:none}
       .knob{position:absolute;left:50%;top:50%;width:42%;height:42%;margin:-21% 0 0 -21%;border-radius:50%;background:rgba(255,255,255,.3);border:2px solid rgba(255,255,255,.5);pointer-events:none}
       /* right: four buttons on a diamond */
-      .acts{position:relative;flex:0 0 auto;width:calc(var(--b)*2.45);height:calc(var(--b)*2.45)}
-      .acts button{position:absolute;width:var(--b);height:var(--b);border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.3);color:rgba(255,255,255,.85);font:700 clamp(9px,2.2vmin,12px) sans-serif;letter-spacing:.04em;text-transform:uppercase;touch-action:none;-webkit-user-select:none;user-select:none;padding:0}
-      .acts button.on{background:rgba(255,106,61,.65);border-color:rgba(255,106,61,.95);color:#fff}
+      .acts{position:relative;flex:0 0 auto;margin-left:auto;width:calc(var(--b)*2.45);height:calc(var(--b)*2.45)}
+      /* left-hand fire buttons, right next to the joystick */
+      .lacts{flex:0 0 auto;display:flex;flex-direction:column;justify-content:center;gap:8px;height:100%}
+      .acts button,.lacts button{position:absolute;width:var(--b);height:var(--b);border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.3);color:rgba(255,255,255,.85);font:700 clamp(9px,2.2vmin,12px) sans-serif;letter-spacing:.04em;text-transform:uppercase;touch-action:none;-webkit-user-select:none;user-select:none;padding:0}
+      .lacts button{position:relative}
+      .acts button.on,.lacts button.on{background:rgba(255,106,61,.65);border-color:rgba(255,106,61,.95);color:#fff}
       .acts [data-t="missile"]{left:calc(var(--b)*.725);top:0}
       .acts [data-t="gun"]{left:0;top:calc(var(--b)*.725)}
       .acts [data-t="roll"]{right:0;top:calc(var(--b)*.725)}
@@ -63,7 +66,8 @@
       /* short landscape phones: a footer would eat the picture, so the pad floats over the corners instead */
       @media (max-height:470px) and (orientation:landscape){
         #padFooter{position:fixed;left:0;right:0;bottom:0;height:0;padding:0;background:none;border:0;display:block;pointer-events:none;--fh:min(46vh,190px)}
-        #stickZone{position:absolute;left:0;bottom:0;width:46%;height:var(--fh);background:none;border:0;pointer-events:auto}
+        #stickZone{position:absolute;left:0;bottom:0;width:calc(var(--s)*1.35);height:var(--fh);background:none;border:0;pointer-events:auto}
+        .lacts{position:absolute;left:calc(var(--s)*1.35 + 8px);bottom:10px;height:auto;pointer-events:auto}
         #stickZone .zl{display:none}
         .acts{position:absolute;right:max(10px,env(safe-area-inset-right));bottom:10px;pointer-events:auto}
         body.padon #radarBox{bottom:auto;top:132px;right:auto;left:12px}
@@ -158,6 +162,10 @@
       <div id="stickZone" aria-label="Joystick: touch anywhere here; drag to turn, climb and dive">
         <span class="zl">TURN &middot; CLIMB &middot; DIVE</span>
         <div id="stick" class="stick"><div id="knob" class="knob"></div></div>
+      </div>
+      <div class="lacts">
+        <button type="button" data-t="missile">Missile</button>
+        <button type="button" data-t="gun">Gun</button>
       </div>
       <div class="acts">
         <button type="button" data-t="missile">Missile</button>

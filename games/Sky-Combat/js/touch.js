@@ -3,6 +3,7 @@
 //
 //   Footer, left   -> joystick zone: touch anywhere in it and the ring appears under your thumb.
 //                     Drag: left/right = turn, up = climb, down = dive (analog)
+//   Footer, middle -> MISSILE + GUN again, so the left hand can shoot too
 //   Footer, right  -> MISSILE (at the lock) · GUN (hold) · ROLL (barrel roll) · THR (hold = speed up)
 //   Game view      -> swipe: the jet follows your finger (up/down = nose up/down, left/right = turn).
 //                     Targeting is automatic: planes in front of the nose get locked, MISSILE fires at the lock.
@@ -100,18 +101,25 @@ let touchLookYaw = 0, touchLookPitch = 0, touchLookHold = 0;
         roll:    { down() { keys['KeyR'] = true; },      up() { keys['KeyR'] = false; } },
         thr:     { down() { keys['KeyW'] = true; },      up() { keys['KeyW'] = false; } },
     };
+    // Missile and Gun exist twice (left hand next to the stick, right hand in the diamond). Both copies drive the
+    // same action; it stays on until every finger is off every copy of that button.
+    const held = {};       // action name -> fingers currently down on its buttons
+    const releasers = [];  // one release function per button (used to reset everything)
     document.querySelectorAll('#padFooter [data-t]').forEach(b => {
-        const a = actions[b.dataset.t];
+        const name = b.dataset.t, a = actions[name];
+        let active = false;
+        const press = () => { if (active) return; active = true; held[name] = (held[name] || 0) + 1; if (held[name] === 1) a.down(); b.classList.add('on'); };
+        const release = () => { if (!active) return; active = false; held[name]--; if (held[name] <= 0) { held[name] = 0; a.up(); } b.classList.remove('on'); };
+        releasers.push(release);
         b.addEventListener('pointerdown', e => {
             e.preventDefault();
             try { b.setPointerCapture(e.pointerId); } catch (_) {}
-            a.down(); b.classList.add('on');
-            padDebug(b.dataset.t + ' down');
+            press();
+            padDebug(name + ' down');
         });
-        const up = () => { a.up(); b.classList.remove('on'); };
-        b.addEventListener('pointerup', up);
-        b.addEventListener('pointercancel', up);
-        b.addEventListener('lostpointercapture', up);
+        b.addEventListener('pointerup', release);
+        b.addEventListener('pointercancel', release);
+        b.addEventListener('lostpointercapture', release);
     });
     footer.addEventListener('contextmenu', e => e.preventDefault());
 
@@ -159,8 +167,10 @@ let touchLookYaw = 0, touchLookPitch = 0, touchLookHold = 0;
         footer.hidden = !show;
         document.documentElement.classList.toggle('noscroll', playing);
         if (show !== lastShow) { lastShow = show; centerCursor(); }
-        if (!show && (drag || stick || touchYaw || touchPitch)) {
+        const anyHeld = Object.keys(held).some(k => held[k] > 0);
+        if (!show && (drag || stick || anyHeld || touchYaw || touchPitch)) {
             releaseStick();
+            releasers.forEach(r => r());
             for (const k in actions) actions[k].up();
             touchLookYaw = touchLookPitch = 0;
             drag = null; dragUI.style.display = 'none';
