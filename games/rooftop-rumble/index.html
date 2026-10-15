@@ -342,8 +342,13 @@ function moveStick(e){
   const len=Math.hypot(dx,dy),lim=R-18;
   if(len>lim){dx*=lim/len;dy*=lim/len}
   knobEl.style.transform='translate('+dx+'px,'+dy+'px)';
-  const nx=dx/R,ny=dy/R;
-  setDir('left',nx<-.28);setDir('right',nx>.28);setDir('up',ny<-.4);setDir('down',ny>.4);
+  const nx=dx/R,ny=dy/R,m=Math.hypot(nx,ny);
+  // sectors, not axes: anything pointing into the upper ~130 degrees jumps (so up-left and up-right jump and walk that way),
+  // the lower sector ducks, and left/right walk on their own. 'up' has hysteresis so a wobbling thumb doesn't jump twice.
+  const upSector=ny<0&&-ny>.4*Math.abs(nx),downSector=ny>0&&ny>.6*Math.abs(nx);
+  setDir('left',nx<-.25);setDir('right',nx>.25);
+  setDir('up',upSector&&m>(T.held.up?.2:.34));
+  setDir('down',downSector&&m>.4);
 }
 function releaseStick(){
   stickId=null;knobEl.style.transform='';
@@ -375,8 +380,8 @@ function readHuman(map,touch,pad){
 }
 // Presses made during the last few frames of a recovery still count, so moves chain without frame-perfect timing.
 function bufInput(f,i){
-  const B=f.buf||(f.buf={pp:0,pk:0,ps:0});
-  for(const k of ['pp','pk','ps']){if(i[k])B[k]=6;else if(B[k]>0)B[k]--;i[k]=B[k]>0}
+  const B=f.buf||(f.buf={pp:0,pk:0,ps:0,pu:0});
+  for(const k of ['pp','pk','ps','pu']){if(i[k])B[k]=6;else if(B[k]>0)B[k]--;i[k]=B[k]>0}
   return i;
 }
 
