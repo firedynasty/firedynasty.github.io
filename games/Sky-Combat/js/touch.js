@@ -3,12 +3,13 @@
 // (each finger is its own pointerId, no touch/pointer mixing) — the same approach as the
 // Pixel Racing pad, which is known to work on phones.
 //
-//   Joystick  -> analog: left/right = bank + turn, up = nose up (climb), down = nose down (dive)
+//   Joystick  -> floating: touch the LEFT half of the screen and the stick appears under your
+//                thumb; drag = analog turn (left/right) + pitch (up climbs, down dives)
 //   MISSILE   -> missile at the lock (like LMB / F)
 //   GUN       -> hold to fire bullets (like Space)
 //   ROLL      -> barrel roll (like R)
 //   THR       -> hold to speed up (like W); release and speed drifts back to cruise
-//   Swipe     -> anywhere except the pad: the jet follows your finger — up/down = nose up/down,
+//   Swipe     -> the RIGHT half of the screen: the jet follows your finger — up/down = nose up/down,
 //                left/right = turn. Quick tap = lock the plane you tapped.
 //   PAD / ||  -> show or hide the pad, pause
 
@@ -23,7 +24,7 @@ let touchLookYaw = 0, touchLookPitch = 0, touchLookHold = 0;
     try { const sv = localStorage.getItem('sc-pad'); if (sv !== null) padOn = sv === '1'; } catch (_) {}
 
     const $ = id => document.getElementById(id);
-    const touchEl = $('touch'), stick = $('stick'), knob = $('knob'), padBtn = $('padBtn'), pauseBtn = $('padPause');
+    const touchEl = $('touch'), stickEl = $('stick'), knob = $('knob'), padBtn = $('padBtn'), pauseBtn = $('padPause');
     const dragUI = $('dragUI'), dragDot = $('dragDot'), dbg = $('padDbg');
     if (!touchEl) return;
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -42,12 +43,24 @@ let touchLookYaw = 0, touchLookPitch = 0, touchLookHold = 0;
         dbgLast = n; dbg.textContent = msg;
     }
 
-    // ---- joystick: analog turn (X) and pitch (Y), pointer capture like Pixel Racing ----
-    let stickId = null;
+    // ---- floating joystick: left-half touches. The ring teleports to the touch point, so the
+    // painted control and the coordinate math can never disagree (no getBoundingClientRect position
+    // math — an offset between the layout viewport and the visible page was freezing the old stick).
+    let stick = null;   // { id, x, y }
     function dead(v) { return Math.abs(v) < 0.25 ? 0 : (v - Math.sign(v) * 0.25) / 0.75; }
-    function moveStick(e) {
-        const r = stick.getBoundingClientRect(), R = r.width / 2;
-        let dx = e.clientX - (r.left + R), dy = e.clientY - (r.top + R);
+    function stickRadius() { return stickEl.getBoundingClientRect().width / 2 || 75; }
+    function stickStart(e) {
+        const R = stickRadius();
+        stickEl.style.left = (e.clientX - R) + 'px';
+        stickEl.style.top  = (e.clientY - R) + 'px';
+        stickEl.style.bottom = 'auto';
+        stick = { id: e.pointerId, x: e.clientX, y: e.clientY };
+        padDebug('stick start ' + Math.round(e.clientX) + ',' + Math.round(e.clientY));
+        stickMove(e);
+    }
+    function stickMove(e) {
+        const R = stickRadius();
+        let dx = e.clientX - stick.x, dy = e.clientY - stick.y;
         const len = Math.hypot(dx, dy), lim = R - 10;
         if (len > lim) { dx *= lim / len; dy *= lim / len; }
         knob.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
@@ -56,19 +69,10 @@ let touchLookYaw = 0, touchLookPitch = 0, touchLookHold = 0;
         padDebug('stick ' + touchYaw.toFixed(1) + ',' + touchPitch.toFixed(1));
     }
     function releaseStick() {
-        stickId = null; knob.style.transform = '';
+        stick = null; knob.style.transform = '';
+        stickEl.style.left = ''; stickEl.style.top = ''; stickEl.style.bottom = '';   // back to the corner hint
         touchYaw = 0; touchPitch = 0;
     }
-    stick.addEventListener('pointerdown', e => {
-        e.preventDefault();
-        stickId = e.pointerId;
-        try { stick.setPointerCapture(e.pointerId); } catch (_) {}
-        padDebug('stick down ' + e.pointerType);
-        moveStick(e);
-    });
-    stick.addEventListener('pointermove', e => { if (e.pointerId === stickId) { e.preventDefault(); moveStick(e); } });
-    stick.addEventListener('pointerup', e => { if (e.pointerId === stickId) releaseStick(); });
-    stick.addEventListener('pointercancel', e => { if (e.pointerId === stickId) { padDebug('stick CANCEL'); releaseStick(); } });
 
     // ---- action buttons ----
     const actions = {
@@ -90,22 +94,28 @@ let touchLookYaw = 0, touchLookPitch = 0, touchLookHold = 0;
         b.addEventListener('pointercancel', up);
         b.addEventListener('lostpointercapture', up);
     });
-    [stick, touchEl].forEach(el => el.addEventListener('contextmenu', e => e.preventDefault()));
+    [stickEl, touchEl].forEach(el => el.addEventListener('contextmenu', e => e.preventDefault()));
 
     // ---- swipe the sky: the jet follows your finger (both axes); quick tap = lock ----
     // Touch/pen only, anywhere except the pad. No preventDefault and no capture needed:
     // html/body have touch-action:none, so the browser never steals the gesture to scroll.
     let drag = null;   // { id, x, y, lx, ly, t, moved }
-    const onPad = el => !!(el && el.closest && el.closest('#touch,.padtop'));
+    const onPad = el => !!(el && el.closest && el.closest('.acts,.padtop'));
     document.addEventListener('pointerdown', e => {
-        if (e.pointerType === 'mouse' || drag || !padOn || !isPlaying()) return;
+        if (e.pointerType === 'mouse' || !padOn || !isPlaying()) return;
         if (onPad(e.target)) return;
+        if (e.clientX < window.innerWidth * 0.5) {       // left half = floating joystick
+            if (!stick) stickStart(e);
+            return;
+        }
+        if (drag) return;                                 // right half = swipe to look
         drag = { id: e.pointerId, x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, t: performance.now(), moved: 0 };
         dragUI.style.cssText = 'display:block;left:' + e.clientX + 'px;top:' + e.clientY + 'px';
         dragDot.style.transform = 'translate(0,0)';
         padDebug('swipe start');
     });
     document.addEventListener('pointermove', e => {
+        if (stick && e.pointerId === stick.id) { stickMove(e); return; }
         if (!drag || e.pointerId !== drag.id) return;
         const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
         drag.moved = Math.max(drag.moved, Math.hypot(dx, dy));
@@ -118,6 +128,7 @@ let touchLookYaw = 0, touchLookPitch = 0, touchLookHold = 0;
         padDebug('swipe ' + Math.round(dx) + ',' + Math.round(dy));
     });
     function endDrag(e) {
+        if (stick && e.pointerId === stick.id) { releaseStick(); return; }
         if (!drag || e.pointerId !== drag.id) return;
         if (drag.moved < 12 && performance.now() - drag.t < 300) { mouseScreenX = e.clientX; mouseScreenY = e.clientY; } // tap = manual lock
         drag = null;
@@ -134,7 +145,8 @@ let touchLookYaw = 0, touchLookPitch = 0, touchLookHold = 0;
         padBtn.hidden = !playing;
         pauseBtn.hidden = !playing;
         touchEl.hidden = !(padOn && playing);
-        if (touchEl.hidden && (drag || stickId !== null || touchYaw || touchPitch)) {
+        document.documentElement.classList.toggle('noscroll', playing);
+        if (touchEl.hidden && (drag || stick || touchYaw || touchPitch)) {
             releaseStick();
             for (const k in actions) actions[k].up();
             touchLookYaw = touchLookPitch = 0;

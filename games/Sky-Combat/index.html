@@ -37,6 +37,9 @@
     <!-- On-screen pad (touch): joystick = turn + climb/dive, buttons right, swipe the sky to look. Wired up in js/touch.js -->
     <style>
       html,body{touch-action:none;-webkit-user-select:none;user-select:none}
+      /* the page must not scroll during play, or painted controls and touch coordinates drift apart */
+      html.noscroll,html.noscroll body{overflow:hidden;height:100%}
+      canvas{display:block}
       .touch{position:fixed;left:0;right:0;bottom:0;height:0;z-index:30;pointer-events:none;touch-action:none}
       .touch>*{pointer-events:auto}
       /* sizes follow the screen's shorter side so the pad is never huge on a Fold / phone */
@@ -62,7 +65,7 @@
       body.padon #controlsHint{display:none}
     </style>
     <div id="touch" class="touch" hidden>
-      <div id="stick" class="stick" aria-label="Joystick: left and right turn, up climbs, down dives"><div id="knob" class="knob"></div></div>
+      <div id="stick" class="stick" aria-label="Floating joystick: touch the left half of the screen; drag to turn, climb and dive"><div id="knob" class="knob"></div></div>
       <div class="acts">
         <button type="button" data-t="missile">Missile</button>
         <button type="button" data-t="gun">Gun</button>
