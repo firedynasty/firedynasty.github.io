@@ -44,6 +44,22 @@ python3 -m http.server 8080
 | `R` | Barrel roll (destroys all incoming missiles) |
 | `ESC` | Pause / resume |
 
+### Touch (phones / foldables)
+
+The game view sits in a box with the controls in a footer underneath (like Rooftop Rumble). The **Pad** button toggles the footer.
+
+| Input | Action |
+|---|---|
+| Footer, left zone | Joystick — touch anywhere, ring appears under your thumb. Left/right = turn, up = climb, down = dive |
+| `MISSILE` | Fire missile at the lock |
+| `GUN` (hold) | Fire bullets |
+| `ROLL` | Barrel roll |
+| `THR` (hold) | Speed up |
+| Swipe the game view | Jet follows your finger (up/down = nose, left/right = turn) |
+| Tap a plane | Lock it |
+
+Short landscape phones put the pad over the corners of the picture instead of in a footer. Add `?debug=1` to the URL for a touch-input readout.
+
 **Missile targeting:** aim at an enemy and click LMB. Missiles fired at **jets** home automatically. Missiles fired at **drones** fly straight from your nose — use the aim dot for direction.
 
 ---

@@ -164,18 +164,20 @@ function init() {
     scene.fog = new THREE.Fog(FOG_COLOR, FOG_NEAR, FOG_FAR);
 
     // --- Camera ---
-    camera = new THREE.PerspectiveCamera(FOV_NORMAL, window.innerWidth / window.innerHeight, 0.5, 9000);
+    camera = new THREE.PerspectiveCamera(FOV_NORMAL, gameAreaSize().w / gameAreaSize().h, 0.5, 9000);
     camera.position.set(0, 30, 50);
 
     // --- Renderer ---
     renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(gameAreaSize().w, gameAreaSize().h);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1)); // cap at 1× — Retina 2× halves performance for minimal gain
     renderer.shadowMap.enabled = false; // no ground plane → shadows give nothing, kill the GPU cost
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.2;
     renderer.outputEncoding = THREE.sRGBEncoding;
-    document.body.appendChild(renderer.domElement);
+    document.getElementById('gameArea').appendChild(renderer.domElement);
+    // the view is a box (smaller than the window when the touch footer is showing): follow its size
+    if (window.ResizeObserver) new ResizeObserver(() => onWindowResize()).observe(document.getElementById('gameArea'));
 
     // --- Lighting: daytime open sky ---
     const ambient = new THREE.AmbientLight(AMBIENT_LIGHT_COLOR, AMBIENT_LIGHT_INTENSITY);
@@ -516,10 +518,17 @@ function animate(timestamp = 0) {
     renderer.render(scene, camera);
 }
 
+function gameAreaSize() {
+    const a = document.getElementById('gameArea');
+    return { w: Math.max(1, (a && a.clientWidth) || window.innerWidth), h: Math.max(1, (a && a.clientHeight) || window.innerHeight) };
+}
+
 function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
+    if (!camera || !renderer) return;
+    const s = gameAreaSize();
+    camera.aspect = s.w / s.h;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(s.w, s.h);
 }
 
 // --- Start ---

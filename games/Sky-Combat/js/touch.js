@@ -1,17 +1,14 @@
-// js/touch.js — On-screen pad: analog joystick on the left, action buttons on the right,
-// and a Gore Rush-style swipe anywhere on the sky to look. ALL input uses Pointer Events
-// (each finger is its own pointerId, no touch/pointer mixing) — the same approach as the
-// Pixel Racing pad, which is known to work on phones.
+// js/touch.js — Touch controls. Layout like Rooftop Rumble: the game view is a box, the controls sit in a
+// footer underneath it (#padFooter). All input uses Pointer Events (each finger = its own pointerId).
 //
-//   Joystick  -> floating: touch the LEFT half of the screen and the stick appears under your
-//                thumb; drag = analog turn (left/right) + pitch (up climbs, down dives)
-//   MISSILE   -> missile at the lock (like LMB / F)
-//   GUN       -> hold to fire bullets (like Space)
-//   ROLL      -> barrel roll (like R)
-//   THR       -> hold to speed up (like W); release and speed drifts back to cruise
-//   Swipe     -> the RIGHT half of the screen: the jet follows your finger — up/down = nose up/down,
-//                left/right = turn. Quick tap = lock the plane you tapped.
-//   PAD / ||  -> show or hide the pad, pause
+//   Footer, left   -> joystick zone: touch anywhere in it and the ring appears under your thumb.
+//                     Drag: left/right = turn, up = climb, down = dive (analog)
+//   Footer, right  -> MISSILE (at the lock) · GUN (hold) · ROLL (barrel roll) · THR (hold = speed up)
+//   Game view      -> swipe: the jet follows your finger (up/down = nose up/down, left/right = turn).
+//                     Quick tap = lock the plane you tapped.
+//   PAD / ||       -> show or hide the footer, pause
+//
+// Add ?debug=1 to the URL to see a one-line readout of the last touch input.
 
 let touchPitch = 0;   // -1..1 analog pitch from the joystick, read by flight.js
 let touchYaw   = 0;   // -1..1 analog turn from the joystick, read by flight.js
@@ -24,9 +21,9 @@ let touchLookYaw = 0, touchLookPitch = 0, touchLookHold = 0;
     try { const sv = localStorage.getItem('sc-pad'); if (sv !== null) padOn = sv === '1'; } catch (_) {}
 
     const $ = id => document.getElementById(id);
-    const touchEl = $('touch'), stickEl = $('stick'), knob = $('knob'), padBtn = $('padBtn'), pauseBtn = $('padPause');
-    const dragUI = $('dragUI'), dragDot = $('dragDot'), dbg = $('padDbg');
-    if (!touchEl) return;
+    const area = $('gameArea'), footer = $('padFooter'), zone = $('stickZone'), stickEl = $('stick'), knob = $('knob');
+    const padBtn = $('padBtn'), pauseBtn = $('padPause'), dragUI = $('dragUI'), dragDot = $('dragDot'), dbg = $('padDbg');
+    if (!footer || !area) return;
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
     // gameState is a `let` in main.js, which loads after this file — a bare reference throws
     // (temporal dead zone) if touched too early, so always go through this guard.
@@ -35,53 +32,74 @@ let touchLookYaw = 0, touchLookPitch = 0, touchLookHold = 0;
     const LOOK_YAW   = 0.0045;   // radians of turn per pixel of swipe
     const LOOK_PITCH = 0.005;    // radians of nose up/down per pixel of swipe
 
+    const DEBUG = /[?&]debug\b/.test(location.search);
+    if (dbg) dbg.style.display = DEBUG ? 'block' : 'none';
     let dbgLast = 0;
     function padDebug(msg) {
-        if (!dbg) return;
+        if (!DEBUG || !dbg) return;
         const n = performance.now();
-        if (n - dbgLast < 120) return;
+        if (n - dbgLast < 100) return;
         dbgLast = n; dbg.textContent = msg;
     }
 
-    // ---- floating joystick: left-half touches. The ring teleports to the touch point, so the
-    // painted control and the coordinate math can never disagree (no getBoundingClientRect position
-    // math — an offset between the layout viewport and the visible page was freezing the old stick).
-    let stick = null;   // { id, x, y }
-    function dead(v) { return Math.abs(v) < 0.25 ? 0 : (v - Math.sign(v) * 0.25) / 0.75; }
-    function stickRadius() { return stickEl.getBoundingClientRect().width / 2 || 75; }
+    // The crosshair / manual-lock cursor lives in the game view, so keep it centred there
+    // (it only moves when you tap a plane).
+    let recenterTimer = 0;
+    function centerCursor() {
+        const r = area.getBoundingClientRect();
+        mouseScreenX = r.left + r.width / 2;
+        mouseScreenY = r.top + r.height / 2;
+    }
+
+    // ---- floating joystick (footer, left) ----
+    // Everything is measured from where the stick started, so the drawn ring and the maths can't disagree.
+    let stick = null;   // { id, x, y }  x,y = client coordinates of the ring centre
+    function dead(v) { return Math.abs(v) < 0.2 ? 0 : (v - Math.sign(v) * 0.2) / 0.8; }
+    function stickR() { return (stickEl.offsetWidth || 140) / 2; }
     function stickStart(e) {
-        const R = stickRadius();
-        stickEl.style.left = (e.clientX - R) + 'px';
-        stickEl.style.top  = (e.clientY - R) + 'px';
-        stickEl.style.bottom = 'auto';
+        const zr = zone.getBoundingClientRect();
+        // ring centre = exactly the touch point (it may overhang the zone edge; that's fine)
+        stickEl.style.left = (e.clientX - zr.left) + 'px';
+        stickEl.style.top  = (e.clientY - zr.top) + 'px';
         stick = { id: e.pointerId, x: e.clientX, y: e.clientY };
         padDebug('stick start ' + Math.round(e.clientX) + ',' + Math.round(e.clientY));
         stickMove(e);
     }
     function stickMove(e) {
-        const R = stickRadius();
+        const R = stickR();
         let dx = e.clientX - stick.x, dy = e.clientY - stick.y;
-        const len = Math.hypot(dx, dy), lim = R - 10;
+        const len = Math.hypot(dx, dy), lim = R - 8;
         if (len > lim) { dx *= lim / len; dy *= lim / len; }
         knob.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
         touchYaw   = clamp(dead(-dx / R), -1, 1);       // stick left = turn left
         touchPitch = clamp(dead(-dy / R), -1, 1);       // stick up = nose up (climb)
-        padDebug('stick ' + touchYaw.toFixed(1) + ',' + touchPitch.toFixed(1));
+        padDebug('stick ' + touchYaw.toFixed(2) + ',' + touchPitch.toFixed(2));
     }
     function releaseStick() {
         stick = null; knob.style.transform = '';
-        stickEl.style.left = ''; stickEl.style.top = ''; stickEl.style.bottom = '';   // back to the corner hint
+        stickEl.style.left = ''; stickEl.style.top = '';   // back to the middle of the zone
         touchYaw = 0; touchPitch = 0;
     }
+    zone.addEventListener('pointerdown', e => {
+        if (stick) return;
+        e.preventDefault();
+        try { zone.setPointerCapture(e.pointerId); } catch (_) {}
+        stickStart(e);
+    });
+    zone.addEventListener('pointermove', e => { if (stick && e.pointerId === stick.id) { e.preventDefault(); stickMove(e); } });
+    const zoneEnd = e => { if (stick && e.pointerId === stick.id) releaseStick(); };
+    zone.addEventListener('pointerup', zoneEnd);
+    zone.addEventListener('pointercancel', zoneEnd);
+    zone.addEventListener('lostpointercapture', zoneEnd);
 
-    // ---- action buttons ----
+    // ---- action buttons (footer, right) ----
     const actions = {
         missile: { down() { mouseButtons[0] = true; },  up() { mouseButtons[0] = false; } },
         gun:     { down() { keys['Space'] = true; },     up() { keys['Space'] = false; } },
         roll:    { down() { keys['KeyR'] = true; },      up() { keys['KeyR'] = false; } },
         thr:     { down() { keys['KeyW'] = true; },      up() { keys['KeyW'] = false; } },
     };
-    document.querySelectorAll('#touch [data-t]').forEach(b => {
+    document.querySelectorAll('#padFooter [data-t]').forEach(b => {
         const a = actions[b.dataset.t];
         b.addEventListener('pointerdown', e => {
             e.preventDefault();
@@ -94,28 +112,21 @@ let touchLookYaw = 0, touchLookPitch = 0, touchLookHold = 0;
         b.addEventListener('pointercancel', up);
         b.addEventListener('lostpointercapture', up);
     });
-    [stickEl, touchEl].forEach(el => el.addEventListener('contextmenu', e => e.preventDefault()));
+    footer.addEventListener('contextmenu', e => e.preventDefault());
 
-    // ---- swipe the sky: the jet follows your finger (both axes); quick tap = lock ----
-    // Touch/pen only, anywhere except the pad. No preventDefault and no capture needed:
-    // html/body have touch-action:none, so the browser never steals the gesture to scroll.
+    // ---- swipe the game view: the jet follows your finger; quick tap = lock ----
+    // Touch/pen only (a mouse keeps its normal desktop controls). html/body have touch-action:none,
+    // so the browser never steals the gesture to scroll.
     let drag = null;   // { id, x, y, lx, ly, t, moved }
-    const onPad = el => !!(el && el.closest && el.closest('.acts,.padtop'));
     document.addEventListener('pointerdown', e => {
-        if (e.pointerType === 'mouse' || !padOn || !isPlaying()) return;
-        if (onPad(e.target)) return;
-        if (e.clientX < window.innerWidth * 0.5) {       // left half = floating joystick
-            if (!stick) stickStart(e);
-            return;
-        }
-        if (drag) return;                                 // right half = swipe to look
+        if (e.pointerType === 'mouse' || drag || !padOn || !isPlaying()) return;
+        if (!area.contains(e.target) || (e.target.closest && e.target.closest('.padtop'))) return;
         drag = { id: e.pointerId, x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, t: performance.now(), moved: 0 };
         dragUI.style.cssText = 'display:block;left:' + e.clientX + 'px;top:' + e.clientY + 'px';
         dragDot.style.transform = 'translate(0,0)';
         padDebug('swipe start');
     });
     document.addEventListener('pointermove', e => {
-        if (stick && e.pointerId === stick.id) { stickMove(e); return; }
         if (!drag || e.pointerId !== drag.id) return;
         const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
         drag.moved = Math.max(drag.moved, Math.hypot(dx, dy));
@@ -128,9 +139,12 @@ let touchLookYaw = 0, touchLookPitch = 0, touchLookHold = 0;
         padDebug('swipe ' + Math.round(dx) + ',' + Math.round(dy));
     });
     function endDrag(e) {
-        if (stick && e.pointerId === stick.id) { releaseStick(); return; }
         if (!drag || e.pointerId !== drag.id) return;
-        if (drag.moved < 12 && performance.now() - drag.t < 300) { mouseScreenX = e.clientX; mouseScreenY = e.clientY; } // tap = manual lock
+        if (drag.moved < 12 && performance.now() - drag.t < 300) {      // tap = manual lock on whatever is under the finger
+            mouseScreenX = e.clientX; mouseScreenY = e.clientY;
+            clearTimeout(recenterTimer);
+            recenterTimer = setTimeout(centerCursor, 700);              // the picked plane stays locked; the crosshair goes home
+        }
         drag = null;
         dragUI.style.display = 'none';
     }
@@ -138,15 +152,17 @@ let touchLookYaw = 0, touchLookPitch = 0, touchLookHold = 0;
     document.addEventListener('pointercancel', endDrag);
 
     // ---- pad toggle + pause ----
+    let lastShow = null;
     function applyPad() {
-        const playing = isPlaying();
-        document.body.classList.toggle('padon', padOn && playing);
+        const playing = isPlaying(), show = padOn && playing;
+        document.body.classList.toggle('padon', show);
         padBtn.setAttribute('aria-pressed', String(padOn));
         padBtn.hidden = !playing;
         pauseBtn.hidden = !playing;
-        touchEl.hidden = !(padOn && playing);
+        footer.hidden = !show;
         document.documentElement.classList.toggle('noscroll', playing);
-        if (touchEl.hidden && (drag || stick || touchYaw || touchPitch)) {
+        if (show !== lastShow) { lastShow = show; centerCursor(); }
+        if (!show && (drag || stick || touchYaw || touchPitch)) {
             releaseStick();
             for (const k in actions) actions[k].up();
             touchLookYaw = touchLookPitch = 0;
@@ -156,6 +172,7 @@ let touchLookYaw = 0, touchLookPitch = 0, touchLookHold = 0;
     }
     padBtn.addEventListener('click', () => { padOn = !padOn; try { localStorage.setItem('sc-pad', padOn ? '1' : '0'); } catch (_) {} applyPad(); });
     pauseBtn.addEventListener('click', () => { if (isPlaying()) pauseGame(); });
+    if (window.ResizeObserver) new ResizeObserver(() => { if (!drag && padOn) centerCursor(); }).observe(area);
     setInterval(applyPad, 150);
     applyPad();
 })();
