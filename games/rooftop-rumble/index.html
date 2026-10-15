@@ -96,6 +96,18 @@ button{font:inherit;color:inherit;cursor:pointer}
   .acts [data-t="kick"]{left:58px}
 }
 
+/* In a fight the page becomes one screen, like Shell Hopper: a slim bar on top, then the 16:9 arena sized to fit whatever room is left,
+   so the whole arena (scores included) is always visible and nothing scrolls. The fighter-select page stays a normal scrolling page. */
+body.playing{height:100vh;height:100dvh;overflow:hidden;padding:6px 8px}
+body.playing .app{max-width:none;height:100%;gap:6px}
+body.playing .top{flex:none;flex-wrap:nowrap;align-items:center;gap:8px}
+body.playing h1{font-size:22px;white-space:nowrap}
+body.playing .tag{display:none}
+body.playing .tools{gap:5px;justify-content:flex-end}
+body.playing .btn{padding:6px 10px;font-size:11px}
+body.playing .help{display:none}
+body.playing .stage{flex:none;margin-inline:auto}
+
 .help{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:14px}
 .help>div{background:var(--deck);border:1px solid var(--line);padding:14px 16px;min-width:0}
 .help h3{font:800 18px/1 var(--f-display);text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px;color:var(--c,var(--fg))}
@@ -1150,10 +1162,23 @@ function resize(){
   cv.width=w;cv.height=Math.round(w*H/W);scale=cv.width/W;
 }
 new ResizeObserver(resize).observe(stageEl);
+// size the arena to the room left under the top bar (fight screen only)
+function fitStage(){
+  const app=document.querySelector('.app');
+  if(stageEl.hidden||!document.body.classList.contains('playing')){stageEl.style.width='';stageEl.style.height='';return}
+  const top=document.querySelector('.top'),cs=getComputedStyle(app);
+  const gap=parseFloat(cs.rowGap)||0,aw=app.clientWidth,ah=app.clientHeight-top.offsetHeight-gap;
+  const w=Math.max(160,Math.min(aw,ah*16/9));
+  stageEl.style.width=Math.floor(w)+'px';stageEl.style.height=Math.floor(w*9/16)+'px';
+}
+addEventListener('resize',fitStage);
+['fullscreenchange','webkitfullscreenchange'].forEach(n=>document.addEventListener(n,()=>setTimeout(fitStage,50)));
 function setScreen(menu){
+  document.body.classList.toggle('playing',!menu);
   menuEl.hidden=!menu;stageEl.hidden=menu;
   pauseBtn.hidden=menu;menuBtn.hidden=menu;
   touchEl.hidden=menu||!padOn;padBtn.hidden=menu;padBtn.setAttribute('aria-pressed',String(padOn));
+  fitStage();if(!menu)window.scrollTo(0,0);
 }
 function toMenu(){
   G.phase='menu';G.paused=false;veil.hidden=true;setScreen(true);sfx('ui');
