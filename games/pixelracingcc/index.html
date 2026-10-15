@@ -977,21 +977,21 @@
   <style>
     #pad { display: none; }
     #pad.on { display: block; }
-    #stick { position: absolute; z-index: 3; left: 28px; bottom: 90px; width: 200px; height: 200px; border-radius: 50%;
+    #stick { position: absolute; z-index: 3; left: 28px; bottom: max(24px, env(safe-area-inset-bottom)); width: 200px; height: 200px; border-radius: 50%;
              background: rgba(16,31,37,.45); border: 2px solid rgba(255,255,255,.35); touch-action: none; user-select: none; -webkit-user-select: none; }
     #knob { position: absolute; left: 50%; top: 50%; width: 84px; height: 84px; margin: -42px 0 0 -42px; border-radius: 50%;
             background: rgba(255,255,255,.55); border: 2px solid rgba(255,255,255,.8); pointer-events: none; }
     .padBtn { position: absolute; z-index: 3; border-radius: 50%; font: 700 16px 'DM Mono', monospace; display: flex; align-items: center; justify-content: center; letter-spacing: .05em;
               color: #fff; background: rgba(16,31,37,.55); border: 2px solid rgba(255,255,255,.4); touch-action: none; user-select: none; -webkit-user-select: none; }
     /* ACCEL sits in the corner, BRAKE up and to its left on a 45 degree diagonal, so one thumb can roll between them */
-    #padAccel { right: 24px; bottom: 90px; width: 150px; height: 150px; }
+    #padAccel { right: 24px; bottom: max(24px, env(safe-area-inset-bottom)); width: 150px; height: 150px; }
     #padAccel.down { background: rgba(40,200,80,.55); border-color: #3ddc66; }
-    #padBrake { right: 146px; bottom: 212px; width: 126px; height: 126px; }
+    #padBrake { right: 146px; bottom: calc(max(24px, env(safe-area-inset-bottom)) + 122px); width: 126px; height: 126px; }
     #padBrake.down { background: rgba(255,0,0,.55); border-color: #ff4d4d; }
     @media (max-width: 500px) {
-      #stick { left: 36px; bottom: 76px; width: 146px; height: 146px; }
-      #padAccel { right: 30px; bottom: 76px; width: 122px; height: 122px; }
-      #padBrake { right: 121px; bottom: 183px; width: 104px; height: 104px; font-size: 14px; }
+      #stick { left: 36px; bottom: max(20px, env(safe-area-inset-bottom)); width: 146px; height: 146px; }
+      #padAccel { right: 30px; bottom: max(20px, env(safe-area-inset-bottom)); width: 122px; height: 122px; }
+      #padBrake { right: 121px; bottom: calc(max(20px, env(safe-area-inset-bottom)) + 107px); width: 104px; height: 104px; font-size: 14px; }
     }
     #padToggle.active { border-color: var(--accent); color: var(--accent); }
   </style>
