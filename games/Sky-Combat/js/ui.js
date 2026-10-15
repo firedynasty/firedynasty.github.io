@@ -380,7 +380,8 @@ function _updateLockIndicator() {
 
     // --- Auto lock: sticky target in front of the nose ---
     const sy = Math.sin(droneYaw), cy = Math.cos(droneYaw);
-    _lockFwd.set(-sy, 0, -cy);
+    const sp = Math.sin(dronePitch), cp = Math.cos(dronePitch);
+    _lockFwd.set(-sy * cp, sp, -cy * cp);   // the real nose direction (works when climbing and when inverted)
     const breakAng = AUTO_LOCK_BREAK * Math.PI / 180, coneAng = AUTO_LOCK_CONE * Math.PI / 180;
     if (_autoTarget) {
         const info = enemies.includes(_autoTarget) ? _angleToEnemy(_autoTarget) : null;
@@ -473,8 +474,10 @@ function updateRadar(delta) {
     // turning left moves dots right (the correct direction) on the radar.
     // right   = (cos(yaw), -sin(yaw)) in xz  [from flight.js: rx=cos(yaw), rz=-sin(yaw)]
     // forward = (-sin(yaw), -cos(yaw)) in xz [from flight.js: fx=-sin(yaw), fz=-cos(yaw)]
-    const cos_yaw = Math.cos(droneYaw);
-    const sin_yaw = Math.sin(droneYaw);
+    // heading on the radar = where the nose points over the ground (turn it round when flying inverted)
+    const _hd = droneYaw + (Math.cos(dronePitch) < 0 ? Math.PI : 0);
+    const cos_yaw = Math.cos(_hd);
+    const sin_yaw = Math.sin(_hd);
 
     // Add/refresh dots for enemies swept by the line this frame
     const sweepWindow = RADAR_SWEEP_SPEED * delta * Math.PI * 2 * 2;

@@ -187,6 +187,36 @@ function requestPointerLock(){
 
 ---
 
+## 7b. Loops, inverted flight and a half-roll "turn-around" (added later)
+
+Asked for: "instead of stopping at vertical, be able to go over / flip upside down; R should flip upside-down and
+back upright". Pitch was clamped to +-66 deg. Lessons, all of which bit during testing:
+
+- **Don't clamp pitch; wrap it** to (-PI, PI]. The forward vector `(-sin(yaw)cos(p), sin(p), -cos(yaw)cos(p))` is already
+  correct past vertical (horizontal part flips sign), so loops "just work" in the flight/weapon/terrain code.
+- **`sign(pitch)` is a trap.** My first "finish the loop when you let go" used `sign(pitch)` for the direction; pitch changes
+  sign where it wraps at +-PI, so the jet oscillated and got stuck upside-down. Use a **wrapped error to a target**
+  instead: level out to the *nearest level attitude* (`pitch 0` if `cos(p) >= 0`, else `pitch PI`) with
+  `err = wrapPi(target - pitch)`. No jump, no oscillation. (Found by watching `pitch=-3.13, vel=-0.16` in a live probe.)
+- **Left/right must swap when inverted** (`cos(pitch) < 0`) so the pilot's left stays screen-left. Verified numerically:
+  heading change dotted with the camera's right vector is the same negative number upright, rolled, and looped.
+  The visual bank uses the *pilot's* direction, so undo the swap there. Lock-steer yaw assist needs the heading
+  `yaw + (inverted ? PI : 0)` and **no** swap; its pitch assist moves the opposite way when inverted.
+- **"Pull up" means raise the nose elevation**, whose pitch direction is `sign(cos p)`. The automatic terrain pull-up must
+  use that, and should stop short of straight-up or it throws the jet over the top by itself.
+- **Half roll = an attitude identity.** Rotating 180 deg about the nose equals `(yaw + PI, pitch -> PI - pitch, roll same)`,
+  so R flips the *state* instantly (same flight path) and the picture eases a visual roll from +-PI to 0. Pressing it again
+  returns upright. Set `drone.rotation.x` and the visual roll in the same frame or you get a one-frame snap or the nose
+  tilting through vertical. Loop up + level out inverted + R = a real **Immelmann turn-around** (heading reversed).
+- **Lerp angles the short way**: `d = atan2(sin(a-b), cos(a-b))`, otherwise `+3.1 -> -3.1` swings the long way round.
+- **Camera `up` must follow the jet's up**, and a plain vector lerp between `up` and `-up` passes through zero (NaN after
+  normalize). Instead rotate the camera's up toward the target *about the view axis*:
+  `ang = atan2(fwd . (up x upT), up . upT);  up.applyAxisAngle(fwd, ang * 0.12)`. Also project `up` perpendicular to the view
+  first so `lookAt` never degenerates. Use full pitch for the chase-camera offset once inverted.
+- The aim cone must use the **real 3D nose vector**, not a horizontal one, or an inverted jet locks onto enemies behind it.
+- Crash handler must flip an inverted jet back upright *along the same flight path* (yaw + PI, pitch PI - p), not just
+  set the pitch, or the jet reverses heading.
+
 ## 8. How the testing was done (reuse this)
 
 Browser automation (Claude in Chrome) with **synthetic events**, plus numeric assertions instead of eyeballing:

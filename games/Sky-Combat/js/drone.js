@@ -93,12 +93,16 @@ function updateDroneVisuals(delta) {
 
     drone.rotation.order = 'YXZ';
     drone.rotation.y = droneYaw;
-    drone.rotation.x = THREE.MathUtils.lerp(drone.rotation.x || 0, dronePitch, 0.25); // nose follows pitch
+    // nose follows pitch, taking the SHORT way round the circle (pitch wraps at +-PI during a loop)
+    const _pd = Math.atan2(Math.sin(dronePitch - (drone.rotation.x || 0)), Math.cos(dronePitch - (drone.rotation.x || 0)));
+    drone.rotation.x = (drone.rotation.x || 0) + _pd * 0.25;
     // Visual bank — overridden by barrel roll animation when active
     if (typeof droneFlipRoll !== 'undefined' && Math.abs(droneFlipRoll) > 0.05) {
         drone.rotation.z = droneFlipRoll;
     } else {
-        const bankTarget = ((typeof _yawVelocity !== 'undefined' ? _yawVelocity / YAW_SPEED : 0) + (typeof lookBank !== 'undefined' ? lookBank * 0.6 : 0)) * BANK_ANGLE;
+        // bank follows the PILOT's turn direction, so undo the left/right swap used while inverted
+        const _pilotSign = Math.cos(dronePitch) < 0 ? -1 : 1;
+        const bankTarget = ((typeof _yawVelocity !== 'undefined' ? _yawVelocity * _pilotSign / YAW_SPEED : 0) + (typeof lookBank !== 'undefined' ? lookBank * 0.6 : 0)) * BANK_ANGLE;
         drone.rotation.z = THREE.MathUtils.lerp(drone.rotation.z || 0, bankTarget, BANK_LERP);
     }
 }

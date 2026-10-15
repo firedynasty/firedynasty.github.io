@@ -310,6 +310,7 @@ function resetGame() {
     droneVelocity.set(0, 0, 0);
     droneYaw = 0;
     dronePitch = 0;
+    _camUp.set(0, 1, 0); camera.up.set(0, 1, 0);
     droneSpeed = CRUISE_SPEED;
     drone.visible = true;
     drone.rotation.set(0, 0, 0);
@@ -418,6 +419,7 @@ function update(delta) {
             55 + Math.sin(t * 0.3) * 10,
             Math.cos(t) * 100
         );
+        camera.up.set(0, 1, 0); _camUp.set(0, 1, 0);
         camera.lookAt(0, 40, 0);
         if (skyMesh) skyMesh.position.copy(camera.position);
         updateDroneVisuals(delta);
@@ -466,11 +468,15 @@ function update(delta) {
     updateCamera(delta);
 }
 
+const _camUp = new THREE.Vector3(0, 1, 0);
+
 function updateCamera(delta) {
     {
         // Chase cam: behind and above, swung around with yaw AND pitch so you see the jet's belly when climbing
+        // pitch follow: 0.8 in normal flight (shows the belly on a climb), full 1.0 once the jet is going over the top
+        const _ap = Math.abs(dronePitch), _k = _ap < 0.9 ? 0.8 : (_ap > 1.6 ? 1 : 0.8 + 0.2 * (_ap - 0.9) / 0.7);
         const offset = CAMERA_CHASE_OFFSET.clone();
-        offset.applyEuler(new THREE.Euler(dronePitch * 0.8, droneYaw, 0, 'YXZ'));
+        offset.applyEuler(new THREE.Euler(dronePitch * _k, droneYaw, 0, 'YXZ'));
         const targetPos = drone.position.clone().add(offset);
         camera.position.lerp(targetPos, CAMERA_LERP);
 
@@ -483,6 +489,15 @@ function updateCamera(delta) {
         // Look ahead along the 3D nose vector
         const cp = Math.cos(dronePitch);
         const lookAhead = new THREE.Vector3(-Math.sin(droneYaw) * cp, Math.sin(dronePitch), -Math.cos(droneYaw) * cp);
+        // The camera's "up" follows the jet's up (smoothed), so a loop rolls the view over instead of snapping at vertical
+        const _upT = new THREE.Vector3(0, 1, 0).applyEuler(new THREE.Euler(dronePitch, droneYaw, 0, 'YXZ'));
+        // Roll the camera's up toward the jet's up AROUND THE VIEW AXIS (a plain lerp passes through zero on a 180 flip)
+        const _fw = lookAhead.clone().normalize();
+        _camUp.addScaledVector(_fw, -_camUp.dot(_fw));
+        if (_camUp.lengthSq() < 1e-4) _camUp.copy(_upT); else _camUp.normalize();
+        const _ang = Math.atan2(_fw.dot(new THREE.Vector3().crossVectors(_camUp, _upT)), _camUp.dot(_upT));
+        _camUp.applyAxisAngle(_fw, _ang * 0.12).normalize();
+        camera.up.copy(_camUp);
         camera.lookAt(drone.position.clone().add(lookAhead.multiplyScalar(14)));
         // Lean the camera into turns
         camera.rotateZ((drone.rotation.z || 0) * 0.3);

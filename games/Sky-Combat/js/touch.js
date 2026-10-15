@@ -3,11 +3,11 @@
 //
 //   Footer, left   -> joystick zone: touch anywhere in it and the ring appears under your thumb.
 //                     Drag: left/right = turn, up = climb, down = dive (analog)
-//   Footer, middle -> MISSILE + GUN again, so the left hand can shoot too
+//   Footer, middle -> (Pad 1 only) MISSILE + GUN again, so the left hand can shoot too. Pad 2 leaves them out.
 //   Footer, right  -> MISSILE (at the lock) · GUN (hold) · ROLL (barrel roll) · THR (hold = speed up)
 //   Game view      -> swipe: the jet follows your finger (up/down = nose up/down, left/right = turn).
 //                     Targeting is automatic: planes in front of the nose get locked, MISSILE fires at the lock.
-//   PAD / ||       -> show or hide the footer, pause
+//   PAD / ||       -> Pad button cycles Off -> Pad 1 -> Pad 2 -> Off; || pauses
 //
 // Add ?debug=1 to the URL to see a one-line readout of the last touch input.
 
@@ -18,8 +18,10 @@ let touchLookYaw = 0, touchLookPitch = 0, touchLookHold = 0;
 
 (function () {
     const coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
-    let padOn = coarse || 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    try { const sv = localStorage.getItem('sc-pad'); if (sv !== null) padOn = sv === '1'; } catch (_) {}
+    // Pad layout: 0 = off (desktop controls), 1 = Pad 1 (extra Missile/Gun buttons by the stick), 2 = Pad 2 (without them)
+    let padMode = (coarse || 'ontouchstart' in window || navigator.maxTouchPoints > 0) ? 1 : 0;
+    try { const sv = localStorage.getItem('sc-pad'); if (sv === '0' || sv === '1' || sv === '2') padMode = +sv; } catch (_) {}
+    let padOn = padMode > 0;
 
     const $ = id => document.getElementById(id);
     const area = $('gameArea'), footer = $('padFooter'), zone = $('stickZone'), stickEl = $('stick'), knob = $('knob');
@@ -160,7 +162,9 @@ let touchLookYaw = 0, touchLookPitch = 0, touchLookHold = 0;
     function applyPad() {
         const playing = isPlaying(), show = padOn && playing;
         document.body.classList.toggle('padon', show);
+        document.body.classList.toggle('pad2', show && padMode === 2);
         padBtn.setAttribute('aria-pressed', String(padOn));
+        padBtn.textContent = padMode === 0 ? 'Pad' : 'Pad ' + padMode;
         padBtn.hidden = !playing;
         pauseBtn.hidden = !playing;
         fullBtn.hidden = !playing || !fsReq;
@@ -179,8 +183,10 @@ let touchLookYaw = 0, touchLookPitch = 0, touchLookHold = 0;
     }
     padBtn.addEventListener('click', e => {
         e.currentTarget.blur();
-        padOn = !padOn;
-        try { localStorage.setItem('sc-pad', padOn ? '1' : '0'); } catch (_) {}
+        padMode = (padMode + 1) % 3;                  // Pad -> Pad 1 -> Pad 2 -> off
+        padOn = padMode > 0;
+        try { localStorage.setItem('sc-pad', String(padMode)); } catch (_) {}
+        releasers.forEach(r => r());                  // a finger may have been on a button that just disappeared
         applyPad();
         // pad off -> desktop controls: grab the mouse again (this click is the user gesture the browser requires)
         if (!padOn && isPlaying() && typeof requestPointerLock === 'function') requestPointerLock();

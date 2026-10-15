@@ -54,8 +54,9 @@
       .knob{position:absolute;left:50%;top:50%;width:42%;height:42%;margin:-21% 0 0 -21%;border-radius:50%;background:rgba(255,255,255,.3);border:2px solid rgba(255,255,255,.5);pointer-events:none}
       /* right: four buttons on a diamond */
       .acts{position:relative;flex:0 0 auto;margin-left:auto;width:calc(var(--b)*2.45);height:calc(var(--b)*2.45)}
-      /* left-hand fire buttons, right next to the joystick */
+      /* left-hand fire buttons, right next to the joystick (Pad 1 only; Pad 2 leaves them out) */
       .lacts{flex:0 0 auto;display:flex;flex-direction:column;justify-content:center;gap:8px;height:100%}
+      body.pad2 .lacts{display:none}
       .acts button,.lacts button{position:absolute;width:var(--b);height:var(--b);border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.3);color:rgba(255,255,255,.85);font:700 clamp(9px,2.2vmin,12px) sans-serif;letter-spacing:.04em;text-transform:uppercase;touch-action:none;-webkit-user-select:none;user-select:none;padding:0}
       .lacts button{position:relative}
       .acts button.on,.lacts button.on{background:rgba(255,106,61,.65);border-color:rgba(255,106,61,.95);color:#fff}
@@ -288,12 +289,12 @@
                 <div class="flex justify-between border-b border-gray-700 pb-2"><span class="text-gray-400">Mouse / trackpad</span><span>Nose up-down &amp; turn</span></div>
                 <div class="flex justify-between border-b border-gray-700 pb-2"><span class="text-gray-400">Space (hold)</span><span>Fire bullets</span></div>
                 <div class="flex justify-between border-b border-gray-700 pb-2"><span class="text-gray-400">LMB / F</span><span>Fire homing missile at lock</span></div>
-                <div class="flex justify-between border-b border-gray-700 pb-2"><span class="text-gray-400">&uarr; / &darr;</span><span>Nose up / down (auto-levels)</span></div>
+                <div class="flex justify-between border-b border-gray-700 pb-2"><span class="text-gray-400">&uarr; / &darr;</span><span>Nose up / down &mdash; keep pulling to loop over</span></div>
                 <div class="flex justify-between border-b border-gray-700 pb-2"><span class="text-gray-400">Tab</span><span>Switch target (auto-lock is on)</span></div>
-                <div class="flex justify-between border-b border-gray-700 pb-2"><span class="text-cyan-400">R</span><span class="text-cyan-200">Barrel roll dodge</span></div>
+                <div class="flex justify-between border-b border-gray-700 pb-2"><span class="text-cyan-400">R</span><span class="text-cyan-200">Flip upside-down / upright (dodges missiles)</span></div>
                 <div class="flex justify-between"><span class="text-gray-400">ESC</span><span>Pause / Menu</span></div>
             </div>
-            <p class="text-gray-500 text-xs text-center mt-5">Tip: press R when a missile is incoming!</p>
+            <p class="text-gray-500 text-xs text-center mt-5">Tip: press R when a missile is incoming! Loop up, level out upside-down, press R to turn around.</p>
             <button id="howToPlayClose" class="w-full mt-6 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl transition-colors cursor-pointer">Got it</button>
         </div>
     </div>

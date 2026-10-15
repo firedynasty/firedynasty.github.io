@@ -41,12 +41,14 @@ python3 -m http.server 8080
 | `Mouse` / trackpad | Fly: up/down = nose up/down, left/right = turn. The `+` stays in the middle of the view; targeting is automatic (the pointer is captured while playing — Esc releases it and pauses) |
 | `Space` (hold) | Fire bullets |
 | `LMB` (click) | Fire missile |
-| `R` | Barrel roll (destroys all incoming missiles) |
+| `R` | Half roll: flips the jet upside-down, press again to come back upright (also destroys all incoming missiles) |
+
+**Loops and turn-arounds:** the nose is not limited — keep pulling up (`Arrow Up`, trackpad up, joystick up, swipe up) past vertical and the jet goes over the top. Let go and it levels out to the nearest level attitude: before vertical it settles right-way-up, past vertical it settles upside-down. Press `R` to half-roll back upright — loop up, level out upside-down, roll upright = a turn-around. Left/right stay on the pilot's left/right while upside down.
 | `ESC` | Pause / resume |
 
 ### Touch (phones / foldables)
 
-The game view sits in a box with the controls in a footer underneath (like Rooftop Rumble). The **Pad** button toggles the footer.
+The game view sits in a box with the controls in a footer underneath (like Rooftop Rumble). The **Pad** button cycles **Pad 1** (extra Missile/Gun buttons next to the joystick, so the left hand can shoot too) → **Pad 2** (same, without those extra buttons) → off.
 
 | Input | Action |
 |---|---|
