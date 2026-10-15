@@ -79,7 +79,7 @@
       body.padon #controlsHint{display:none}
     </style>
     <div id="gameArea">
-    <div class="padtop"><button id="padBtn" type="button" aria-pressed="false" hidden>Pad</button><button id="padPause" type="button" hidden>&#10074;&#10074;</button></div>
+    <div class="padtop"><button id="padBtn" type="button" aria-pressed="false" hidden>Pad</button><button id="padPause" type="button" hidden>&#10074;&#10074;</button><button id="padFull" type="button" hidden>Full</button></div>
     <div id="padDbg" style="display:none;position:absolute;top:122px;left:12px;z-index:31;color:rgba(125,255,154,.85);font:11px monospace;text-shadow:0 1px 3px #000;pointer-events:none;"></div>
 
     <!-- HUD (visible during gameplay) -->
@@ -147,7 +147,7 @@
 
         <!-- Controls hint (fades after 5s) -->
         <div id="controlsHint" style="position:absolute;bottom:100px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,0.5);font-size:13px;text-align:center;transition:opacity 1s;">
-          W: speed up &nbsp;|&nbsp; S: slow down &nbsp;|&nbsp; A/D: bank &amp; turn &nbsp;|&nbsp; <span style="color:#7dff9a;">&uarr;/&darr;: nose up/down</span> &nbsp;|&nbsp; Space: bullets &nbsp;|&nbsp; <span style="color:#ff6666;">Red ring = locked on</span> &nbsp;|&nbsp; LMB / F: missile &nbsp;|&nbsp; Tab: next target &nbsp;|&nbsp; <span style="color:#00aaff;">R: Barrel Roll</span>
+          W: speed up &nbsp;|&nbsp; S: slow down &nbsp;|&nbsp; A/D: bank &amp; turn &nbsp;|&nbsp; <span style="color:#7dff9a;">&uarr;/&darr; or mouse: nose up/down</span> &nbsp;|&nbsp; Space: bullets &nbsp;|&nbsp; <span style="color:#ff6666;">Red ring = locked on</span> &nbsp;|&nbsp; LMB / F: missile &nbsp;|&nbsp; Tab: next target &nbsp;|&nbsp; <span style="color:#00aaff;">R: Barrel Roll</span>
         </div>
     </div>
 
@@ -277,10 +277,11 @@
             <div class="space-y-3 text-sm">
                 <div class="flex justify-between border-b border-gray-700 pb-2"><span class="text-gray-400">W / S</span><span>Speed up / Slow down</span></div>
                 <div class="flex justify-between border-b border-gray-700 pb-2"><span class="text-gray-400">A / D</span><span>Turn left / right</span></div>
+                <div class="flex justify-between border-b border-gray-700 pb-2"><span class="text-gray-400">Mouse / trackpad</span><span>Nose up-down &amp; turn</span></div>
                 <div class="flex justify-between border-b border-gray-700 pb-2"><span class="text-gray-400">Space (hold)</span><span>Fire bullets</span></div>
                 <div class="flex justify-between border-b border-gray-700 pb-2"><span class="text-gray-400">LMB / F</span><span>Fire homing missile at lock</span></div>
                 <div class="flex justify-between border-b border-gray-700 pb-2"><span class="text-gray-400">&uarr; / &darr;</span><span>Nose up / down (auto-levels)</span></div>
-                <div class="flex justify-between border-b border-gray-700 pb-2"><span class="text-gray-400">Tab</span><span>Switch lock target</span></div>
+                <div class="flex justify-between border-b border-gray-700 pb-2"><span class="text-gray-400">Tab</span><span>Switch target (auto-lock is on)</span></div>
                 <div class="flex justify-between border-b border-gray-700 pb-2"><span class="text-cyan-400">R</span><span class="text-cyan-200">Barrel roll dodge</span></div>
                 <div class="flex justify-between"><span class="text-gray-400">ESC</span><span>Pause / Menu</span></div>
             </div>

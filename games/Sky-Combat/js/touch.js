@@ -5,7 +5,7 @@
 //                     Drag: left/right = turn, up = climb, down = dive (analog)
 //   Footer, right  -> MISSILE (at the lock) · GUN (hold) · ROLL (barrel roll) · THR (hold = speed up)
 //   Game view      -> swipe: the jet follows your finger (up/down = nose up/down, left/right = turn).
-//                     Quick tap = lock the plane you tapped.
+//                     Targeting is automatic: planes in front of the nose get locked, MISSILE fires at the lock.
 //   PAD / ||       -> show or hide the footer, pause
 //
 // Add ?debug=1 to the URL to see a one-line readout of the last touch input.
@@ -22,12 +22,15 @@ let touchLookYaw = 0, touchLookPitch = 0, touchLookHold = 0;
 
     const $ = id => document.getElementById(id);
     const area = $('gameArea'), footer = $('padFooter'), zone = $('stickZone'), stickEl = $('stick'), knob = $('knob');
-    const padBtn = $('padBtn'), pauseBtn = $('padPause'), dragUI = $('dragUI'), dragDot = $('dragDot'), dbg = $('padDbg');
+    const padBtn = $('padBtn'), pauseBtn = $('padPause'), fullBtn = $('padFull'), dragUI = $('dragUI'), dragDot = $('dragDot'), dbg = $('padDbg');
     if (!footer || !area) return;
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
     // gameState is a `let` in main.js, which loads after this file — a bare reference throws
     // (temporal dead zone) if touched too early, so always go through this guard.
     function isPlaying() { try { return gameState === 'playing'; } catch (_) { return false; } }
+
+    // input.js asks this before grabbing the mouse (pointer lock): never lock while the pad is on
+    window.touchPadActive = () => padOn;
 
     const LOOK_YAW   = 0.0045;   // radians of turn per pixel of swipe
     const LOOK_PITCH = 0.005;    // radians of nose up/down per pixel of swipe
@@ -42,9 +45,7 @@ let touchLookYaw = 0, touchLookPitch = 0, touchLookHold = 0;
         dbgLast = n; dbg.textContent = msg;
     }
 
-    // The crosshair / manual-lock cursor lives in the game view, so keep it centred there
-    // (it only moves when you tap a plane).
-    let recenterTimer = 0;
+    // The crosshair lives in the game view, so keep it centred there.
     function centerCursor() {
         const r = area.getBoundingClientRect();
         mouseScreenX = r.left + r.width / 2;
@@ -114,7 +115,7 @@ let touchLookYaw = 0, touchLookPitch = 0, touchLookHold = 0;
     });
     footer.addEventListener('contextmenu', e => e.preventDefault());
 
-    // ---- swipe the game view: the jet follows your finger; quick tap = lock ----
+    // ---- swipe the game view: the jet follows your finger ----
     // Touch/pen only (a mouse keeps its normal desktop controls). html/body have touch-action:none,
     // so the browser never steals the gesture to scroll.
     let drag = null;   // { id, x, y, lx, ly, t, moved }
@@ -140,11 +141,6 @@ let touchLookYaw = 0, touchLookPitch = 0, touchLookHold = 0;
     });
     function endDrag(e) {
         if (!drag || e.pointerId !== drag.id) return;
-        if (drag.moved < 12 && performance.now() - drag.t < 300) {      // tap = manual lock on whatever is under the finger
-            mouseScreenX = e.clientX; mouseScreenY = e.clientY;
-            clearTimeout(recenterTimer);
-            recenterTimer = setTimeout(centerCursor, 700);              // the picked plane stays locked; the crosshair goes home
-        }
         drag = null;
         dragUI.style.display = 'none';
     }
@@ -159,6 +155,7 @@ let touchLookYaw = 0, touchLookPitch = 0, touchLookHold = 0;
         padBtn.setAttribute('aria-pressed', String(padOn));
         padBtn.hidden = !playing;
         pauseBtn.hidden = !playing;
+        fullBtn.hidden = !playing || !fsReq;
         footer.hidden = !show;
         document.documentElement.classList.toggle('noscroll', playing);
         if (show !== lastShow) { lastShow = show; centerCursor(); }
@@ -170,8 +167,34 @@ let touchLookYaw = 0, touchLookPitch = 0, touchLookHold = 0;
             if (dbg) dbg.textContent = '';
         }
     }
-    padBtn.addEventListener('click', () => { padOn = !padOn; try { localStorage.setItem('sc-pad', padOn ? '1' : '0'); } catch (_) {} applyPad(); });
-    pauseBtn.addEventListener('click', () => { if (isPlaying()) pauseGame(); });
+    padBtn.addEventListener('click', e => {
+        e.currentTarget.blur();
+        padOn = !padOn;
+        try { localStorage.setItem('sc-pad', padOn ? '1' : '0'); } catch (_) {}
+        applyPad();
+        // pad off -> desktop controls: grab the mouse again (this click is the user gesture the browser requires)
+        if (!padOn && isPlaying() && typeof requestPointerLock === 'function') requestPointerLock();
+    });
+    pauseBtn.addEventListener('click', e => { e.currentTarget.blur(); if (isPlaying()) pauseGame(); });
+
+    // ---- full screen on and off (like Gore Rush); on Android Chrome it also locks landscape ----
+    const root = document.documentElement;
+    const fsReq = root.requestFullscreen || root.webkitRequestFullscreen;
+    const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+    function lockLandscape() { try { const o = screen.orientation; if (o && o.lock) { const q = o.lock('landscape'); if (q && q.catch) q.catch(() => {}); } } catch (_) {} }
+    function unlockOrientation() { try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (_) {} }
+    fullBtn.addEventListener('click', e => {
+        e.currentTarget.blur();
+        try {
+            if (fsEl()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+            else { const q = fsReq.call(root); if (q && q.then) q.then(lockLandscape).catch(() => {}); else lockLandscape(); }
+        } catch (_) {}
+    });
+    ['fullscreenchange', 'webkitfullscreenchange'].forEach(n => document.addEventListener(n, () => {
+        if (!fsEl()) unlockOrientation();
+        fullBtn.setAttribute('aria-pressed', String(!!fsEl()));
+        fullBtn.textContent = fsEl() ? 'Exit' : 'Full';
+    }));
     if (window.ResizeObserver) new ResizeObserver(() => { if (!drag && padOn) centerCursor(); }).observe(area);
     setInterval(applyPad, 150);
     applyPad();

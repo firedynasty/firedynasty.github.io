@@ -52,10 +52,11 @@ function _updateFlightHUD() {
 }
 
 function _updateCrosshairPosition() {
+    // The + is always in the middle of the view (the #hud box is the game view), never following the mouse.
     const ch = document.getElementById('crosshair');
     if (!ch) return;
-    ch.style.left      = mouseScreenX + 'px';
-    ch.style.top       = mouseScreenY + 'px';
+    ch.style.left      = '50%';
+    ch.style.top       = '50%';
     ch.style.transform = 'translate(-50%, -50%)';
 }
 
@@ -374,14 +375,8 @@ function _updateLockIndicator() {
         return { x: (projPos.x + 1) / 2 * rect.width + rect.left, y: (-projPos.y + 1) / 2 * rect.height + rect.top };
     };
 
-    // --- Manual lock: enemy near the cursor wins ---
-    let hoverEnemy = null, bestDist = LOCK_RADIUS_PX;
-    for (let i = 0; i < enemies.length; i++) {
-        const p = toScreen(enemies[i]);
-        if (!p) continue;
-        const d = Math.sqrt((mouseScreenX - p.x) ** 2 + (mouseScreenY - p.y) ** 2);
-        if (d < bestDist) { bestDist = d; hoverEnemy = enemies[i]; }
-    }
+    // Targeting is automatic: no cursor-hover lock (the crosshair is fixed in the middle of the view).
+    const hoverEnemy = null;
 
     // --- Auto lock: sticky target in front of the nose ---
     const sy = Math.sin(droneYaw), cy = Math.cos(droneYaw);

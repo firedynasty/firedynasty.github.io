@@ -38,7 +38,7 @@ python3 -m http.server 8080
 | `Arrow Up` / `Arrow Down` | Nose up / nose down (auto-levels when released) |
 | `Tab` | Switch lock-on target |
 | `F` | Fire missile at lock (same as LMB) |
-| `Mouse` | Aim crosshair |
+| `Mouse` / trackpad | Fly: up/down = nose up/down, left/right = turn. The `+` stays in the middle of the view; targeting is automatic (the pointer is captured while playing — Esc releases it and pauses) |
 | `Space` (hold) | Fire bullets |
 | `LMB` (click) | Fire missile |
 | `R` | Barrel roll (destroys all incoming missiles) |
@@ -56,7 +56,8 @@ The game view sits in a box with the controls in a footer underneath (like Rooft
 | `ROLL` | Barrel roll |
 | `THR` (hold) | Speed up |
 | Swipe the game view | Jet follows your finger (up/down = nose, left/right = turn) |
-| Tap a plane | Lock it |
+| `Full` | Full screen on/off (also locks landscape on Android) |
+| (automatic) | Planes in front of the nose are locked on their own; MISSILE fires at the lock |
 
 Short landscape phones put the pad over the corners of the picture instead of in a footer. Add `?debug=1` to the URL for a touch-input readout.
 

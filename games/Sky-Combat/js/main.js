@@ -239,10 +239,12 @@ function init() {
 
     // --- Resize ---
     window.addEventListener('resize', onWindowResize);
+    document.addEventListener('visibilitychange', () => { if (document.hidden && gameState === 'playing') pauseGame(); });
 
     // --- ESC to pause (pointer lock exit also triggers pauseGame via input.js) ---
     window.addEventListener('keydown', (e) => {
         if (e.code === 'Escape' && gameState === 'playing') pauseGame();
+        if (e.code === 'KeyP') { if (gameState === 'playing') pauseGame(); else if (gameState === 'paused') resumeGame(); }
     });
 
     // --- Start render loop ---
