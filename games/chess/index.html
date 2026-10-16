@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chess Game Viewer</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<style>
+  :root { --light:#f0d9b5; --dark:#b58863; --hl:rgba(255,235,59,.55); --bg:#262421; --panel:#33302c; --text:#eee; --muted:#aaa; --accent:#7fa650; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:system-ui,sans-serif; }
+  .wrap { max-width:1000px; margin:0 auto; padding:16px; display:flex; flex-wrap:wrap; gap:20px; }
+  .wrap { align-items:flex-start; }
+  .left { flex:1 1 420px; max-width:min(560px, max(320px, calc(100vh - 160px))); position:sticky; top:0; z-index:5; background:var(--bg); padding-bottom:6px; }
+  @media (min-width:900px) { .left { position:static; } }
+  #moves { position:relative; }
+  summary { cursor:pointer; font-size:14px; color:var(--muted); }
+  details[open] summary { color:var(--text); }
+  .right { flex:1 1 320px; display:flex; flex-direction:column; gap:12px; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  .meta { color:var(--muted); font-size:14px; margin-bottom:10px; }
+  #board { display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); grid-template-rows:repeat(8,minmax(0,1fr)); aspect-ratio:1; width:100%; border:3px solid #111; user-select:none; }
+  .sq { min-width:0; min-height:0; overflow:hidden; position:relative; display:flex; align-items:center; justify-content:center; font-size:min(8.5vw,52px); line-height:1; }
+  .sq.l { background:var(--light); } .sq.d { background:var(--dark); }
+  .sq.hl::after { content:""; position:absolute; inset:0; background:var(--hl); }
+  .sq span { position:relative; z-index:1; }
+  .w { color:#fff; text-shadow:0 0 2px #000,0 0 2px #000,0 0 3px #000; }
+  .b { color:#111; }
+  .coord { position:absolute; font-size:10px; opacity:.7; z-index:2; color:#222; }
+  .coord.f { right:2px; bottom:1px; } .coord.r { left:2px; top:1px; }
+  .controls { display:flex; gap:8px; margin-top:10px; }
+  button { background:var(--panel); color:var(--text); border:1px solid #555; border-radius:6px; padding:8px 12px; font-size:16px; cursor:pointer; }
+  button:hover { background:#444; }
+  button.go { background:var(--accent); border-color:var(--accent); }
+  .controls button { flex:1; }
+  .panel { background:var(--panel); border-radius:8px; padding:12px; }
+  #comment { min-height:90px; line-height:1.5; }
+  #comment .san { font-weight:700; color:var(--accent); }
+  #moves { max-height:200px; overflow:auto; display:grid; grid-template-columns:36px 1fr 1fr; gap:2px 6px; font-size:15px; }
+  #moves .n { color:var(--muted); }
+  #moves .m { cursor:pointer; padding:2px 6px; border-radius:4px; }
+  #moves .m:hover { background:#444; }
+  #moves .m.cur { background:var(--accent); color:#111; font-weight:700; }
+  #moves .m.has::after { content:" •"; color:#e6b800; }
+  select, textarea { width:100%; background:#1e1c1a; color:var(--text); border:1px solid #555; border-radius:6px; padding:8px; font-family:inherit; }
+  textarea { height:110px; font-family:monospace; font-size:13px; }
+  label { font-size:13px; color:var(--muted); display:block; margin-bottom:4px; }
+  .row { display:flex; gap:8px; margin-top:8px; }
+  #err { color:#ff8a80; font-size:13px; margin-top:6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="left">
+    <h1 id="title"></h1>
+    <div class="meta" id="meta"></div>
+    <div id="board"></div>
+    <div class="controls">
+      <button id="first" title="Start">⏮</button>
+      <button id="prev" title="Back (←)">◀</button>
+      <button id="play" class="go" title="Autoplay (space)">▶ Play</button>
+      <button id="next" title="Forward (→)">▶</button>
+      <button id="last" title="End">⏭</button>
+      <button id="flip" title="Flip board">⇅</button>
+    </div>
+  </div>
+  <div class="right">
+    <div class="panel"><label>Game</label><select id="gameSelect"></select></div>
+    <div class="panel" id="comment"></div>
+    <div class="panel"><div id="moves"></div></div>
+    <details class="panel" id="pgnBox">
+      <summary>Load your own PGN</summary>
+      <label style="margin-top:10px">Put commentary in {braces} after a move</label>
+      <textarea id="pgn" placeholder='[White "Morphy"]&#10;[Black "Opponent"]&#10;&#10;1. e4 e5 {Classical center.} 2. Nf3 ...'></textarea>
+      <div class="row"><button id="load">Load PGN</button></div>
+      <div id="err"></div>
+    </details>
+  </div>
+</div>
+
+<script>
+// ---------- Game data (Morphy's games are public domain; commentary is original) ----------
+const GAMES = [{
+  title: "The Opera Game",
+  white: "Paul Morphy", black: "Duke of Brunswick & Count Isouard",
+  event: "Paris, 1858 (played in a box at the opera)",
+  pgn: `1. e4 {Morphy takes the center and opens lines for his pieces.} e5
+2. Nf3 {Attacks the e5 pawn.} d6 {The Philidor Defense: solid, but passive.}
+3. d4 {Challenging the center right away.} Bg4 {Pinning the knight, though this develops the bishop before the center is settled.}
+4. dxe5 Bxf3 5. Qxf3 {Morphy gives up nothing; his queen now eyes f7.} dxe5
+6. Bc4 {Developing with a threat: Qxf7 mate is in the air.} Nf6
+7. Qb3 {A double attack on f7 and b7.} Qe7 {Defends f7 but leaves the b7 pawn and Black's queenside undeveloped.}
+8. Nc3 {Morphy keeps developing instead of grabbing the pawn.} c6 9. Bg5 {Pins the f6 knight, so Black's queen loses a defender.} b5
+10. Nxb5 {A sacrifice to rip open the position. Morphy leads in development, so lines matter more than material.} cxb5
+11. Bxb5+ {Check, and the bishop pins the d7 knight.} Nbd7
+12. O-O-O {Bringing the last piece in with tempo. The rook now pins the knight on d7.} Rd8
+13. Rxd7 {Sacrificing the exchange to remove a key defender.} Rxd7 14. Rd1 {Pins the rook to the queen.} Qe6
+15. Bxd7+ {Black must recapture.} Nxd7
+16. Qb8+ {The famous queen sacrifice that deflects the knight from d7.} Nxb8
+17. Rd8# {Checkmate. Every Morphy piece joined the attack; Black's were still at home.}`
+}, {
+  title: "Morphy's Queen Sacrifice",
+  white: "Louis Paulsen", black: "Paul Morphy",
+  event: "1st American Chess Congress, New York, 1857",
+  pgn: `1. e4 e5 2. Nf3 Nc6 3. Nc3 Nf6 4. Bb5 Bc5 5. O-O O-O
+6. Nxe5 {Paulsen wins a pawn, but opens the e-file for Black's rook.} Re8
+7. Nxc6 dxc6 8. Bc4 b5 {Black gains queenside space and kicks the bishop.}
+9. Be2 Nxe4 {A pawn comes back, and White's pieces are suddenly tied to the e-file.}
+10. Nxe4 Rxe4 11. Bf3 Re6
+12. c3 Qd3 {Morphy's queen lands deep in White's camp and pins the bishop's fate to f3.}
+13. b4 Bb6 14. a4 bxa4 15. Qxa4 Bd7
+16. Ra2 Rae8 {Both rooks now bear on the e-file and Black's pressure on f3 builds.}
+17. Qa6 {White threatens Qxc6 and thinks he is fine. Chernev noted that Morphy spent about twelve minutes on his reply, checking that every variation worked.}
+Qxf3 {The queen sacrifice. Morphy gives up his queen so that two rooks and a bishop can run a forced attack on the king.}
+18. gxf3 Rg6+ {The rook swings over with check along the g-file.}
+19. Kh1 Bh3 {Threatening Bg2+, where the bishop and rook work together against the king.}
+20. Rd1 {White avoids 20.Rg1, which loses at once to Rxg1+ 21.Kxg1 Re1+.} Bg2+
+21. Kg1 Bxf3+ 22. Kf1 Bg2+ {Playable, but Zukertort showed the quiet 22...Rg2! was faster: 23.Qd3 Rxf2+ 24.Kg1 Rg2+ 25.Kh1 Rg1.}
+23. Kg1 Bh3+ 24. Kh1 Bxf2 {Threatens mate, so White has only one reply.}
+25. Qf1 {The only move.} Bxf1 26. Rxf1 Re2 {Black has won back everything and more: two rooks and a bishop against two rooks.}
+27. Ra1 Rh6 28. d4 Be3 {White resigned, a full bishop down with his king still exposed.} 0-1`
+}, 
+{
+  title: "Nerves of Steel",
+  white: "Levon Aronian",
+  black: "Viswanathan Anand",
+  event: "Tata Steel Group A, Wijk aan Zee 2013, Round 4",
+  pgn: `1. d4 d5 2. c4 c6 3. Nf3 Nf6 4. Nc3 e6 5. e3 Nbd7 6. Bd3 dxc4 7. Bxc4 b5 8. Bd3 Bd6 {Anand spent a long time choosing this over the usual ...a6 Meran setups.} 9. O-O O-O 10. Qc2 Bb7 11. a3 Rc8 12. Ng5 c5 {A novelty that opens the position at the cost of a pawn, and it won Novelty of the Year.} 13. Nxh7 {Other captures give Black good play, so Aronian takes the pawn.} Ng4 {The h7 knight is cut off from the rest of White's army.} 14. f4 cxd4 15. exd4 Bc5 {A bishop sacrifice that finds a new route for the dark-squared bishop.} 16. Be2 Nde5 17. Bxg4 Bxd4+ 18. Kh1 Nxg4 19. Nxf8 f5 {Black skips the obvious Qh4, which would let White trade queens with Qh7+.} 20. Ng6 Qf6 21. h3 Qxg6 22. Qe2 Qh5 23. Qd3 Be3 {A quiet finishing move that cuts off every escape, and Aronian resigned.} 0-1`,
+},
+{
+  title: "A Bent Pin",
+  white: "Mikhail Tal",
+  black: "Bent Larsen",
+  event: "Tal - Larsen Candidates Semifinal, Bled 1965, Round 10",
+  pgn: `1. e4 c5 2. Nf3 Nc6 3. d4 cxd4 4. Nxd4 e6 5. Nc3 d6 6. Be3 Nf6 7. f4 Be7 8. Qf3 O-O 9. O-O-O Qc7 10. Ndb5 Qb8 11. g4 a6 12. Nd4 Nxd4 13. Bxd4 b5 14. g5 Nd7 15. Bd3 b4 16. Nd5 {A positional piece sacrifice. White's pawns control e5 and e6, which builds a barrier on the e-file, and a rook is about to come to e1.} exd5 17. exd5 f5 {Larsen later preferred 17...g6, though engines find f5 reasonable too.} 18. Rde1 {Tal keeps the pawn chain intact instead of opening the g-file with gxf6.} Rf7 19. h4 Bb7 20. Bxf5 Rxf5 21. Rxe7 Ne5 22. Qe4 Qf8 23. fxe5 Rf4 24. Qe3 Rf3 25. Qe2 Qxe7 26. Qxf3 dxe5 27. Re1 Rd8 28. Rxe5 Qd6 29. Qf4 {A simple tactic: after Bxd5, Re8+ lets White keep two extra pawns.} Rf8 30. Qe4 b3 31. axb3 Rf1+ 32. Kd2 Qb4+ 33. c3 Qd6 34. Bc5 {A quiet but crushing bishop move.} Qxc5 35. Re8+ Rf8 36. Qe6+ Kh8 37. Qf7 {The finishing blow. Black resigned.} 1-0`,
+},
+{
+  title: "Evergreen Game",
+  white: "Adolf Anderssen",
+  black: "Jean Dufresne",
+  event: "Casual game, Berlin 1852",
+  pgn: `1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. b4 {The Evans Gambit: a pawn offered for fast development and a big center.} Bxb4 5. c3 Ba5 6. d4 exd4 7. O-O d3 {Black hangs on to the extra pawn, but White's pieces are all aiming at the king.} 8. Qb3 Qf6 9. e5 Qg6 10. Re1 Nge7 11. Ba3 b5 {Black grabs another pawn and leaves his king in the center.} 12. Qxb5 Rb8 13. Qa4 Bb6 14. Nbd2 Bb7 15. Ne4 Qf5 16. Bxd3 Qh5 17. Nf6+ {A flashy sacrifice. Quieter moves like Ng3 also win, but Black gets counterplay on the g-file.} gxf6 18. exf6 Rg8 19. Rad1 {Black can hold on here with other moves, such as Qh3.} Qxf3 {Black grabs the knight, but this walks into the finish.} 20. Rxe7+ {The queen sacrifice begins.} Nxe7 21. Qxd7+ {The queen is given up, forcing the king out.} Kxd7 22. Bf5+ Ke8 23. Bd7+ Kf8 24. Bxe7# {A quiet bishop move mates, with Black's king boxed in by his own pieces.} 1-0`,
+},
+{
+  title: "Four Queens",
+  white: "Bobby Fischer",
+  black: "Tigran Petrosian",
+  event: "Bled-Zagreb-Belgrade Candidates 1959, Round 16",
+  pgn: `1. e4 c6 2. Nc3 {The Two Knights Attack, meant to discourage ...Bf5. Fischer used it often early in his career.} d5 3. Nf3 Bg4 4. h3 Bxf3 5. Qxf3 Nf6 6. d3 e6 7. g3 Bb4 8. Bd2 d4 9. Nb1 Bxd2+ 10. Nxd2 e5 11. Bg2 c5 12. O-O Nc6 13. Qe2 Qe7 14. f4 O-O-O 15. a3 Ne8 16. b4 cxb4 17. Nc4 f6 18. fxe5 fxe5 19. axb4 Nc7 20. Na5 Nb5 21. Nxc6 bxc6 22. Rf2 g6 23. h4 Kb7 24. h5 Qxb4 {Black plays for complications instead of contesting the f-file, and White gets a dangerous initiative.} 25. Rf7+ Kb6 26. Qf2 a5 27. c4 Nc3 28. Rf1 a4 29. Qf6 Qc5 30. Rxh7 Rdf8 31. Qxg6 Rxh7 32. Qxh7 Rxf1+ 33. Bxf1 a3 34. h6 a2 35. Qg8 a1=Q {Black's a-pawn queens, but White's own h-pawn is only two steps from promotion.} 36. h7 Qd6 37. h8=Q {Four queens are on the board, and neither king faces immediate checks.} Qa7 {A passive square. An active move such as Qe1 was probably better.} 38. g4 Kc5 39. Qf8 {Fischer later showed that 39.g5 was a forced win, and other strong moves also existed.} Qae7 40. Qa8 Kb4 41. Qh2 Kb3 42. Qa1 Qa3 43. Qxa3+ Kxa3 44. Qh6 Qf7 45. Kg2 Kb3 46. Qd2 Qh7 47. Kg3 Qxe4 {Reportedly a queen sacrifice that White's analysis had missed, so the game was soon drawn.} 48. Qf2 Qh1 1/2-1/2`,
+},
+{
+  title: "The Game of the Century",
+  white: "Donald Byrne",
+  black: "Bobby Fischer",
+  event: "Third Rosenwald Trophy, New York 1956, Round 8",
+  pgn: `1. Nf3 Nf6 2. c4 g6 3. Nc3 Bg7 4. d4 O-O 5. Bf4 d5 6. Qb3 dxc4 7. Qxc4 c6 8. e4 Nbd7 9. Rd1 Nb6 10. Qc5 Bg4 11. Bg5 {Quieter development with Be2 and castling was safer. This bishop move lets Fischer unleash a string of tactics.} Na4 12. Qa3 {After Nxa4 Nxe4, White is in real trouble.} Nxc3 {Fischer removes the knight so he can later give up the exchange and break up White's center while the king is stuck.} 13. bxc3 Nxe4 {The natural follow-up to his plan.} 14. Bxe7 Qb6 15. Bc4 Nxc3 16. Bc5 Rfe8+ 17. Kf1 Be6 {A queen offer for a ferocious minor-piece attack. Taking the bishop runs into a smothered mate, and other ways of declining also fail.} 18. Bxb6 Bxc4+ 19. Kg1 Ne2+ 20. Kf1 Nxd4+ {The king is revealed to repeated discovered checks, a pattern known as a windmill.} 21. Kg1 Ne2+ 22. Kf1 Nc3+ 23. Kg1 axb6 24. Qb4 Ra4 25. Qxb6 Nxd1 26. h3 Rxa2 27. Kh2 Nxf2 28. Re1 Rxe1 29. Qd8+ Bf8 30. Nxe1 Bd5 31. Nf3 Ne4 32. Qb8 b5 {Every black piece and pawn is protected, and the white queen has nothing useful to do.} 33. h4 h5 34. Ne5 Kg7 35. Kg1 Bc5+ 36. Kf1 Ng3+ {Byrne's king is now caught in a mating net.} 37. Ke1 Bb4+ 38. Kd1 Bb3+ 39. Kc1 Ne2+ 40. Kb1 Nc3+ 41. Kc1 Rc2# 0-1`,
+},
+{
+  title: "The Immortal Zugzwang Game",
+  white: "Friedrich Saemisch",
+  black: "Aron Nimzowitsch",
+  event: "Copenhagen 1923, Round 6",
+  pgn: `1. d4 Nf6 2. c4 e6 3. Nf3 b6 4. g3 Bb7 5. Bg2 Be7 6. Nc3 O-O 7. O-O d5 8. Ne5 c6 {Shores up the center.} 9. cxd5 cxd5 10. Bf4 a6 {Prepares ...b5 so Black can use c4 as an outpost.} 11. Rc1 b5 12. Qb3 Nc6 {Black's knight heads quietly for c4.} 13. Nxc6 {White spends tempi just to get rid of that knight.} Bxc6 14. h3 Qd7 15. Kh2 Nh5 {Black turns his attention to the kingside.} 16. Bd2 f5 17. Qd1 b4 18. Nb1 Bb5 19. Rg1 Bd6 20. e4 fxe4 {A surprising piece sacrifice. Black gets two pawns, the seventh rank, and a tangled White queenside.} 21. Qxh5 Rxf2 22. Qg5 Raf8 23. Kh1 R8f5 24. Qe3 Bd3 25. Rce1 h6 {A quiet move that leaves White almost without useful moves. Kh2 or g4 would allow ...R5f3, and White resigned.} 0-1`,
+},
+{
+  title: "Kasparov's Immortal",
+  white: "Garry Kasparov",
+  black: "Veselin Topalov",
+  event: "Hoogovens Group A, Wijk aan Zee 1999, Round 4",
+  pgn: `1. e4 d6 2. d4 Nf6 3. Nc3 g6 4. Be3 Bg7 5. Qd2 c6 6. f3 b5 7. Nge2 Nbd7 8. Bh6 Bxh6 9. Qxh6 Bb7 10. a3 e5 11. O-O-O Qe7 12. Kb1 a6 13. Nc1 O-O-O 14. Nb3 exd4 15. Rxd4 c5 16. Rd1 Nb6 17. g3 Kb8 18. Na5 Ba8 19. Bh3 d5 20. Qf4+ Ka7 21. Rhe1 d4 22. Nd5 Nbxd5 23. exd5 Qd6 24. Rxd4 {A rook sacrifice that engines find sound, though Black stays slightly better with best play.} cxd4 25. Re7+ Kb6 26. Qxd4+ Kxa5 27. b4+ Ka4 28. Qc3 {An inaccuracy. Ra7 would have won by force, for example with a quick mate after Bb7 Rxb7.} Qxd5 29. Ra7 Bb7 30. Rxb7 Qc4 31. Qxf6 Kxa3 {Black's king is drawn to a3, though Rd1+ was the stronger try.} 32. Qxa6+ Kxb4 33. c3+ Kxc3 34. Qa1+ Kd2 35. Qb2+ Kd1 36. Bf1 {A quiet bishop move, setting up a rare double-edged finish.} Rd2 37. Rd7 {The reply that wins: the rook is offered, and Black cannot take without losing.} Rxd7 38. Bxc4 bxc4 39. Qxh8 Rd3 40. Qa8 c3 41. Qa4+ Ke1 42. f4 f5 43. Kc1 Rd2 44. Qa7 {Black's king is exposed and White's pieces are coordinated, so Black resigned.} 1-0`,
+},
+{
+  title: "Nezly Done!",
+  white: "Rashid Nezhmetdinov",
+  black: "Oleg Chernikov",
+  event: "Chigorin Team Cup, Rostov-on-Don 1962",
+  pgn: `1. e4 c5 2. Nf3 Nc6 3. d4 cxd4 4. Nxd4 g6 5. Nc3 Bg7 6. Be3 Nf6 7. Bc4 O-O 8. Bb3 Ng4 9. Qxg4 Nxd4 10. Qh4 Qa5 11. O-O Bf6 12. Qxf6 {The queen sacrifice. Nezhmetdinov reportedly thought about 45 minutes before playing it. Engines call the position roughly balanced, but it is very hard to play as Black.} Ne2+ 13. Nxe2 exf6 14. Nc3 Re8 15. Nd5 Re6 {White has two bishops aimed at the king and control of f6 and h6, which is real compensation for the queen.} 16. Bd4 Kg7 17. Rad1 d6 18. Rd3 Bd7 19. Rf3 Bb5 20. Bc3 Qd8 21. Nxf6 {Black's best was probably ...Rc8, keeping things roughly level.} Be2 {The critical mistake. Taking the rook on f1 would lose to Ng4+ followed by Bxe6.} 22. Nxh7+ Kg8 23. Rh3 Re5 24. f4 Bxf1 25. Kxf1 Rc8 26. Bd4 b5 27. Ng5 Rc7 28. Bxf7+ Rxf7 29. Rh8+ {A final rook sacrifice that drags the king onto h8.} Kxh8 30. Nxf7+ Kh7 31. Nxd8 Rxe4 32. Nc6 Rxf4+ 33. Ke2 {White has regained the queen with a winning edge, and Black resigned.} 1-0`,
+},
+{
+  title: "8-Ball in the Corner Pocket",
+  white: "Paul Morphy",
+  black: "Charles Le Carpentier",
+  event: "Rook odds game, New Orleans 1849",
+  pgn: `1. e4 e5 2. Nf3 Nc6 3. d4 exd4 4. Bc4 Bb4+ {Black checks, inviting White to block.} 5. c3 dxc3 6. O-O cxb2 {Black grabs pawns, content to hold the material edge.} 7. Bxb2 Bf8 {White has a pawn for the piece, but the bishops and open lines give real pressure.} 8. e5 d6 9. Re1 dxe5 10. Nxe5 Qxd1 {Black takes the queen and does not see the danger on f7.} 11. Bxf7+ {The key shot: the bishop sacrifice unleashes the knight and rook.} Ke7 12. Ng6+ {Double attack on the king from the knight, with the rook behind it.} Kxf7 13. Nxh8# {The knight takes the rook with mate, as the bishop on b2 and rook on e1 seal every escape square.} 1-0`,
+},
+{
+  title: "Best by Protest",
+  white: "Bobby Fischer",
+  black: "Boris Spassky",
+  event: "Spassky - Fischer World Championship Match, Reykjavik 1972, Round 6",
+  pgn: `1. c4 {Fischer's first 1.c4 of the match, a surprise from a player known for 1.e4.} e6 2. Nf3 d5 3. d4 Nf6 4. Nc3 Be7 5. Bg5 O-O 6. e3 h6 7. Bh4 b6 8. cxd5 Nxd5 9. Bxe7 Qxe7 10. Nxd5 exd5 11. Rc1 Be6 12. Qa4 c5 13. Qa3 Rc8 14. Bb5 {A new move at the time. 14...a6 is sound, but 14...Qb7 later proved more effective.} a6 15. dxc5 bxc5 16. O-O Ra7 17. Be2 Nd7 18. Nd4 Qf8 19. Nxe6 fxe6 20. e4 d4 {A positional error. Black's pieces are badly coordinated for this pawn structure, and 20...dxe4 would have been the safer way to play for a draw.} 21. f4 Qe7 22. e5 Rb8 23. Bc4 Kh8 24. Qh3 Nf8 {Black is now passive and has no good way to challenge the center.} 25. b3 a5 26. f5 exf5 27. Rxf5 Nh7 28. Rcf1 Qd8 29. Qg3 Re7 30. h4 Rbb7 31. e6 Rbc7 32. Qe5 Qe8 33. a4 Qd8 34. R1f2 {Moves 34 and 35 look neutral. They may have been meant to toy with Black, to gain time before the time control, or to get Black's queen to e8.} Qe8 35. R2f3 Qd8 36. Bd3 Qe8 37. Qe4 Nf6 38. Rxf6 gxf6 39. Rxf6 Kg8 40. Bc4 Kh8 41. Qf4 {Black is lost and resigned.} 1-0`,
+},
+{
+  title: "Tal Tales",
+  white: "Mikhail Tal",
+  black: "Vasily Smyslov",
+  event: "Bled-Zagreb-Belgrade Candidates 1959, Round 8",
+  pgn: `1. e4 c6 2. d3 {An offbeat anti-Caro-Kann setup that likely caught Smyslov unprepared.} d5 3. Nd2 e5 4. Ngf3 Nd7 5. d4 dxe4 6. Nxe4 exd4 7. Qxd4 {Black ends up with an isolated-pawn type of position he may not have wanted.} Ngf6 8. Bg5 Be7 9. O-O-O O-O 10. Nd6 Qa5 11. Bc4 b5 {Questionable. A quiet trade on d6 would have equalized more simply.} 12. Bd2 Qa6 13. Nf5 Bd8 {Tal's knight is far advanced, and Black's position looks fine at first glance. Bc5 here leads to deep complications.} 14. Qh4 bxc4 15. Qg5 Nh5 16. Nh6+ Kh8 17. Qxh5 Qxa2 18. Bc3 Nf6 {The losing move. Bc7, threatening Bf4+, was needed, but the draw is almost impossible to calculate over the board.} 19. Qxf7 {The point of the attack: a queen sacrifice that wins material by force.} Qa1+ 20. Kd2 Rxf7 21. Nxf7+ Kg8 22. Rxa1 Kxf7 23. Ne5+ Ke6 24. Nxc6 Ne4+ 25. Ke3 Bb6+ 26. Bd4 {White is up the exchange with Black's king exposed, and Black resigned.} 1-0`,
+}
+];
+
+// ---------- PGN parsing ----------
+function parsePGN(text) {
+  const headers = {};
+  text.replace(/\[(\w+)\s+"([^"]*)"\]/g, (_, k, v) => (headers[k] = v));
+  const body = text.replace(/\[[^\]]*\]/g, " ");
+  const tokens = body.match(/\{[^}]*\}|\([^)]*\)|\$\d+|\d+\.(?:\.\.)?|1-0|0-1|1\/2-1\/2|\*|[^\s{}()]+/g) || [];
+  const moves = [], comments = {};
+  for (const t of tokens) {
+    if (t[0] === "{") {
+      const txt = t.slice(1, -1).trim();
+      comments[moves.length] = comments[moves.length] ? comments[moves.length] + " " + txt : txt;
+    } else if (/^\d+\./.test(t) || t[0] === "(" || t[0] === "$" || /^(1-0|0-1|1\/2-1\/2|\*)$/.test(t)) {
+      continue;
+    } else moves.push(t);
+  }
+  return { headers, moves, comments };
+}
+
+// ---------- State ----------
+let game = null, positions = [], ply = 0, flipped = false, timer = null;
+const PIECES = { p:"♟", n:"♞", b:"♝", r:"♜", q:"♛", k:"♚" };
+const $ = id => document.getElementById(id);
+
+function loadGame({ title, white, black, event, pgn }) {
+  const parsed = parsePGN(pgn);
+  const chess = new Chess();
+  positions = [{ board: chess.board(), from: null, to: null, san: null }];
+  for (const san of parsed.moves) {
+    const m = chess.move(san, { sloppy: true });
+    if (!m) throw new Error("Illegal or unreadable move: " + san);
+    positions.push({ board: chess.board(), from: m.from, to: m.to, san: m.san });
+  }
+  const h = parsed.headers;
+  game = { comments: parsed.comments, sans: positions.slice(1).map(p => p.san) };
+  $("title").textContent = title || (h.White && h.Black ? `${h.White} – ${h.Black}` : "Custom game");
+  $("meta").textContent = [white || h.White, black || h.Black].filter(Boolean).join(" vs ") +
+    (event || h.Event ? " · " + (event || h.Event) : "") + (h.Date ? " · " + h.Date : "");
+  buildMoveList(); go(0); stop();
+}
+
+// ---------- Rendering ----------
+function render() {
+  const pos = positions[ply];
+  const b = $("board"); b.innerHTML = "";
+  for (let i = 0; i < 64; i++) {
+    const r = flipped ? 7 - Math.floor(i / 8) : Math.floor(i / 8);
+    const f = flipped ? 7 - (i % 8) : i % 8;
+    const name = "abcdefgh"[f] + (8 - r);
+    const sq = document.createElement("div");
+    sq.className = "sq " + ((r + f) % 2 === 0 ? "l" : "d") + (name === pos.from || name === pos.to ? " hl" : "");
+    const p = pos.board[r][f];
+    if (p) { const s = document.createElement("span"); s.className = p.color; s.textContent = PIECES[p.type]; sq.appendChild(s); }
+    if (i % 8 === 7) { const c = document.createElement("div"); c.className = "coord r"; c.textContent = 8 - r; sq.appendChild(c); }
+    if (i >= 56) { const c = document.createElement("div"); c.className = "coord f"; c.textContent = "abcdefgh"[f]; sq.appendChild(c); }
+    b.appendChild(sq);
+  }
+  document.querySelectorAll("#moves .m").forEach(el => el.classList.toggle("cur", +el.dataset.ply === ply));
+  // Scroll only the move list; scrollIntoView would also scroll the page and push the board off screen
+  const cur = document.querySelector("#moves .m.cur"), list = $("moves");
+  if (cur) list.scrollTop = cur.offsetTop - list.offsetTop - (list.clientHeight - cur.offsetHeight) / 2;
+  const label = ply === 0 ? "Starting position" : `${Math.ceil(ply / 2)}${ply % 2 ? "." : "..."} <span class="san">${pos.san}</span>`;
+  const txt = game.comments[ply] || (ply === 0 ? "Use the arrow keys or buttons to step through the game." : "");
+  $("comment").innerHTML = `<div style="color:var(--muted);margin-bottom:6px">${label}</div>${escapeHtml(txt)}`;
+}
+function escapeHtml(s) { return s.replace(/[&<>]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;" }[c])); }
+
+function buildMoveList() {
+  const el = $("moves"); el.innerHTML = "";
+  game.sans.forEach((san, i) => {
+    if (i % 2 === 0) { const n = document.createElement("div"); n.className = "n"; n.textContent = i / 2 + 1 + "."; el.appendChild(n); }
+    const m = document.createElement("div");
+    m.className = "m" + (game.comments[i + 1] ? " has" : ""); m.dataset.ply = i + 1; m.textContent = san;
+    m.onclick = () => { stop(); go(i + 1); };
+    el.appendChild(m);
+  });
+}
+
+// ---------- Navigation ----------
+function go(n) { ply = Math.max(0, Math.min(positions.length - 1, n)); render(); }
+const COMMENT_DELAY = 5000, QUIET_DELAY = 800;
+function stop() { if (timer) { clearTimeout(timer); timer = null; } $("play").textContent = "▶ Play"; }
+function tick() {
+  if (ply >= positions.length - 1) return stop();
+  go(ply + 1);
+  // Linger 2 seconds on a move that has commentary before advancing
+  timer = setTimeout(tick, game.comments[ply] ? COMMENT_DELAY : QUIET_DELAY);
+}
+function play() {
+  if (timer) return stop();
+  if (ply >= positions.length - 1) go(0);
+  $("play").textContent = "⏸ Pause";
+  timer = setTimeout(tick, game.comments[ply] ? COMMENT_DELAY : QUIET_DELAY);
+}
+
+$("first").onclick = () => { stop(); go(0); };
+$("prev").onclick = () => { stop(); go(ply - 1); };
+$("next").onclick = () => { stop(); go(ply + 1); };
+$("last").onclick = () => { stop(); go(positions.length - 1); };
+$("play").onclick = play;
+$("flip").onclick = () => { flipped = !flipped; render(); };
+document.addEventListener("keydown", e => {
+  if (e.target.tagName === "TEXTAREA" || e.target.tagName === "SELECT") return;
+  if (e.key === "ArrowRight") { stop(); go(ply + 1); }
+  else if (e.key === "ArrowLeft") { stop(); go(ply - 1); }
+  else if (e.key === " ") { e.preventDefault(); play(); }
+});
+
+GAMES.forEach((g, i) => { const o = document.createElement("option"); o.value = i; o.textContent = `${g.title} — ${g.white} vs ${g.black}`; $("gameSelect").appendChild(o); });
+$("gameSelect").onchange = e => loadGame(GAMES[e.target.value]);
+$("load").onclick = () => {
+  $("err").textContent = "";
+  try {
+    const text = $("pgn").value.trim(); if (!text) return;
+    loadGame({ pgn: text });
+    $("pgnBox").open = false;
+  } catch (err) { $("err").textContent = err.message; }
+};
+
+loadGame(GAMES[0]);
+</script>
+</body>
+</html>
