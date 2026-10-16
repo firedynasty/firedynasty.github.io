@@ -65,7 +65,7 @@
     </div>
   </div>
   <div class="right">
-    <div class="panel"><label>Game</label><select id="gameSelect"></select></div>
+    <div class="panel"><label>Game</label><div class="row" style="margin-top:0"><select id="gameSelect"></select><button id="copyPgn" title="Copy full PGN with comments" style="white-space:nowrap">📋 Copy PGN</button></div></div>
     <div class="panel" id="comment"></div>
     <div class="panel"><div id="moves"></div></div>
     <details class="panel" id="pgnBox">
@@ -218,7 +218,7 @@ function parsePGN(text) {
 }
 
 // ---------- State ----------
-let game = null, positions = [], ply = 0, flipped = false, timer = null;
+let meta = {}, game = null, positions = [], ply = 0, flipped = false, timer = null;
 const PIECES = { p:"♟", n:"♞", b:"♝", r:"♜", q:"♛", k:"♚" };
 const $ = id => document.getElementById(id);
 
@@ -232,6 +232,8 @@ function loadGame({ title, white, black, event, pgn }) {
     positions.push({ board: chess.board(), from: m.from, to: m.to, san: m.san });
   }
   const h = parsed.headers;
+  const res = (pgn.match(/(1-0|0-1|1\/2-1\/2|\*)\s*$/) || [, "*"])[1];
+  meta = { white: white || h.White || "?", black: black || h.Black || "?", event: event || h.Event || "?", date: h.Date || "????.??.??", result: h.Result || res, site: h.Site || "?" };
   game = { comments: parsed.comments, sans: positions.slice(1).map(p => p.san) };
   $("title").textContent = title || (h.White && h.Black ? `${h.White} – ${h.Black}` : "Custom game");
   $("meta").textContent = [white || h.White, black || h.Black].filter(Boolean).join(" vs ") +
@@ -275,6 +277,25 @@ function buildMoveList() {
     el.appendChild(m);
   });
 }
+
+// ---------- PGN export ----------
+function buildPGN() {
+  const tags = [["Event", meta.event], ["Site", meta.site], ["Date", meta.date], ["Round", "?"], ["White", meta.white], ["Black", meta.black], ["Result", meta.result]];
+  let out = tags.map(([k, v]) => `[${k} "${String(v).replace(/"/g, "'")}"]`).join("\n") + "\n\n";
+  const parts = [];
+  game.sans.forEach((san, i) => {
+    parts.push((i % 2 === 0 ? `${i / 2 + 1}. ` : "") + san);
+    const c = game.comments[i + 1];
+    if (c) parts.push(`{${c.replace(/[{}]/g, "")}}`);
+  });
+  return out + parts.join(" ") + " " + meta.result + "\n";
+}
+$("copyPgn").onclick = async () => {
+  const btn = $("copyPgn"), text = buildPGN();
+  try { await navigator.clipboard.writeText(text); }
+  catch { const t = document.createElement("textarea"); t.value = text; document.body.appendChild(t); t.select(); document.execCommand("copy"); t.remove(); }
+  btn.textContent = "✓ Copied"; setTimeout(() => btn.textContent = "📋 Copy PGN", 1500);
+};
 
 // ---------- Navigation ----------
 function go(n) { ply = Math.max(0, Math.min(positions.length - 1, n)); render(); }
