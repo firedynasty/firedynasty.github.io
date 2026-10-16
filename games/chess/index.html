@@ -41,7 +41,9 @@
   #moves .m { cursor:pointer; padding:2px 6px; border-radius:4px; }
   #moves .m:hover { background:#444; }
   #moves .m.cur { background:var(--accent); color:#111; font-weight:700; }
-  #moves .m.has::after { content:" •"; color:#e6b800; }
+  #moves .m.has::after { content:" ★"; color:#e6b800; font-size:.85em; }
+  .sq.note { box-shadow:inset 0 0 0 3px #ffd700; }
+  .badge { position:absolute; top:1px; right:1px; width:16px; height:16px; border-radius:50%; background:#ffd700; color:#1a1a2e; border:1.5px solid #1a1a2e; font-size:10px; line-height:13px; text-align:center; z-index:3; }
   select, textarea { width:100%; background:#1e1c1a; color:var(--text); border:1px solid #555; border-radius:6px; padding:8px; font-family:inherit; }
   textarea { height:110px; font-family:monospace; font-size:13px; }
   label { font-size:13px; color:var(--muted); display:block; margin-bottom:4px; }
@@ -250,9 +252,10 @@ function render() {
     const f = flipped ? 7 - (i % 8) : i % 8;
     const name = "abcdefgh"[f] + (8 - r);
     const sq = document.createElement("div");
-    sq.className = "sq " + ((r + f) % 2 === 0 ? "l" : "d") + (name === pos.from || name === pos.to ? " hl" : "");
+    sq.className = "sq " + ((r + f) % 2 === 0 ? "l" : "d") + (name === pos.from || name === pos.to ? " hl" : "") + (name === pos.to && game.comments[ply] ? " note" : "");
     const p = pos.board[r][f];
     if (p) { const s = document.createElement("span"); s.className = p.color; s.textContent = PIECES[p.type]; sq.appendChild(s); }
+    if (name === pos.to && game.comments[ply]) { const bd = document.createElement("div"); bd.className = "badge"; bd.textContent = "★"; sq.appendChild(bd); }
     if (i % 8 === 7) { const c = document.createElement("div"); c.className = "coord r"; c.textContent = 8 - r; sq.appendChild(c); }
     if (i >= 56) { const c = document.createElement("div"); c.className = "coord f"; c.textContent = "abcdefgh"[f]; sq.appendChild(c); }
     b.appendChild(sq);
