@@ -48,6 +48,15 @@
   textarea { height:110px; font-family:monospace; font-size:13px; }
   label { font-size:13px; color:var(--muted); display:block; margin-bottom:4px; }
   .row { display:flex; gap:8px; margin-top:8px; }
+  #lichessModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:50; align-items:center; justify-content:center; padding:16px; }
+  #lichessModal .box { background:var(--panel); border-radius:10px; padding:16px; max-width:480px; width:100%; position:relative; }
+  #lichessModal h3 { margin:0 0 8px; font-size:17px; }
+  #lichessModal .x { position:absolute; top:8px; right:8px; padding:2px 8px; }
+  #lichessModal code { display:block; background:#1e1c1a; border-radius:6px; padding:6px 8px; font-size:12px; word-break:break-all; margin-bottom:10px; }
+  #lichessModal .opt { display:flex; gap:8px; margin-bottom:8px; }
+  #lichessModal a.btn { flex:1; text-align:center; text-decoration:none; background:var(--accent); color:#111; border-radius:6px; padding:8px; font-weight:700; }
+  #lichessModal a.btn.blk { background:#111; color:#fff; border:1px solid #666; }
+  #lichessModal a.ed { color:var(--muted); font-size:13px; }
   #err { color:#ff8a80; font-size:13px; margin-top:6px; }
 </style>
 </head>
@@ -64,6 +73,7 @@
       <button id="next" title="Forward (→)">▶</button>
       <button id="last" title="End">⏭</button>
       <button id="flip" title="Flip board">⇅</button>
+      <button id="lichess" title="Continue this position on Lichess">♞ Lichess</button>
     </div>
   </div>
   <div class="right">
@@ -77,6 +87,17 @@
       <div class="row"><button id="load">Load PGN</button></div>
       <div id="err"></div>
     </details>
+  </div>
+</div>
+
+<div id="lichessModal">
+  <div class="box">
+    <button class="x" id="lichessClose">✕</button>
+    <h3>Continue on Lichess</h3>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:6px">Current position (FEN):</div>
+    <code id="lichessFen"></code>
+    <div class="opt"><a class="btn" id="lichessW" target="_blank" rel="noopener">Play as White</a><a class="btn blk" id="lichessB" target="_blank" rel="noopener">Play as Black</a></div>
+    <div class="row" style="margin:0"><a class="ed" id="lichessEd" target="_blank" rel="noopener">Open in board editor</a><button id="lichessCopy" style="margin-left:auto;padding:4px 10px;font-size:13px">Copy FEN</button></div>
   </div>
 </div>
 
@@ -227,11 +248,11 @@ const $ = id => document.getElementById(id);
 function loadGame({ title, white, black, event, pgn }) {
   const parsed = parsePGN(pgn);
   const chess = new Chess();
-  positions = [{ board: chess.board(), from: null, to: null, san: null }];
+  positions = [{ board: chess.board(), fen: chess.fen(), from: null, to: null, san: null }];
   for (const san of parsed.moves) {
     const m = chess.move(san, { sloppy: true });
     if (!m) throw new Error("Illegal or unreadable move: " + san);
-    positions.push({ board: chess.board(), from: m.from, to: m.to, san: m.san });
+    positions.push({ board: chess.board(), fen: chess.fen(), from: m.from, to: m.to, san: m.san });
   }
   const h = parsed.headers;
   const res = (pgn.match(/(1-0|0-1|1\/2-1\/2|\*)\s*$/) || [, "*"])[1];
@@ -299,6 +320,24 @@ $("copyPgn").onclick = async () => {
   catch { const t = document.createElement("textarea"); t.value = text; document.body.appendChild(t); t.select(); document.execCommand("copy"); t.remove(); }
   btn.textContent = "✓ Copied"; setTimeout(() => btn.textContent = "📋 Copy PGN", 1500);
 };
+
+// ---------- Lichess ----------
+function lichessFen(color) {
+  const [placement, , castling] = positions[ply].fen.split(" ");
+  return `${placement} ${color} ${castling} - 0 1`;
+}
+$("lichess").onclick = () => {
+  stop();
+  const w = lichessFen("w"), b = lichessFen("b"), u = f => f.replace(/ /g, "_");
+  $("lichessFen").textContent = positions[ply].fen;
+  $("lichessW").href = `https://lichess.org/analysis/${u(w)}?color=white`;
+  $("lichessB").href = `https://lichess.org/analysis/${u(b)}?color=black`;
+  $("lichessEd").href = `https://lichess.org/editor/${u(positions[ply].fen)}`;
+  $("lichessModal").style.display = "flex";
+};
+$("lichessClose").onclick = () => $("lichessModal").style.display = "none";
+$("lichessModal").onclick = e => { if (e.target.id === "lichessModal") e.target.style.display = "none"; };
+$("lichessCopy").onclick = () => navigator.clipboard.writeText(positions[ply].fen).then(() => { $("lichessCopy").textContent = "✓ Copied"; setTimeout(() => $("lichessCopy").textContent = "Copy FEN", 1500); });
 
 // ---------- Navigation ----------
 function go(n) { ply = Math.max(0, Math.min(positions.length - 1, n)); render(); }
