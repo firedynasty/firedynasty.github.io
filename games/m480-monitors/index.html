@@ -27,8 +27,8 @@ button.big{padding:9px 18px;font-weight:600}
 input[type=text]{width:100%;padding:5px 8px;border-radius:5px}
 .hint{color:var(--mute);font-size:12.5px;margin:6px 0 0}
 .tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;border-radius:4px;padding:1px 6px;vertical-align:middle}
-.tag.unv{background:#4a3410;color:var(--warn);border:1px solid #8a6220}
-.tag.ok{background:#12443f;color:#9ff0dd;border:1px solid #2a7a6a}
+
+.tag.ok{background:#12443f;color:#9ff0dd;border:1px solid #2a7a6a;white-space:nowrap}
 .banner{background:#2b2210;border:1px solid #8a6220;border-radius:10px;padding:10px 14px;color:#ffe2b0;font-size:14px}
 .banner b{color:#fff}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -97,8 +97,8 @@ a{color:#7fd8ff}
     <p class="sub">Two ways to build and adjust a monitor (aux) mix, with a practice board. <b>Practice only: this page does not control a console.</b></p>
   </header>
 
-  <div class="banner" id="unverifiedBanner">
-    <b>Not yet checked against the M-480 manual.</b> The steps below come from your own notes and panel photos. Steps marked <span class="tag unv">UNVERIFIED</span> (exact button order, how the LEVEL knob behaves, MTX) were flagged in those notes and still need to be confirmed. See <a href="#verify">what is left to verify</a>.
+  <div class="banner" id="sourceBanner" style="background:#0f2a26;border-color:#2a7a6a;color:#cdf5ec">
+    <b>Checked against the Roland M-480 owner's manual</b> (the PDF you supplied). Tags like <span class="tag ok">MANUAL p. 45</span> show where each step was confirmed. What is <em>not</em> from the manual: which aux is which monitor and your channel list (those are your setup).
   </div>
 
   <section class="card">
@@ -106,10 +106,10 @@ a{color:#7fd8ff}
     <div class="two">
       <div class="way"><h3>Way 1 &middot; Individual column</h3>
         <p><b>Use for:</b> quick tweaks during a song: change <em>one</em> channel's send to <em>one</em> monitor.</p>
-        <p class="hint">Select the channel, pick the monitor, turn LEVEL. <span class="tag unv">UNVERIFIED</span></p></div>
+        <p class="hint">Press the channel's [SEL] button, press the [AUX] button for the monitor, turn LEVEL. <span class="tag ok">MANUAL p. 24, 45</span></p></div>
       <div class="way"><h3>Way 2 &middot; Sends on Fader</h3>
         <p><b>Use for:</b> setup and sound check: build or rebalance a <em>whole</em> monitor mix at once.</p>
-        <p class="hint">Pick the monitor, press SENDS ON FADER, and the faders become that monitor's send levels.</p></div>
+        <p class="hint">Press the [AUX] button, press SENDS ON FADER (it blinks), and the faders become that monitor's send levels. <span class="tag ok">MANUAL p. 45</span></p></div>
     </div>
     <h3>Which one should I use?</h3>
     <div class="row" id="chooser">
@@ -158,7 +158,7 @@ a{color:#7fd8ff}
           <p class="hint" id="deskHint"></p></div>
       </div>
       <div class="panelbox"><b>FADER MODULE</b>
-        <div class="layers"><button id="L1" class="on">CH 1&ndash;24</button><button id="L2">CH 25&ndash;48</button><span class="hint" style="margin:0" id="layerHint"></span></div>
+        <div class="layers"><button id="L1" class="on">CH 1&ndash;24</button><button id="L2">CH 25&ndash;48</button><button id="L3" title="Assigns AUX1–16 and MTX1–8 to the faders (the aux master levels)">AUX/MTX</button><span class="hint" style="margin:0" id="layerHint"></span></div>
         <div class="strips" id="strips"></div>
         <p class="hint">Schematic, not to scale. The layout is simplified from your notes, and each strip's SEL button is an assumption for practising &ldquo;select the channel column&rdquo;.</p></div>
     </div>
@@ -167,40 +167,44 @@ a{color:#7fd8ff}
   <section class="card">
     <h2>5 &middot; Way 1 and Way 2 side by side</h2>
     <div class="scroll"><table>
-      <thead><tr><th>I want to&hellip;</th><th>Way 1 &middot; Individual column <span class="tag unv">UNVERIFIED</span></th><th>Way 2 &middot; Sends on Fader</th></tr></thead>
+      <thead><tr><th>I want to&hellip;</th><th>Way 1 &middot; Individual column <span class="tag ok">MANUAL p. 45</span></th><th>Way 2 &middot; Sends on Fader <span class="tag ok">MANUAL p. 45</span></th></tr></thead>
       <tbody>
-        <tr><td>Choose the monitor</td><td>Press the Aux SELECT button (step 2)</td><td>Press the Aux SELECT button (step 1)</td></tr>
-        <tr><td>Choose the channel(s)</td><td>Select one channel column (step 1)</td><td>All channels are on the faders: pick the layer, CH 1&ndash;24 or CH 25&ndash;48 (step 3)</td></tr>
-        <tr><td>Change a level</td><td>Turn the LEVEL knob (step 3)</td><td>Move that channel's fader (step 4)</td></tr>
-        <tr><td>Do the next channel</td><td>Select the next column and repeat (step 4)</td><td>Move the next fader; nothing to select</td></tr>
-        <tr><td>Do the next monitor</td><td>Press another Aux SELECT</td><td>Press another Aux SELECT (step 5)</td></tr>
-        <tr><td>Get back to the main mix</td><td>Not described in your notes</td><td>Press SENDS ON FADER again (step 6)</td></tr>
+        <tr><td>Choose the monitor</td><td>Press the [AUX] button (step 2)</td><td>Press the [AUX] button (step 1)</td></tr>
+        <tr><td>Choose the channel(s)</td><td>Press that channel's [SEL] button; pick the CH 1&ndash;24 or CH 25&ndash;48 layer first if needed (step 1)</td><td>All 24 channels on the layer are on the faders: pick CH 1&ndash;24 or CH 25&ndash;48 (step 3)</td></tr>
+        <tr><td>Change a level</td><td>Turn the LEVEL knob (step 3). Hold SHIFT for fine steps.</td><td>Move that channel's fader (step 4)</td></tr>
+        <tr><td>Do the next channel</td><td>Press the next [SEL] and repeat (step 4)</td><td>Move the next fader; nothing to select</td></tr>
+        <tr><td>Do the next monitor</td><td>Press another [AUX] button</td><td>Press another [AUX] button (step 5)</td></tr>
+        <tr><td>Turn one send on or off</td><td>Hold SHIFT and press the [AUX] button</td><td>Not described for the faders; use the DISP popup (p. 84)</td></tr>
+        <tr><td>Get back to the main mix</td><td>Nothing to leave</td><td>Press SENDS ON FADER again: it stops blinking (step 6)</td></tr>
       </tbody></table></div>
-    <h3>Things that look like they only work one way <span class="tag unv">VERIFY</span></h3>
+    <h3>What the manual adds to each way</h3>
     <ul>
-      <li><b>Only Way 2, per your notes:</b> seeing the whole monitor balance across all channels at once, and switching the CH 25&ndash;48 layer.</li>
-      <li><b>Only Way 1, per your notes:</b> the LEVEL knob (one channel's send at a time).</li>
-      <li>These are read from your notes, not confirmed on the console or in the manual.</li>
+      <li><b>Way 1 only:</b> fine adjustment (hold SHIFT while turning LEVEL) and SHIFT + [AUX] to switch that send on or off. <span class="tag ok">p. 24, 45</span></li>
+      <li><b>Way 2 only:</b> every channel's send for one monitor on the faders at once. If the MAIN FADER setting &ldquo;SENDS ON FADER MASTER&rdquo; is ticked in User Preference, the MAIN fader module becomes that aux's fader while the mode is on. <span class="tag ok">p. 45, 141</span></li>
+      <li><b>Both:</b> [DISP] in the AUX/MTX SENDS area opens the AUX (MTX) SENDS popup, a screen with all of a channel's sends; you do not need it to turn LEVEL. <span class="tag ok">p. 24, 84</span></li>
+      <li><b>MTX instead of AUX:</b> hold one of [AUX1]&ndash;[AUX8] and press the [AUX9]&ndash;[AUX16] on its right. <span class="tag ok">p. 24, 45</span></li>
     </ul>
   </section>
 
   <section class="card">
     <h2>6 &middot; Tips (tick them off at sound check)</h2>
     <div id="tips"></div>
-    <p class="hint">Way 1 is best for quick tweaks during a song. Way 2 is best for setup and sound check.</p>
+    <p class="hint">Way 1 is best for quick tweaks during a song. Way 2 is best for setup and sound check (your notes). The manual-based tips carry a page tag.</p>
   </section>
 
   <section class="card" id="verify">
-    <h2>7 &middot; Still to verify, and the tutorial format</h2>
+    <h2>7 &middot; What was checked in the manual, and what is still open</h2>
     <dl class="kv">
-      <dt>Way 1 steps</dt><dd><span class="tag unv">UNVERIFIED</span> exact button order and how the LEVEL knob behaves</dd>
-      <dt>LEVEL knob</dt><dd><span class="tag unv">UNVERIFIED</span> what it changes on the M-480 (the console's screen is not covered here)</dd>
-      <dt>MTX</dt><dd><span class="tag unv">UNVERIFIED</span> how the same SELECT buttons act for MTX 1&ndash;8</dd>
-      <dt>Pre / post fader</dt><dd><span class="tag unv">UNVERIFIED</span> where to check it for each send on the M-480</dd>
-      <dt>Way 2 steps</dt><dd>from your notes; not flagged there, but also not checked against the manual yet</dd>
+      <dt>Way 1 steps</dt><dd><span class="tag ok">CHECKED p. 24, 45, 84</span> press [AUX] to pick the destination, turn LEVEL; the channel is the one whose [SEL] is lit</dd>
+      <dt>LEVEL knob</dt><dd><span class="tag ok">CHECKED p. 24, 45</span> sets the send level to the selected AUX/MTX bus. On a stereo-linked pair, the odd-numbered aux adjusts the send <em>pan</em> and the even-numbered one the <em>level</em></dd>
+      <dt>MTX</dt><dd><span class="tag ok">CHECKED p. 24</span> hold [AUX1]&ndash;[AUX8], press its right-hand [AUX9]&ndash;[AUX16]</dd>
+      <dt>Pre / post fader</dt><dd><span class="tag ok">CHECKED p. 49, 84&ndash;85</span> the send bar is <b>blue</b> for pre-EQ or pre-fader, <b>green</b> for post-fader, <b>gray</b> when the send switch is off. Set it per send in the DISP popup, or &ldquo;ALL CH POINTS&rdquo; for every channel at once</dd>
+      <dt>Way 2 steps</dt><dd><span class="tag ok">CHECKED p. 45</span> [AUX], then [SENDS ON FADER] (blinks while on), then the top faders</dd>
+      <dt>Layers</dt><dd><span class="tag ok">CHECKED p. 21</span> the layer buttons are [CH 1&ndash;24], [CH 25&ndash;48], [AUX/MTX] and [USER]. The aux master levels live on the [AUX/MTX] layer (AUX1&ndash;16 then MTX1&ndash;8)</dd>
+      <dt>Still open</dt><dd>Which aux is which monitor and the channel list come from you. Sends on Fader on the [AUX/MTX] layer, the [USER] layer and stereo-link pan are described in the manual but not practised on this board</dd>
       <dt>Format</dt><dd>This interactive page is the tutorial. <b>Copy the whole guide as text</b> (above) gives you a plain document to turn into slides or a video script.</dd>
     </dl>
-    <p class="hint">Where to check: the M-480 owner's or reference manual from Roland support, or the console itself. The same &ldquo;sends on fader&rdquo; idea exists on other mixers, for example the <a href="https://manual.yamaha.com/pa/mixers/dm3/rm/en-US/6345977099.html" target="_blank" rel="noopener">Yamaha DM3</a> and the <a href="https://support.roland.com/hc/en-us/articles/201948199-VS-2400CD-VS-2480-Assigning-Aux-Sends-To-Faders" target="_blank" rel="noopener">Roland VS-2400CD/2480</a>, but their buttons are different, so treat them as background only.</p>
+    <p class="hint">Source: Roland M-480 owner's manual, pages 21, 24, 45, 49, 84&ndash;85, 141, 156, 194.</p>
   </section>
 </main>
 <div id="toast"></div>
@@ -256,23 +260,24 @@ function renderCh() {
 }
 
 /* ---------------------------------------------------------------- practice board */
-const S = { mode: 'main', selAux: 0, selCh: 0, layer: 1, main: Array(49).fill(0).map(() => 62), sends: {} };
-const sendsOf = a => (S.sends[a] = S.sends[a] || Array(49).fill(0));
+const S = { mode: 'main', selAux: 0, selCh: 0, layer: 1, main: Array(73).fill(0).map(() => 62), sends: {} };
+const sendsOf = a => (S.sends[a] = S.sends[a] || Array(73).fill(0));
 const WAYS = {
-  1: { unv: true, note: 'Way 1 behaviour on this board follows your notes and is UNVERIFIED.', steps: [
-    { t: 'Select the channel column you want to change', hl: 'sels', exp: 'strip' },
-    { t: 'Press the Aux SELECT button for the monitor', hl: 'aux', exp: 'sel' },
-    { t: 'Turn the LEVEL knob to set that channel\'s send level', hl: 'level', exp: 'level' },
-    { t: 'Select the next channel column and repeat', hl: 'sels', exp: 'strip' }] },
-  2: { unv: false, note: 'Way 2 follows your notes; not yet checked against the manual.', steps: [
-    { t: 'Press the Aux SELECT button for the monitor', hl: 'aux', exp: 'sel' },
-    { t: 'Press SENDS ON FADER: all faders now show that monitor\'s send levels', hl: 'sof', exp: 'sof' },
-    { t: 'Pick the layer, CH 1–24 or CH 25–48', hl: 'layers', exp: 'layer' },
-    { t: 'Move the faders (channels 1–22) to set each level', hl: 'faders', exp: 'fader' },
-    { t: 'Press another Aux SELECT button to build the next monitor\'s mix', hl: 'aux2', exp: 'sel' },
-    { t: 'Press SENDS ON FADER again to leave and return to the main mix', hl: 'sof', exp: 'sofoff' }] }
+  1: { ref: 'p. 24, 45, 84', note: 'Confirmed in the manual. The practice board shows the channel\'s send level as a simple bar.', steps: [
+    { t: 'Press the [SEL] button of the channel you want to change (pick CH 1\u201324 or CH 25\u201348 first if needed)', hl: 'sels', exp: 'strip' },
+    { t: 'Press the [AUX] button for the monitor (1 yellow, 2 blue, 3 red, 4 back)', hl: 'aux', exp: 'sel' },
+    { t: 'Turn the LEVEL knob to set that channel\'s send level (hold SHIFT for fine steps)', hl: 'level', exp: 'level' },
+    { t: 'Press the next channel\'s [SEL] and repeat', hl: 'sels', exp: 'strip' }] },
+  2: { ref: 'p. 45', note: 'Confirmed in the manual.', steps: [
+    { t: 'Press the [AUX] button for the monitor', hl: 'aux', exp: 'sel' },
+    { t: 'Press [SENDS ON FADER] so it blinks: the faders now show that monitor\'s send levels', hl: 'sof', exp: 'sof' },
+    { t: 'Pick the layer, CH 1\u201324 or CH 25\u201348', hl: 'layers', exp: 'layer' },
+    { t: 'Move the faders (channels 1\u201322) to set each level', hl: 'faders', exp: 'fader' },
+    { t: 'Press another [AUX] button to build the next monitor\'s mix', hl: 'aux2', exp: 'sel' },
+    { t: 'Press [SENDS ON FADER] again to leave: your faders are the main mix again', hl: 'sof', exp: 'sofoff' }] }
 };
 const G = { way: 1, step: 0, aux: 2 };
+
 
 function buildBoard() {
   const sg = $('#selgrid'); sg.innerHTML = '';
@@ -290,7 +295,7 @@ function buildBoard() {
   [1, 2, 3, 4].forEach(a => { const b = document.createElement('button'); b.dataset.a = a; b.innerHTML = `<span class="chip" style="background:${MON[a].color}"></span>${a}`; b.title = MON[a].name; b.onclick = () => { G.aux = a; renderGuide(); }; pk.appendChild(b); });
 }
 const chOf = i => i + (S.layer - 1) * 24;
-function nameStrips() { document.querySelectorAll('.strip').forEach(el => { const c = chOf(+el.dataset.i); el.querySelector('.nm').textContent = c <= NCH ? chName(c) : ''; }); }
+function nameStrips() { document.querySelectorAll('.strip').forEach(el => { const i = +el.dataset.i, c = chOf(i); el.querySelector('.nm').textContent = S.layer === 3 ? (i <= 16 ? 'AUX' + i : 'MTX' + (i - 16)) : (c <= NCH ? chName(c) : ''); }); }
 function attachFader(el, i) {
   let id = null;
   const set = e => { const r = el.getBoundingClientRect(); const v = Math.round(clamp((r.bottom - e.clientY) / r.height, 0, 1) * 100); const c = chOf(i); if (S.mode === 'sof') sendsOf(S.selAux)[c] = v; else S.main[c] = v; paint(); };
@@ -310,15 +315,16 @@ function paint() {
   });
   document.querySelectorAll('#selgrid button').forEach(b => b.classList.toggle('on', +b.dataset.a === S.selAux));
   $('#bSof').classList.toggle('on', sof);
-  $('#L1').classList.toggle('on', S.layer === 1); $('#L2').classList.toggle('on', S.layer === 2);
+  $('#L1').classList.toggle('on', S.layer === 1); $('#L2').classList.toggle('on', S.layer === 2); $('#L3').classList.toggle('on', S.layer === 3);
   const an = a => `Aux ${a} (${MON[a].name})`;
   let st = '', hint = '';
   if (sof) { st = `Practice status: SENDS ON FADER, ${an(S.selAux)}.\nThe faders show this monitor's send levels (${S.layer === 1 ? 'CH 1\u201324' : 'CH 25\u201348'}). The main mix is untouched.`; hint = 'Press SENDS ON FADER again to leave.'; }
-  else if (S.selCh && S.selAux) { const c = S.selCh, nm = c <= NCH && chName(c) ? ' ' + chName(c) : ''; st = `Practice status: CH ${c}${nm} \u2192 ${an(S.selAux)}.\nsend level ${(sendsOf(S.selAux)[c] / 10).toFixed(1)} / 10  (turn LEVEL)`; hint = 'The LEVEL knob now sets this one send. (UNVERIFIED behaviour.)'; }
+  else if (S.selCh && S.selAux) { const c = S.selCh, nm = c <= NCH && chName(c) ? ' ' + chName(c) : ''; st = `Practice status: CH ${c}${nm} \u2192 ${an(S.selAux)}.\nsend level ${(sendsOf(S.selAux)[c] / 10).toFixed(1)} / 10  (turn LEVEL)`; hint = 'The LEVEL knob now sets this one send (manual p. 45).'; }
+  else if (S.layer === 3) { st = 'Practice status: AUX/MTX layer.\nThe faders are the aux and matrix master levels.'; hint = ''; }
   else { st = 'Practice status: MAIN MIX.\nThe faders show the main mix levels.'; hint = S.selCh && !S.selAux ? 'Now pick an Aux SELECT button.' : (S.selAux ? 'Aux selected. Now select a channel column.' : ''); }
   $('#status').textContent = st; $('#deskHint').textContent = hint;
   const lv = $('#kLevel'); if (S.selCh && S.selAux && !sof) lv.value = sendsOf(S.selAux)[S.selCh];
-  $('#layerHint').textContent = S.layer === 1 ? 'Using the bottom number on each strip.' : 'Using the top number on each strip.';
+  $('#layerHint').textContent = S.layer === 1 ? 'Using the bottom number on each strip.' : S.layer === 2 ? 'Using the top number on each strip.' : 'AUX/MTX layer: AUX 1\u201316 then MTX 1\u20138 (their master levels).';
   nameStrips(); applyHighlight();
 }
 /* actions, and "do the next step" detection */
@@ -331,12 +337,14 @@ function pressStrip(i) { S.selCh = chOf(i); paint(); act('strip'); }
 $('#bSof').onclick = () => {
   if (S.mode === 'sof') { S.mode = 'main'; paint(); act('sof'); return; }
   if (!S.selAux) { toast('Press an Aux SELECT button first, as in the steps.'); return; }
+  if (S.layer === 3) { toast('Switch to CH 1\u201324 or CH 25\u201348 first: Sends on Fader on the AUX/MTX layer is not practised here.'); return; }
   S.mode = 'sof'; paint(); act('sof');
 };
 $('#L1').onclick = () => { S.layer = 1; paint(); act('layer'); };
 $('#L2').onclick = () => { S.layer = 2; paint(); act('layer'); };
+$('#L3').onclick = () => { if (S.mode === 'sof') { toast('Sends on Fader on the AUX/MTX layer is not practised here. Use a CH layer.'); return; } S.layer = 3; paint(); };
 $('#kLevel').oninput = e => { if (S.selCh && S.selAux && S.mode !== 'sof') { sendsOf(S.selAux)[S.selCh] = +e.target.value; paint(); act('level'); } else toast('Select a channel column and pick an Aux first (Way 1).'); };
-$('#gReset').onclick = () => { S.mode = 'main'; S.selAux = 0; S.selCh = 0; S.layer = 1; S.main = Array(49).fill(0).map(() => 62); S.sends = {}; $('#kLevel').value = 0; G.step = 0; renderGuide(); };
+$('#gReset').onclick = () => { S.mode = 'main'; S.selAux = 0; S.selCh = 0; S.layer = 1; S.main = Array(73).fill(0).map(() => 62); S.sends = {}; $('#kLevel').value = 0; G.step = 0; renderGuide(); };
 /* guide */
 function applyHighlight() {
   document.querySelectorAll('.mark').forEach(e => e.classList.remove('mark'));
@@ -354,7 +362,7 @@ function applyHighlight() {
 function renderGuide() {
   const w = WAYS[G.way];
   $('#w1').classList.toggle('on', G.way === 1); $('#w2').classList.toggle('on', G.way === 2);
-  $('#wayNote').innerHTML = (w.unv ? '<span class="tag unv">UNVERIFIED</span> ' : '') + w.note + ' Pick a monitor, then press the glowing control.';
+  $('#wayNote').innerHTML = '<span class="tag ok">MANUAL ' + w.ref + '</span> ' + w.note + ' Pick a monitor, then press the glowing control.';
   $('#pickAux').querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.a === G.aux));
   $('#steps').innerHTML = w.steps.map((s, i) => `<li class="${i === G.step ? 'cur' : i < G.step ? 'done' : ''}"><span class="n">${i + 1}</span><span>${s.t}</span></li>`).join('');
   $('#gBack').disabled = G.step === 0; $('#gNext').disabled = G.step === w.steps.length - 1;
@@ -369,8 +377,11 @@ $('#gNext').onclick = () => { if (G.step < WAYS[G.way].steps.length - 1) { G.ste
 /* ---------------------------------------------------------------- tips + text export */
 const TIPS = [
   ['start', 'Start the faders low and add only what the performer asks for.'],
-  ['prepost', 'Check pre-fader vs post-fader for each send.'],
-  ['master', 'Confirm the aux master level is up, and that the channels are not muted.'],
+  ['prepost', 'Check the send point for each send: the send bar is blue for pre-EQ or pre-fader, green for post-fader, gray when the send switch is off (p. 49, 84). Post-fader sends follow the channel fader.'],
+  ['master', 'Confirm the aux master level on the [AUX/MTX] layer is up (p. 21), and the aux attenuator is not turned down (p. 194).'],
+  ['mute', 'A muted channel mutes its post-fader sends always, and all its AUX/MTX sends if CH-MUTE OPTION &ldquo;Mutes AUX/MTX SENDS&rdquo; is ticked (p. 156).'],
+  ['sof', 'While SENDS ON FADER is on, the top faders are sends, not the main mix. Press it again (it blinks while on) to get the main mix back (p. 45, 194).'],
+  ['link', 'If a pair of auxes is stereo-linked, the LEVEL knob adjusts <em>pan</em> on the odd aux and <em>level</em> on the even one (p. 24).'],
   ['way', 'Quick tweak during a song: Way 1. Setup or sound check: Way 2.']
 ];
 function renderTips() {
@@ -379,18 +390,18 @@ function renderTips() {
 }
 function guideText() {
   const L = [];
-  L.push('ROLAND M-480: MONITOR MIXES', '(Practice guide. Items marked UNVERIFIED were not checked against the M-480 manual.)', '');
+  L.push('ROLAND M-480: MONITOR MIXES', '(Checked against the Roland M-480 owner\'s manual; page numbers in brackets. Aux/monitor names and the channel list are your own setup.)', '');
   L.push('MONITOR MAP (Aux SELECT button -> monitor)');
   for (let a = 1; a <= 4; a++) { const ch = []; for (let c = 1; c <= NCH; c++) if (inMix(a, c)) ch.push(c + (chName(c) ? ' ' + chName(c) : '')); L.push(`  Aux ${a} = ${MON[a].name}` + (ch.length ? '  | channels: ' + ch.join(', ') : '')); }
   L.push('  Aux 5-16 = blank (not set up)');
   L.push('', 'CHANNEL MAP (CH 1-22)');
   for (let c = 1; c <= NCH; c++) { const mixes = [1, 2, 3, 4].filter(a => inMix(a, c)).map(a => 'Aux ' + a); L.push(`  CH ${c}: ${chName(c) || '(not set)'}` + (mixes.length ? '  -> ' + mixes.join(', ') : '')); }
-  L.push('', 'WAY 1: INDIVIDUAL COLUMN (quick tweaks during a song)  [UNVERIFIED]');
+  L.push('', 'WAY 1: INDIVIDUAL COLUMN (quick tweaks during a song)  [manual p. 24, 45, 84]');
   WAYS[1].steps.forEach((s, i) => L.push(`  ${i + 1}. ${s.t}`));
-  L.push('', 'WAY 2: SENDS ON FADER (setup and sound check)');
+  L.push('', 'WAY 2: SENDS ON FADER (setup and sound check)  [manual p. 45]');
   WAYS[2].steps.forEach((s, i) => L.push(`  ${i + 1}. ${s.t}`));
-  L.push('', 'TIPS'); TIPS.forEach(t => L.push('  - ' + t[1]));
-  L.push('', 'STILL TO VERIFY: Way 1 steps; LEVEL knob behaviour; MTX behaviour; pre/post fader location.');
+  L.push('', 'TIPS'); TIPS.forEach(t => L.push('  - ' + t[1].replace(/&ldquo;|&rdquo;/g, '"').replace(/<\/?em>/g, '')));
+  L.push('', 'MTX: hold one of [AUX1]-[AUX8] and press the [AUX9]-[AUX16] on its right (p. 24, 45). Fine adjustment: hold SHIFT while turning LEVEL. SHIFT + [AUX] switches that send on/off (p. 24, 45).', 'NOT PRACTISED HERE: Sends on Fader on the [AUX/MTX] layer, the [USER] layer, stereo-link pan.');
   return L.join('\n');
 }
 $('#bCopy').onclick = async () => { const t = guideText(); try { await navigator.clipboard.writeText(t); toast('Guide copied as text'); } catch (e) { prompt('Copy this guide:', t); } };
