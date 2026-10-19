@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>M-480 Monitor Mixes</title>
+<style>
+:root{--bg:#0a1019;--panel:#111a2b;--panel2:#0d1522;--line:#243452;--fg:#dbe6ff;--mute:#8aa0c8;--teal:#3ee0c0;--warn:#ffb454;--bad:#ff7a6b}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{padding:14px max(14px,env(safe-area-inset-right)) 48px max(14px,env(safe-area-inset-left))}
+main{max-width:1060px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+main>*{min-width:0}
+.desk,.panelbox,.guide>*{min-width:0}
+h1{margin:0;font-size:24px;letter-spacing:.03em}
+h2{margin:0 0 8px;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+h3{margin:12px 0 4px;font-size:15px}
+p{margin:6px 0}
+.sub{margin:2px 0 0;color:var(--mute);font-size:13px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button,select,input[type=text]{font:inherit;color:var(--fg);background:var(--panel2);border:1px solid var(--line);border-radius:7px;padding:7px 12px}
+button{cursor:pointer}button:hover{border-color:#41598a}
+button.on{background:#12443f;border-color:var(--teal);color:#d9fff6}
+button.big{padding:9px 18px;font-weight:600}
+input[type=text]{width:100%;padding:5px 8px;border-radius:5px}
+.hint{color:var(--mute);font-size:12.5px;margin:6px 0 0}
+.tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;border-radius:4px;padding:1px 6px;vertical-align:middle}
+.tag.unv{background:#4a3410;color:var(--warn);border:1px solid #8a6220}
+.tag.ok{background:#12443f;color:#9ff0dd;border:1px solid #2a7a6a}
+.banner{background:#2b2210;border:1px solid #8a6220;border-radius:10px;padding:10px 14px;color:#ffe2b0;font-size:14px}
+.banner b{color:#fff}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.way{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.way h3{margin:0 0 4px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:left;vertical-align:top}
+th{background:var(--panel2);color:var(--mute);font-weight:600}
+.scroll{overflow-x:auto}
+.chip{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:-1px;border:1px solid rgba(255,255,255,.35)}
+td.c{text-align:center}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--teal)}
+/* ---------------- console schematic ---------------- */
+.desk{background:#0b1220;border:1px solid #2b3c5e;border-radius:12px;padding:10px;display:grid;gap:10px}
+.status{margin:0;padding:6px 10px;border-radius:6px;border:1px dashed #2b3c5e;color:#cfe0ff;font-size:13.5px;min-height:2.6em;white-space:pre-line}
+.blank5{align-self:center;color:var(--mute);font-size:12.5px;border:1px dashed #2b3c5e;border-radius:6px;padding:6px 10px}
+.auxpanel{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:start}
+.panelbox{border:1px solid #2b3c5e;border-radius:8px;padding:8px;background:#0e1830}
+.panelbox>b{display:block;font-size:11px;letter-spacing:.1em;color:var(--mute);margin-bottom:6px}
+.selgrid{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.selgrid button{padding:0;width:46px;height:40px;border-radius:6px;font-weight:700;font-size:14px;border-width:2px}
+.ctlrow{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.ctlrow button{font-weight:700;font-size:12px;letter-spacing:.05em}
+.knobbox{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;letter-spacing:.05em;color:var(--mute)}
+.knobbox input{width:120px}
+.layers{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap;align-items:center}
+.strips{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:5px}
+.strip{background:#0e1830;border:1px solid #2b3c5e;border-radius:6px;padding:4px 3px 5px;min-width:0;overflow:hidden;text-align:center;display:grid;gap:3px;justify-items:center}
+.strip .top,.strip .bot{font-size:10.5px;color:#6f86b3;line-height:1}
+.strip.l1 .bot{color:var(--teal);font-weight:700}.strip.l2 .top{color:var(--teal);font-weight:700}
+.strip .sel{padding:0;width:80%;height:20px;font-size:9.5px;border-radius:4px}
+.strip .nm{font-size:9.5px;color:var(--mute);height:1.2em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.fader{position:relative;width:20px;height:104px;background:#060b16;border:1px solid #2b3c5e;border-radius:4px;touch-action:none;cursor:ns-resize}
+.fader i{position:absolute;left:0;right:0;bottom:0;background:var(--c,#3a73c8);opacity:.8;border-radius:0 0 3px 3px}
+.fader b{position:absolute;left:-3px;right:-3px;height:7px;background:#dbe6ff;border-radius:2px;bottom:calc(var(--v,0)*1% - 3px)}
+.mark{outline:2px solid var(--teal);outline-offset:2px;animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{outline-color:rgba(62,224,192,.15)}}
+.guide{display:grid;gap:8px}
+.steps{margin:4px 0 0;padding:0;list-style:none;display:grid;gap:4px}
+.steps li{display:flex;gap:8px;align-items:flex-start;padding:6px 8px;border-radius:7px;border:1px solid transparent}
+.steps li .n{flex:0 0 22px;height:22px;border-radius:50%;background:#1b2a47;text-align:center;font-weight:700;font-size:12px;line-height:22px}
+.steps li.cur{background:#10284a;border-color:#2f5a9a}.steps li.cur .n{background:var(--teal);color:#062a22}
+.steps li.done{opacity:.6}.steps li.done .n{background:#2e7d70}
+.pick .chip{margin-right:4px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:13.5px}
+.kv dt{color:var(--mute)}.kv dd{margin:0}
+.ck{display:flex;gap:8px;align-items:flex-start;margin:6px 0}
+.ck input{margin-top:3px}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#1d2b46;border:1px solid var(--line);border-radius:8px;padding:8px 14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
+#toast.show{opacity:1}
+a{color:#7fd8ff}
+@media(min-width:900px){.strips{grid-template-columns:repeat(24,minmax(0,1fr))}}
+@media(max-width:700px){.strips{grid-template-columns:repeat(8,minmax(0,1fr))}.fader{width:22px}.two{grid-template-columns:1fr}.auxpanel{grid-template-columns:1fr}}
+@media print{
+  :root{--bg:#fff;--panel:#fff;--panel2:#f4f6fa;--line:#b9c2d6;--fg:#111;--mute:#445}
+  body{padding:8px;font-size:12.5px}.desk,.guide,#toast,.noprint{display:none!important}
+  .card{break-inside:avoid;border-color:#b9c2d6}.banner{background:#fff3dc;color:#5a3a00}
+  input[type=text]{border:0;border-bottom:1px solid #999;border-radius:0;background:none;color:#111}
+}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Roland M-480: monitor mixes</h1>
+    <p class="sub">Two ways to build and adjust a monitor (aux) mix, with a practice board. <b>Practice only: this page does not control a console.</b></p>
+  </header>
+
+  <div class="banner" id="unverifiedBanner">
+    <b>Not yet checked against the M-480 manual.</b> The steps below come from your own notes and panel photos. Steps marked <span class="tag unv">UNVERIFIED</span> (exact button order, how the LEVEL knob behaves, MTX) were flagged in those notes and still need to be confirmed. See <a href="#verify">what is left to verify</a>.
+  </div>
+
+  <section class="card">
+    <h2>1 &middot; The two ways at a glance</h2>
+    <div class="two">
+      <div class="way"><h3>Way 1 &middot; Individual column</h3>
+        <p><b>Use for:</b> quick tweaks during a song: change <em>one</em> channel's send to <em>one</em> monitor.</p>
+        <p class="hint">Select the channel, pick the monitor, turn LEVEL. <span class="tag unv">UNVERIFIED</span></p></div>
+      <div class="way"><h3>Way 2 &middot; Sends on Fader</h3>
+        <p><b>Use for:</b> setup and sound check: build or rebalance a <em>whole</em> monitor mix at once.</p>
+        <p class="hint">Pick the monitor, press SENDS ON FADER, and the faders become that monitor's send levels.</p></div>
+    </div>
+    <h3>Which one should I use?</h3>
+    <div class="row" id="chooser">
+      <button data-a="1">Performer says &ldquo;more guitar in my ear&rdquo;</button>
+      <button data-a="2">Building a mix from scratch</button>
+      <button data-a="2b">Checking the balance of a whole monitor</button>
+      <button data-a="1b">Mid-song fix</button>
+    </div>
+    <p class="hint" id="chooseOut">Tap a situation.</p>
+  </section>
+
+  <section class="card">
+    <h2>2 &middot; Monitor map (Aux SELECT button &rarr; monitor)</h2>
+    <div class="scroll"><table id="monTable"><thead><tr><th style="width:90px">Aux</th><th>Monitor</th><th>Channels in this mix</th></tr></thead><tbody></tbody></table></div>
+    <p class="hint">Aux 1&ndash;4 are from your notes. The other aux buttons (5&ndash;16) are <b>blank</b>: not set up.</p>
+  </section>
+
+  <section class="card">
+    <h2>3 &middot; Channel map (CH 1&ndash;22) and who is in each monitor mix</h2>
+    <div class="scroll"><table id="chTable"><thead><tr><th style="width:56px">CH</th><th>Source</th><th class="c"><span class="chip" style="background:#f2c53d"></span>Aux 1</th><th class="c"><span class="chip" style="background:#4aa3ff"></span>Aux 2</th><th class="c"><span class="chip" style="background:#ff5a5a"></span>Aux 3</th><th class="c"><span class="chip" style="background:#b8b8c8"></span>Aux 4</th></tr></thead><tbody></tbody></table></div>
+    <p class="hint">The names are pre-filled from your list (change any of them) and you can tick which monitors need each channel. The monitor map above and the board below update as you go. Typed names are saved on this device only. Layers: <b>CH 1&ndash;24</b> uses the bottom number on each strip, <b>CH 25&ndash;48</b> the top number.</p>
+    <div class="row noprint" style="margin-top:8px"><button id="bCopy">Copy the whole guide as text</button><button id="bPrint">Print</button><button id="bClear">Clear my entries</button></div>
+  </section>
+
+  <section class="card guide">
+    <h2>4 &middot; Practice board: follow the steps</h2>
+    <div class="row">
+      <button id="w1" class="on">Way 1 &middot; Individual column</button>
+      <button id="w2">Way 2 &middot; Sends on Fader</button>
+      <span class="row pick" id="pickAux"><span class="hint" style="margin:0">Monitor:</span></span>
+    </div>
+    <p class="hint" id="wayNote"></p>
+    <ol class="steps" id="steps"></ol>
+    <div class="row"><button id="gBack">&#9664; Back</button><button id="gNext" class="big on">Next &#9654;</button><button id="gReset">Reset board</button><span class="hint" style="margin:0" id="gHint"></span></div>
+
+    <div class="desk" id="desk" aria-label="Console schematic">
+      <p class="status" id="status"></p>
+      <div class="auxpanel">
+        <div class="panelbox"><b>AUX SELECT</b>
+          <div class="selgrid" id="selgrid"></div></div>
+        <div class="panelbox"><b>CONTROLS</b>
+          <div class="ctlrow">
+            <label class="knobbox" id="kLevelBox">LEVEL <input id="kLevel" type="range" min="0" max="100" value="0" aria-label="LEVEL knob"></label>
+            <button id="bSof">SENDS ON FADER</button>
+          </div>
+          <p class="hint" id="deskHint"></p></div>
+      </div>
+      <div class="panelbox"><b>FADER MODULE</b>
+        <div class="layers"><button id="L1" class="on">CH 1&ndash;24</button><button id="L2">CH 25&ndash;48</button><span class="hint" style="margin:0" id="layerHint"></span></div>
+        <div class="strips" id="strips"></div>
+        <p class="hint">Schematic, not to scale. The layout is simplified from your notes, and each strip's SEL button is an assumption for practising &ldquo;select the channel column&rdquo;.</p></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>5 &middot; Way 1 and Way 2 side by side</h2>
+    <div class="scroll"><table>
+      <thead><tr><th>I want to&hellip;</th><th>Way 1 &middot; Individual column <span class="tag unv">UNVERIFIED</span></th><th>Way 2 &middot; Sends on Fader</th></tr></thead>
+      <tbody>
+        <tr><td>Choose the monitor</td><td>Press the Aux SELECT button (step 2)</td><td>Press the Aux SELECT button (step 1)</td></tr>
+        <tr><td>Choose the channel(s)</td><td>Select one channel column (step 1)</td><td>All channels are on the faders: pick the layer, CH 1&ndash;24 or CH 25&ndash;48 (step 3)</td></tr>
+        <tr><td>Change a level</td><td>Turn the LEVEL knob (step 3)</td><td>Move that channel's fader (step 4)</td></tr>
+        <tr><td>Do the next channel</td><td>Select the next column and repeat (step 4)</td><td>Move the next fader; nothing to select</td></tr>
+        <tr><td>Do the next monitor</td><td>Press another Aux SELECT</td><td>Press another Aux SELECT (step 5)</td></tr>
+        <tr><td>Get back to the main mix</td><td>Not described in your notes</td><td>Press SENDS ON FADER again (step 6)</td></tr>
+      </tbody></table></div>
+    <h3>Things that look like they only work one way <span class="tag unv">VERIFY</span></h3>
+    <ul>
+      <li><b>Only Way 2, per your notes:</b> seeing the whole monitor balance across all channels at once, and switching the CH 25&ndash;48 layer.</li>
+      <li><b>Only Way 1, per your notes:</b> the LEVEL knob (one channel's send at a time).</li>
+      <li>These are read from your notes, not confirmed on the console or in the manual.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>6 &middot; Tips (tick them off at sound check)</h2>
+    <div id="tips"></div>
+    <p class="hint">Way 1 is best for quick tweaks during a song. Way 2 is best for setup and sound check.</p>
+  </section>
+
+  <section class="card" id="verify">
+    <h2>7 &middot; Still to verify, and the tutorial format</h2>
+    <dl class="kv">
+      <dt>Way 1 steps</dt><dd><span class="tag unv">UNVERIFIED</span> exact button order and how the LEVEL knob behaves</dd>
+      <dt>LEVEL knob</dt><dd><span class="tag unv">UNVERIFIED</span> what it changes on the M-480 (the console's screen is not covered here)</dd>
+      <dt>MTX</dt><dd><span class="tag unv">UNVERIFIED</span> how the same SELECT buttons act for MTX 1&ndash;8</dd>
+      <dt>Pre / post fader</dt><dd><span class="tag unv">UNVERIFIED</span> where to check it for each send on the M-480</dd>
+      <dt>Way 2 steps</dt><dd>from your notes; not flagged there, but also not checked against the manual yet</dd>
+      <dt>Format</dt><dd>This interactive page is the tutorial. <b>Copy the whole guide as text</b> (above) gives you a plain document to turn into slides or a video script.</dd>
+    </dl>
+    <p class="hint">Where to check: the M-480 owner's or reference manual from Roland support, or the console itself. The same &ldquo;sends on fader&rdquo; idea exists on other mixers, for example the <a href="https://manual.yamaha.com/pa/mixers/dm3/rm/en-US/6345977099.html" target="_blank" rel="noopener">Yamaha DM3</a> and the <a href="https://support.roland.com/hc/en-us/articles/201948199-VS-2400CD-VS-2480-Assigning-Aux-Sends-To-Faders" target="_blank" rel="noopener">Roland VS-2400CD/2480</a>, but their buttons are different, so treat them as background only.</p>
+  </section>
+</main>
+<div id="toast"></div>
+
+<script>
+(() => {
+'use strict';
+const $ = s => document.querySelector(s);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const MON = { 1: { name: 'Yellow monitor', color: '#f2c53d' }, 2: { name: 'Blue monitor', color: '#4aa3ff' }, 3: { name: 'Red monitor', color: '#ff5a5a' }, 4: { name: 'Back monitors', color: '#b8b8c8' } };
+const NCH = 22;
+// pre-filled from the user's list (editable; anything typed overrides these)
+const DEFAULT_NAMES = { 1: 'Guitar', 2: 'Piano L', 3: 'Piano R', 10: 'Podium', 16: 'Vocalist 1', 17: 'Vocalist 2', 18: 'Vocalist 3', 19: 'Vocalist 4', 20: 'Handheld mic 1', 21: 'Handheld mic 2', 22: 'Handheld mic 3' };
+
+/* ---------------------------------------------------------------- saved data */
+const data = { auxNames: {}, chNames: {}, inMix: {}, tips: {} };
+try { const sv = JSON.parse(localStorage.getItem('m480-v1') || 'null'); if (sv) Object.assign(data, sv); } catch (e) {}
+const save = () => { try { localStorage.setItem('m480-v1', JSON.stringify(data)); } catch (e) {} };
+const chName = c => (data.chNames[c] !== undefined ? data.chNames[c] : (DEFAULT_NAMES[c] || '')).trim();
+const inMix = (a, c) => !!(data.inMix[a] && data.inMix[a][c]);
+function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2400); }
+
+/* ---------------------------------------------------------------- chooser */
+const ADVICE = {
+  1: 'Way 1 (individual column): it is one channel to one monitor, so select that channel, pick the monitor, and nudge its level.',
+  '1b': 'Way 1 (individual column): quick and small, and it does not disturb the rest of the mix while the song is running.',
+  2: 'Way 2 (Sends on Fader): all faders become that monitor\'s sends, so you can build the whole mix in one pass.',
+  '2b': 'Way 2 (Sends on Fader): the faders show every channel\'s send at once, so you can see and fix the balance.'
+};
+$('#chooser').onclick = e => { const a = e.target.dataset && e.target.dataset.a; if (a) $('#chooseOut').innerHTML = '<b>' + ADVICE[a] + '</b>'; };
+
+/* ---------------------------------------------------------------- tables */
+function renderMon() {
+  const tb = $('#monTable tbody'); tb.innerHTML = '';
+  for (let a = 1; a <= 4; a++) {
+    const m = MON[a], tr = document.createElement('tr');
+    const names = []; for (let c = 1; c <= NCH; c++) if (inMix(a, c)) names.push(c + (chName(c) ? ' ' + chName(c) : ''));
+    tr.innerHTML = `<td><span class="chip" style="background:${m.color}"></span>Aux ${a}</td><td>${m.name}</td><td class="mixlist">${names.length ? names.join(', ') : '<span class="hint">none ticked yet</span>'}</td>`;
+    tb.appendChild(tr);
+  }
+  const bl = document.createElement('tr'); bl.innerHTML = '<td>Aux 5\u201316</td><td colspan="2" class="hint">blank (not set up)</td>'; tb.appendChild(bl);
+}
+function renderCh() {
+  const tb = $('#chTable tbody'); tb.innerHTML = '';
+  for (let c = 1; c <= NCH; c++) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${c}</td><td><input type="text" placeholder="(blank)" aria-label="Source on channel ${c}"></td>` + [1, 2, 3, 4].map(a => `<td class="c"><input type="checkbox" data-a="${a}" aria-label="Channel ${c} in aux ${a}"></td>`).join('');
+    const inp = tr.querySelector('input[type=text]'); inp.value = chName(c);
+    inp.oninput = () => { data.chNames[c] = inp.value; save(); renderMon(); nameStrips(); };
+    tr.querySelectorAll('input[type=checkbox]').forEach(cb => { cb.checked = inMix(+cb.dataset.a, c); cb.onchange = () => { (data.inMix[cb.dataset.a] = data.inMix[cb.dataset.a] || {})[c] = cb.checked; save(); renderMon(); }; });
+    tb.appendChild(tr);
+  }
+}
+
+/* ---------------------------------------------------------------- practice board */
+const S = { mode: 'main', selAux: 0, selCh: 0, layer: 1, main: Array(49).fill(0).map(() => 62), sends: {} };
+const sendsOf = a => (S.sends[a] = S.sends[a] || Array(49).fill(0));
+const WAYS = {
+  1: { unv: true, note: 'Way 1 behaviour on this board follows your notes and is UNVERIFIED.', steps: [
+    { t: 'Select the channel column you want to change', hl: 'sels', exp: 'strip' },
+    { t: 'Press the Aux SELECT button for the monitor', hl: 'aux', exp: 'sel' },
+    { t: 'Turn the LEVEL knob to set that channel\'s send level', hl: 'level', exp: 'level' },
+    { t: 'Select the next channel column and repeat', hl: 'sels', exp: 'strip' }] },
+  2: { unv: false, note: 'Way 2 follows your notes; not yet checked against the manual.', steps: [
+    { t: 'Press the Aux SELECT button for the monitor', hl: 'aux', exp: 'sel' },
+    { t: 'Press SENDS ON FADER: all faders now show that monitor\'s send levels', hl: 'sof', exp: 'sof' },
+    { t: 'Pick the layer, CH 1–24 or CH 25–48', hl: 'layers', exp: 'layer' },
+    { t: 'Move the faders (channels 1–22) to set each level', hl: 'faders', exp: 'fader' },
+    { t: 'Press another Aux SELECT button to build the next monitor\'s mix', hl: 'aux2', exp: 'sel' },
+    { t: 'Press SENDS ON FADER again to leave and return to the main mix', hl: 'sof', exp: 'sofoff' }] }
+};
+const G = { way: 1, step: 0, aux: 2 };
+
+function buildBoard() {
+  const sg = $('#selgrid'); sg.innerHTML = '';
+  for (let a = 1; a <= 4; a++) { const b = document.createElement('button'); b.textContent = a; b.dataset.a = a; b.title = MON[a].name; b.setAttribute('aria-label', 'Aux ' + a + ' select, ' + MON[a].name); b.style.borderColor = MON[a].color; b.onclick = () => pressSel(a); sg.appendChild(b); }
+  const bk = document.createElement('span'); bk.className = 'blank5'; bk.textContent = 'Aux 5\u201316: blank'; sg.appendChild(bk);
+  const st = $('#strips'); st.innerHTML = '';
+  for (let i = 1; i <= 24; i++) {
+    const d = document.createElement('div'); d.className = 'strip l1'; d.dataset.i = i;
+    d.innerHTML = `<span class="top">${i + 24}</span><button class="sel" aria-label="Select strip ${i}">SEL</button><div class="fader" role="slider" aria-label="Fader ${i}"><i></i><b></b></div><span class="nm"></span><span class="bot">${i}</span>`;
+    d.querySelector('.sel').onclick = () => pressStrip(i);
+    attachFader(d.querySelector('.fader'), i);
+    st.appendChild(d);
+  }
+  const pk = $('#pickAux'); pk.querySelectorAll('button').forEach(b => b.remove());
+  [1, 2, 3, 4].forEach(a => { const b = document.createElement('button'); b.dataset.a = a; b.innerHTML = `<span class="chip" style="background:${MON[a].color}"></span>${a}`; b.title = MON[a].name; b.onclick = () => { G.aux = a; renderGuide(); }; pk.appendChild(b); });
+}
+const chOf = i => i + (S.layer - 1) * 24;
+function nameStrips() { document.querySelectorAll('.strip').forEach(el => { const c = chOf(+el.dataset.i); el.querySelector('.nm').textContent = c <= NCH ? chName(c) : ''; }); }
+function attachFader(el, i) {
+  let id = null;
+  const set = e => { const r = el.getBoundingClientRect(); const v = Math.round(clamp((r.bottom - e.clientY) / r.height, 0, 1) * 100); const c = chOf(i); if (S.mode === 'sof') sendsOf(S.selAux)[c] = v; else S.main[c] = v; paint(); };
+  el.addEventListener('pointerdown', e => { id = e.pointerId; try { el.setPointerCapture(id); } catch (x) {} set(e); act('fader'); e.preventDefault(); });
+  el.addEventListener('pointermove', e => { if (e.pointerId === id) set(e); });
+  const end = e => { if (e.pointerId === id) id = null; };
+  el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+}
+function level(c) { return S.mode === 'sof' ? sendsOf(S.selAux)[c] : S.main[c]; }
+function paint() {
+  const sof = S.mode === 'sof', col = sof && MON[S.selAux] ? MON[S.selAux].color : '#3a73c8';
+  document.querySelectorAll('.strip').forEach(el => {
+    const i = +el.dataset.i, c = chOf(i), v = level(c), f = el.querySelector('.fader');
+    f.style.setProperty('--v', v); f.style.setProperty('--c', col); f.querySelector('i').style.height = v + '%';
+    el.classList.toggle('l1', S.layer === 1); el.classList.toggle('l2', S.layer === 2);
+    el.querySelector('.sel').classList.toggle('on', c === S.selCh);
+  });
+  document.querySelectorAll('#selgrid button').forEach(b => b.classList.toggle('on', +b.dataset.a === S.selAux));
+  $('#bSof').classList.toggle('on', sof);
+  $('#L1').classList.toggle('on', S.layer === 1); $('#L2').classList.toggle('on', S.layer === 2);
+  const an = a => `Aux ${a} (${MON[a].name})`;
+  let st = '', hint = '';
+  if (sof) { st = `Practice status: SENDS ON FADER, ${an(S.selAux)}.\nThe faders show this monitor's send levels (${S.layer === 1 ? 'CH 1\u201324' : 'CH 25\u201348'}). The main mix is untouched.`; hint = 'Press SENDS ON FADER again to leave.'; }
+  else if (S.selCh && S.selAux) { const c = S.selCh, nm = c <= NCH && chName(c) ? ' ' + chName(c) : ''; st = `Practice status: CH ${c}${nm} \u2192 ${an(S.selAux)}.\nsend level ${(sendsOf(S.selAux)[c] / 10).toFixed(1)} / 10  (turn LEVEL)`; hint = 'The LEVEL knob now sets this one send. (UNVERIFIED behaviour.)'; }
+  else { st = 'Practice status: MAIN MIX.\nThe faders show the main mix levels.'; hint = S.selCh && !S.selAux ? 'Now pick an Aux SELECT button.' : (S.selAux ? 'Aux selected. Now select a channel column.' : ''); }
+  $('#status').textContent = st; $('#deskHint').textContent = hint;
+  const lv = $('#kLevel'); if (S.selCh && S.selAux && !sof) lv.value = sendsOf(S.selAux)[S.selCh];
+  $('#layerHint').textContent = S.layer === 1 ? 'Using the bottom number on each strip.' : 'Using the top number on each strip.';
+  nameStrips(); applyHighlight();
+}
+/* actions, and "do the next step" detection */
+function act(name) {
+  const st = WAYS[G.way].steps[G.step]; if (!st) return;
+  if (st.exp === name || (name === 'sof' && st.exp === 'sofoff' && S.mode === 'main')) { setTimeout(() => { if (G.step < WAYS[G.way].steps.length - 1) { G.step++; renderGuide(); } else { renderGuide(); toast('That is every step ✓'); } }, 250); }
+}
+function pressSel(a) { S.selAux = a; paint(); act('sel'); }
+function pressStrip(i) { S.selCh = chOf(i); paint(); act('strip'); }
+$('#bSof').onclick = () => {
+  if (S.mode === 'sof') { S.mode = 'main'; paint(); act('sof'); return; }
+  if (!S.selAux) { toast('Press an Aux SELECT button first, as in the steps.'); return; }
+  S.mode = 'sof'; paint(); act('sof');
+};
+$('#L1').onclick = () => { S.layer = 1; paint(); act('layer'); };
+$('#L2').onclick = () => { S.layer = 2; paint(); act('layer'); };
+$('#kLevel').oninput = e => { if (S.selCh && S.selAux && S.mode !== 'sof') { sendsOf(S.selAux)[S.selCh] = +e.target.value; paint(); act('level'); } else toast('Select a channel column and pick an Aux first (Way 1).'); };
+$('#gReset').onclick = () => { S.mode = 'main'; S.selAux = 0; S.selCh = 0; S.layer = 1; S.main = Array(49).fill(0).map(() => 62); S.sends = {}; $('#kLevel').value = 0; G.step = 0; renderGuide(); };
+/* guide */
+function applyHighlight() {
+  document.querySelectorAll('.mark').forEach(e => e.classList.remove('mark'));
+  const st = WAYS[G.way].steps[G.step]; if (!st) return;
+  const q = s => document.querySelectorAll(s);
+  const on = els => els.forEach(e => e.classList.add('mark'));
+  if (st.hl === 'sels') on(q('.strip .sel'));
+  else if (st.hl === 'aux') on(q(`#selgrid button[data-a="${G.aux}"]`));
+  else if (st.hl === 'aux2') on(q(`#selgrid button[data-a="${G.aux === 4 ? 1 : G.aux + 1}"]`));
+  else if (st.hl === 'level') on(q('#kLevelBox'));
+  else if (st.hl === 'sof') on(q('#bSof'));
+  else if (st.hl === 'layers') on(q('#L1,#L2'));
+  else if (st.hl === 'faders') on(q('.strip .fader'));
+}
+function renderGuide() {
+  const w = WAYS[G.way];
+  $('#w1').classList.toggle('on', G.way === 1); $('#w2').classList.toggle('on', G.way === 2);
+  $('#wayNote').innerHTML = (w.unv ? '<span class="tag unv">UNVERIFIED</span> ' : '') + w.note + ' Pick a monitor, then press the glowing control.';
+  $('#pickAux').querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.a === G.aux));
+  $('#steps').innerHTML = w.steps.map((s, i) => `<li class="${i === G.step ? 'cur' : i < G.step ? 'done' : ''}"><span class="n">${i + 1}</span><span>${s.t}</span></li>`).join('');
+  $('#gBack').disabled = G.step === 0; $('#gNext').disabled = G.step === w.steps.length - 1;
+  $('#gHint').textContent = 'Practising advances on its own; use Next to skip.';
+  paint();
+}
+$('#w1').onclick = () => { G.way = 1; G.step = 0; renderGuide(); };
+$('#w2').onclick = () => { G.way = 2; G.step = 0; renderGuide(); };
+$('#gBack').onclick = () => { if (G.step > 0) { G.step--; renderGuide(); } };
+$('#gNext').onclick = () => { if (G.step < WAYS[G.way].steps.length - 1) { G.step++; renderGuide(); } };
+
+/* ---------------------------------------------------------------- tips + text export */
+const TIPS = [
+  ['start', 'Start the faders low and add only what the performer asks for.'],
+  ['prepost', 'Check pre-fader vs post-fader for each send.'],
+  ['master', 'Confirm the aux master level is up, and that the channels are not muted.'],
+  ['way', 'Quick tweak during a song: Way 1. Setup or sound check: Way 2.']
+];
+function renderTips() {
+  $('#tips').innerHTML = TIPS.map(t => `<label class="ck"><input type="checkbox" data-k="${t[0]}"><span>${t[1]}</span></label>`).join('');
+  document.querySelectorAll('#tips input').forEach(cb => { cb.checked = !!data.tips[cb.dataset.k]; cb.onchange = () => { data.tips[cb.dataset.k] = cb.checked; save(); }; });
+}
+function guideText() {
+  const L = [];
+  L.push('ROLAND M-480: MONITOR MIXES', '(Practice guide. Items marked UNVERIFIED were not checked against the M-480 manual.)', '');
+  L.push('MONITOR MAP (Aux SELECT button -> monitor)');
+  for (let a = 1; a <= 4; a++) { const ch = []; for (let c = 1; c <= NCH; c++) if (inMix(a, c)) ch.push(c + (chName(c) ? ' ' + chName(c) : '')); L.push(`  Aux ${a} = ${MON[a].name}` + (ch.length ? '  | channels: ' + ch.join(', ') : '')); }
+  L.push('  Aux 5-16 = blank (not set up)');
+  L.push('', 'CHANNEL MAP (CH 1-22)');
+  for (let c = 1; c <= NCH; c++) { const mixes = [1, 2, 3, 4].filter(a => inMix(a, c)).map(a => 'Aux ' + a); L.push(`  CH ${c}: ${chName(c) || '(not set)'}` + (mixes.length ? '  -> ' + mixes.join(', ') : '')); }
+  L.push('', 'WAY 1: INDIVIDUAL COLUMN (quick tweaks during a song)  [UNVERIFIED]');
+  WAYS[1].steps.forEach((s, i) => L.push(`  ${i + 1}. ${s.t}`));
+  L.push('', 'WAY 2: SENDS ON FADER (setup and sound check)');
+  WAYS[2].steps.forEach((s, i) => L.push(`  ${i + 1}. ${s.t}`));
+  L.push('', 'TIPS'); TIPS.forEach(t => L.push('  - ' + t[1]));
+  L.push('', 'STILL TO VERIFY: Way 1 steps; LEVEL knob behaviour; MTX behaviour; pre/post fader location.');
+  return L.join('\n');
+}
+$('#bCopy').onclick = async () => { const t = guideText(); try { await navigator.clipboard.writeText(t); toast('Guide copied as text'); } catch (e) { prompt('Copy this guide:', t); } };
+$('#bPrint').onclick = () => window.print();
+$('#bClear').onclick = () => { if (!confirm('Clear all names, ticks and checklist on this device?')) return; data.auxNames = {}; data.chNames = {}; data.inMix = {}; data.tips = {}; save(); renderMon(); renderCh(); renderTips(); nameStrips(); toast('Cleared'); };
+
+renderMon(); renderCh(); renderTips(); buildBoard(); renderGuide();
+window.m480 = { S, G, data, WAYS, guideText, pressSel, pressStrip };
+})();
+</script>
+</body>
+</html>
