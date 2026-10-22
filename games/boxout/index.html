@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Box Out Lesson</title>
+<style>
+:root{--bg:#0a1019;--panel:#111a2b;--panel2:#0d1522;--line:#243452;--fg:#dbe6ff;--mute:#8aa0c8;--teal:#3ee0c0;--warn:#ffb454;--bad:#ff7a6b}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{padding:14px max(14px,env(safe-area-inset-right)) 48px max(14px,env(safe-area-inset-left))}
+main{max-width:860px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+main>*{min-width:0}
+h1{margin:0;font-size:24px;letter-spacing:.03em}
+h2{margin:0 0 8px;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+p{margin:6px 0}
+.sub{margin:2px 0 0;color:var(--mute);font-size:13px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button{font:inherit;color:var(--fg);background:var(--panel2);border:1px solid var(--line);border-radius:7px;padding:7px 12px;cursor:pointer}
+button:hover{border-color:#41598a}
+button.on{background:#12443f;border-color:var(--teal);color:#d9fff6}
+button.big{padding:9px 18px;font-weight:600}
+button:disabled{opacity:.4;cursor:default}
+.hint{color:var(--mute);font-size:12.5px;margin:6px 0 0}
+.banner{background:#2b2210;border:1px solid #8a6220;border-radius:10px;padding:10px 14px;color:#ffe2b0;font-size:14px}
+.stage{background:#0b1220;border:1px solid #2b3c5e;border-radius:12px;padding:8px;width:min(100%,414px);margin:0 auto}
+canvas{display:block;width:100%;aspect-ratio:38/32;border-radius:8px;touch-action:none;background:#1b1409}
+canvas:focus-visible{outline:2px solid var(--teal)}
+.steps{margin:4px 0 0;padding:0;list-style:none;display:grid;gap:4px}
+.steps li{display:flex;gap:8px;align-items:flex-start;padding:6px 8px;border-radius:7px;border:1px solid transparent;cursor:pointer}
+.steps li .n{flex:0 0 22px;height:22px;border-radius:50%;background:#1b2a47;text-align:center;font-weight:700;font-size:12px;line-height:22px}
+.steps li.cur{background:#10284a;border-color:#2f5a9a}.steps li.cur .n{background:var(--teal);color:#062a22}
+.steps li.done{opacity:.6}.steps li.done .n{background:#2e7d70}
+.say{font-size:15.5px}
+.cue{margin-top:8px;padding:6px 10px;border-left:3px solid var(--teal);background:#0d1d2c;border-radius:0 6px 6px 0;font-size:14px}
+.miss{margin-top:6px;padding:6px 10px;border-left:3px solid var(--bad);background:#241517;border-radius:0 6px 6px 0;font-size:14px}
+.res{padding:8px 10px;border-radius:7px;border:1px dashed #2b3c5e;min-height:3em;font-size:14.5px}
+.res.ok{border-color:var(--teal);background:#0f2b28}.res.no{border-color:var(--bad);background:#2a1618}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--mute);margin-top:6px}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Box Out Lesson</h1>
+    <p class="sub">A top-down look at how a defender seals an offensive player off the rim. Walk through it, then try it yourself.</p>
+  </header>
+
+  <div class="banner">General boxing-out fundamentals, not any one coach's drill. Your own coach's terms and details win if they differ.</div>
+
+  <div class="row" role="tablist" aria-label="Mode">
+    <button class="big on" id="tabLesson" role="tab" aria-selected="true">Lesson</button>
+    <button class="big" id="tabTurn" role="tab" aria-selected="false">Your turn</button>
+  </div>
+
+  <div class="stage">
+    <canvas id="cv" tabindex="0" aria-label="Half court, top-down view of a defender boxing out an offensive player"></canvas>
+    <div class="legend">
+      <span><i class="dot" style="background:#3ee0c0"></i>D = defender (you)</span>
+      <span><i class="dot" style="background:#ff7a6b"></i>O = offensive player</span>
+      <span><i class="dot" style="background:#9aa8c4"></i>S = shooter</span>
+      <span><i class="dot" style="background:#ff9a3c"></i>ball</span>
+    </div>
+  </div>
+
+  <!-- ---------------- lesson mode ---------------- -->
+  <section id="lesson" class="card">
+    <h2 id="stepKicker">Step 1 of 6</h2>
+    <div class="say"><b id="stepTitle"></b></div>
+    <p class="say" id="stepBody"></p>
+    <div class="cue" id="stepCue"></div>
+    <div class="miss" id="stepMiss"></div>
+    <div class="row" style="margin-top:10px">
+      <button id="prev">&larr; Back</button>
+      <button id="next" class="big on">Next &rarr;</button>
+      <button id="play">Auto-play</button>
+      <span class="hint">Keys: <b>&larr;</b>/<b>&rarr;</b> steps, <b>Space</b> auto-play</span>
+    </div>
+    <ul class="steps" id="stepList"></ul>
+  </section>
+
+  <!-- ---------------- your turn ---------------- -->
+  <section id="turn" class="card" hidden>
+    <h2>Your turn</h2>
+    <p>The shot is up. <b>Drag D</b> (or use the arrow keys on the court) to where you should be to box out O, then press <b>Check</b>. Your player is already facing the rim and in a wide base, so this one is only about <i>where you stand</i>.</p>
+    <div class="row" style="margin:8px 0">
+      <button id="check" class="big on">Check my box out</button>
+      <button id="again">New spot</button>
+      <button id="hintBtn">Show hint</button>
+    </div>
+    <div class="res" id="result">Drag D into position.</div>
+    <p class="hint">Rule of thumb used here: D should be about an arm's length from O (roughly 2 to 3 ft centre-to-centre), on the straight line between O and the rim.</p>
+  </section>
+
+  <section class="card">
+    <h2>Key points</h2>
+    <ul style="margin:0;padding-left:20px">
+      <li>See your man <i>and</i> the ball before the shot. Shout "shot!".</li>
+      <li>Contact first, then turn. Don't turn your back before you've found your player.</li>
+      <li>Stay low with a wide base and your butt against their thighs. Arms out and up.</li>
+      <li>Hold the seal until the ball is on its way down, then go get it with two hands.</li>
+      <li>Box out the player closest to you, even when the ball goes to the other side.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+(function(){
+'use strict';
+var cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+var VX0=6,VW=38,VH=32;                       // visible window in feet (court is 50 ft wide, hoop at x=25)
+var H={x:25,y:5.25},SH={x:25,y:28};          // hoop, shooter
+var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---------- state: flat numbers so it can be tweened ----------
+function ang(a,b){return Math.atan2(b.y-a.y,b.x-a.x);}
+function pt(x,y){return {x:x,y:y};}
+function mk(D,Dw,Dr,face,O,Oface,B){
+  return {Dx:D.x,Dy:D.y,Da:ang(D,face),Dw:Dw,Dr:Dr,Ox:O.x,Oy:O.y,Oa:ang(O,Oface),Bx:B.x,By:B.y};
+}
+var D0=pt(30.5,13.8),O0=pt(33,17);
+var LESSON=[
+ {t:'Set up: stay between your man and the rim',
+  b:'Before the shot, D guards O on the rim side. One hand up to contest, eyes on both O and the ball.',
+  cue:'Coach cue: "See ball, see man."',
+  miss:'Common mistake: watching only the ball, so O gets a free run at the rim.',
+  s:mk(D0,0,.5,O0,O0,SH,SH),bubble:null,path:true,block:false},
+ {t:'The shot goes up: call it',
+  b:'The ball leaves the shooter. Yell "SHOT!" so your teammates know. O immediately tries to cut toward the rim for the rebound.',
+  cue:'Coach cue: "Shot!" is the trigger. Everything after happens right now.',
+  miss:'Common mistake: standing and watching to see if it goes in.',
+  s:mk(D0,0,.5,O0,pt(32.4,15.6),H,pt(25,6.4)),bubble:'SHOT!',path:true,block:false},
+ {t:'Find and make contact',
+  b:'Step into O and put a forearm or hand on their chest to feel where they are. Do this before you turn.',
+  cue:'Coach cue: "Hit first." Contact tells you which way they are going.',
+  miss:'Common mistake: turning your back while O is still moving, then losing them.',
+  s:mk(pt(31.3,14.5),.3,1,pt(32.5,15.7),pt(32.5,15.7),H,pt(25,6.4)),bubble:null,path:true,block:false},
+ {t:'Pivot',
+  b:'Reverse pivot so you face the rim with your back and hips against O. Keep the contact all the way round.',
+  cue:'Coach cue: pivot on the foot closest to O, keep your elbows out.',
+  miss:'Common mistake: stepping away from O while you turn, which gives them the gap.',
+  s:mk(pt(31.4,14.7),.6,.6,H,pt(32.6,15.9),H,pt(25,6.4)),bubble:null,path:true,block:false},
+ {t:'Seal: wide base, low, arms up',
+  b:'Drop your hips into O and slide your feet wide. You are now a wall between O and the rim. O is pushed back and has to go around.',
+  cue:'Coach cue: "Make yourself big." Feel them with your back, not your hands.',
+  miss:'Common mistake: standing tall. A high box-out is easy to spin off.',
+  s:mk(pt(31.8,15.2),1,1,H,pt(33,16.9),H,pt(25.4,6.2)),bubble:null,path:true,block:true},
+ {t:'Hold it, then go get the ball',
+  b:'Keep the seal while the ball is in the air. When it comes off the rim, go to it with two hands, jump, and bring it down to your chin.',
+  cue:'Coach cue: "Hold, then go." Secure the ball before you look for the outlet.',
+  miss:'Common mistake: letting go of the seal to chase the ball too early.',
+  s:(function(){var D=pt(30.9,12.8),u=ang(D,H);var B=pt(D.x+Math.cos(u)*1.5,D.y+Math.sin(u)*1.5);return mk(D,.5,1,H,pt(33,16.9),H,B);})(),bubble:'Got it!',path:false,block:true}
+];
+
+// ---------- tween ----------
+var cur=clone(LESSON[0].s),anim=null,raf=0;
+function clone(o){var r={};for(var k in o)r[k]=o[k];return r;}
+function shortest(a,b){var d=b-a;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;return d;}
+function ease(t){return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;}
+function go(target,ms,done){
+  if(reduce||!ms){cur=clone(target);anim=null;draw();if(done)done();return;}
+  anim={from:clone(cur),to:clone(target),t0:performance.now(),ms:ms,done:done};
+  if(!raf)raf=requestAnimationFrame(tick);
+}
+function tick(now){
+  raf=0;if(!anim)return;
+  var t=Math.min(1,(now-anim.t0)/anim.ms),e=ease(t),f=anim.from,to=anim.to;
+  for(var k in to){cur[k]=(k==='Da'||k==='Oa')?f[k]+shortest(f[k],to[k])*e:f[k]+(to[k]-f[k])*e;}
+  draw();
+  if(t<1){raf=requestAnimationFrame(tick);}
+  else{var d=anim.done;anim=null;if(d)d();}
+}
+
+// ---------- drawing ----------
+var mode='lesson',step=0,bubble=null,showPath=true,showBlock=false,showHint=false,ghostO=null;
+function fit(){
+  var dpr=window.devicePixelRatio||1,r=cv.getBoundingClientRect();
+  cv.width=Math.round(r.width*dpr);cv.height=Math.round(r.height*dpr);draw();
+}
+function line(x1,y1,x2,y2){ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();}
+function court(){
+  ctx.fillStyle='#b5834a';ctx.fillRect(0,0,50,34);                 // floor
+  ctx.fillStyle='#a8723b';ctx.fillRect(17,0,16,19);                 // paint
+  ctx.strokeStyle='#f1e6cf';ctx.lineWidth=.16;
+  ctx.strokeRect(17,0,16,19);                                       // key
+  ctx.beginPath();ctx.arc(25,19,6,0,Math.PI);ctx.stroke();          // free-throw arc
+  ctx.save();ctx.setLineDash([.7,.7]);ctx.beginPath();ctx.arc(25,19,6,Math.PI,2*Math.PI);ctx.stroke();ctx.restore();
+  ctx.beginPath();ctx.arc(H.x,H.y,4,0,Math.PI);ctx.stroke();       // restricted area
+  var dy=Math.sqrt(23.75*23.75-22*22);                              // three-point line
+  line(3,0,3,H.y+dy);line(47,0,47,H.y+dy);
+  ctx.beginPath();ctx.arc(H.x,H.y,23.75,Math.atan2(dy,22),Math.PI-Math.atan2(dy,22));ctx.stroke();
+  line(22,4,28,4);                                                  // backboard
+  ctx.strokeStyle='#ff6a2b';ctx.lineWidth=.22;ctx.beginPath();ctx.arc(H.x,H.y,.75,0,2*Math.PI);ctx.stroke();
+}
+function player(x,y,a,wide,arms,col,label){
+  ctx.save();ctx.translate(x,y);ctx.rotate(a);
+  var w=1+.55*wide;
+  if(arms>0){                                                       // arms reaching forward
+    ctx.strokeStyle=col;ctx.lineWidth=.3;ctx.lineCap='round';
+    line(.2,-w*.9,.2+1.5*arms,-w*1.05);line(.2,w*.9,.2+1.5*arms,w*1.05);
+  }
+  ctx.fillStyle=col;ctx.strokeStyle='rgba(0,0,0,.55)';ctx.lineWidth=.12;
+  ctx.beginPath();ctx.ellipse(0,0,.75,w,0,0,2*Math.PI);ctx.fill();ctx.stroke();
+  ctx.fillStyle='rgba(0,0,0,.35)';                                  // facing marker
+  ctx.beginPath();ctx.moveTo(1.15,0);ctx.lineTo(.5,-.38);ctx.lineTo(.5,.38);ctx.closePath();ctx.fill();
+  ctx.restore();
+  ctx.fillStyle='#06101c';ctx.font='bold 1.1px system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(label,x,y);
+}
+function bubbleAt(x,y,text){
+  ctx.font='bold 1.15px system-ui,sans-serif';
+  var w=ctx.measureText(text).width+1.2,h=1.9,bx=x-w/2,by=y-3.6;
+  ctx.fillStyle='#fffbe8';ctx.strokeStyle='#222';ctx.lineWidth=.1;
+  ctx.beginPath();ctx.roundRect?ctx.roundRect(bx,by,w,h,.5):ctx.rect(bx,by,w,h);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#222';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,x,by+h/2+.05);
+}
+function arrow(x1,y1,x2,y2,col){
+  var a=Math.atan2(y2-y1,x2-x1);
+  ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=.16;
+  ctx.save();ctx.setLineDash([.6,.5]);line(x1,y1,x2,y2);ctx.restore();
+  ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-Math.cos(a-.4)*.9,y2-Math.sin(a-.4)*.9);ctx.lineTo(x2-Math.cos(a+.4)*.9,y2-Math.sin(a+.4)*.9);ctx.closePath();ctx.fill();
+}
+function draw(){
+  var s=cv.width/VW;
+  ctx.setTransform(s,0,0,s,-VX0*s,0);
+  court();
+  var u=unit(cur.Ox,cur.Oy);
+  if(showPath){                                                     // where O wants to go
+    var len=Math.min(7,u.L-2);
+    arrow(cur.Ox,cur.Oy,cur.Ox+u.x*len,cur.Oy+u.y*len,'rgba(255,122,107,.9)');
+  }
+  if(showBlock){                                                    // path is blocked
+    var bx=cur.Ox+u.x*2.6,by=cur.Oy+u.y*2.6;
+    ctx.strokeStyle='#ff7a6b';ctx.lineWidth=.3;line(bx-.6,by-.6,bx+.6,by+.6);line(bx-.6,by+.6,bx+.6,by-.6);
+  }
+  if(showHint){
+    var tx=cur.Ox+u.x*2.4,ty=cur.Oy+u.y*2.4;
+    ctx.strokeStyle='#3ee0c0';ctx.lineWidth=.16;ctx.save();ctx.setLineDash([.5,.4]);
+    ctx.beginPath();ctx.arc(tx,ty,1.5,0,2*Math.PI);ctx.stroke();ctx.restore();
+  }
+  // shooter
+  ctx.fillStyle='#9aa8c4';ctx.beginPath();ctx.arc(SH.x,SH.y,1,0,2*Math.PI);ctx.fill();
+  ctx.fillStyle='#06101c';ctx.font='bold 1.1px system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('S',SH.x,SH.y);
+  player(cur.Ox,cur.Oy,cur.Oa,.3,0,'#ff7a6b','O');
+  player(cur.Dx,cur.Dy,cur.Da,cur.Dw,cur.Dr,'#3ee0c0','D');
+  // ball
+  ctx.fillStyle='#ff9a3c';ctx.strokeStyle='#4a2200';ctx.lineWidth=.1;
+  ctx.beginPath();ctx.arc(cur.Bx,cur.By,.55,0,2*Math.PI);ctx.fill();ctx.stroke();
+  if(bubble)bubbleAt(cur.Dx,cur.Dy,bubble);
+}
+function unit(x,y){var dx=H.x-x,dy=H.y-y,L=Math.hypot(dx,dy)||1;return {x:dx/L,y:dy/L,L:L};}
+
+// ---------- lesson ----------
+var $=function(id){return document.getElementById(id);};
+var list=$('stepList');
+LESSON.forEach(function(st,i){
+  var li=document.createElement('li');
+  li.innerHTML='<span class="n">'+(i+1)+'</span><span>'+st.t+'</span>';
+  li.addEventListener('click',function(){stopPlay();setStep(i);});
+  list.appendChild(li);
+});
+function setStep(i,instant){
+  step=Math.max(0,Math.min(LESSON.length-1,i));
+  var st=LESSON[step];
+  $('stepKicker').textContent='Step '+(step+1)+' of '+LESSON.length;
+  $('stepTitle').textContent=st.t;$('stepBody').textContent=st.b;
+  $('stepCue').textContent=st.cue;$('stepMiss').textContent=st.miss;
+  $('prev').disabled=step===0;$('next').disabled=step===LESSON.length-1;
+  Array.prototype.forEach.call(list.children,function(li,j){li.className=j===step?'cur':(j<step?'done':'');});
+  showPath=st.path;showBlock=st.block;bubble=null;
+  go(st.s,instant?0:800,function(){bubble=st.bubble;draw();});
+}
+var playT=0;
+function stopPlay(){if(playT){clearTimeout(playT);playT=0;}$('play').textContent='Auto-play';$('play').classList.remove('on');}
+function playNext(){
+  if(step>=LESSON.length-1){stopPlay();return;}
+  setStep(step+1);playT=setTimeout(playNext,2800);
+}
+$('prev').addEventListener('click',function(){stopPlay();setStep(step-1);});
+$('next').addEventListener('click',function(){stopPlay();setStep(step+1);});
+$('play').addEventListener('click',function(){
+  if(playT){stopPlay();return;}
+  if(step>=LESSON.length-1)setStep(0,true);
+  $('play').textContent='Pause';$('play').classList.add('on');
+  playT=setTimeout(playNext,1600);
+});
+
+// ---------- your turn ----------
+var SPOTS=[pt(33,17),pt(17,17),pt(31,11),pt(19,22),pt(36,21),pt(14,12)];
+var spot=0;
+function turnState(){
+  var O=SPOTS[spot],d=pt(O.x+(SH.x-O.x)*.3,O.y+(SH.y-O.y)*.3+1);   // D starts off to the side, not in position
+  return {Dx:d.x+4,Dy:d.y+3,Da:ang(d,H),Dw:1,Dr:1,Ox:O.x,Oy:O.y,Oa:ang(O,H),Bx:25,By:6.4};
+}
+function newSpot(next){
+  if(next)spot=(spot+1)%SPOTS.length;
+  showBlock=false;showPath=true;bubble=null;showHint=false;$('hintBtn').textContent='Show hint';
+  var r=$('result');r.className='res';r.textContent='Drag D into position.';
+  var t=turnState();t.Da=ang(pt(t.Dx,t.Dy),H);go(t,500);
+}
+function evaluate(){
+  var u=unit(cur.Ox,cur.Oy),rx=cur.Dx-cur.Ox,ry=cur.Dy-cur.Oy;
+  var along=rx*u.x+ry*u.y,perp=Math.abs(rx*u.y-ry*u.x),dist=Math.hypot(rx,ry);
+  if(along<.5)return {ok:false,m:'You are on the wrong side of O. D has to be between O and the rim, not behind them.'};
+  if(perp>2)return {ok:false,m:'You are off the line. Slide over so you are directly between O and the rim, or O can step around you.'};
+  if(dist>3.2)return {ok:false,m:'Too far away. Make contact: about an arm\'s length from O, 2 to 3 ft centre-to-centre.'};
+  if(dist<1.3)return {ok:false,m:'Too tight. You are right on top of O, which is a foul and leaves no room to hold the seal. Ease back a little.'};
+  return {ok:true,m:'Good box out. You are between O and the rim and within arm\'s length, so O is sealed behind you.'};
+}
+$('check').addEventListener('click',function(){
+  var r=evaluate(),el=$('result');
+  el.className='res '+(r.ok?'ok':'no');el.textContent=r.m;
+  var u=unit(cur.Ox,cur.Oy);
+  if(r.ok){showBlock=true;showPath=false;                              // ball falls to D, O stays sealed
+    var t=clone(cur);t.Bx=cur.Dx+Math.cos(cur.Da)*1.5;t.By=cur.Dy+Math.sin(cur.Da)*1.5;go(t,700,function(){bubble='Got it!';draw();});
+  }else{showBlock=false;showPath=false;                               // O gets the rebound
+    var t2=clone(cur);t2.Ox=cur.Ox+u.x*3;t2.Oy=cur.Oy+u.y*3;t2.Bx=t2.Ox+u.x*1.2;t2.By=t2.Oy+u.y*1.2;go(t2,800);
+  }
+});
+$('again').addEventListener('click',function(){newSpot(true);});
+$('hintBtn').addEventListener('click',function(){showHint=!showHint;this.textContent=showHint?'Hide hint':'Show hint';draw();});
+
+// drag D
+var dragging=false;
+function toFeet(e){var r=cv.getBoundingClientRect();return pt(VX0+(e.clientX-r.left)/r.width*VW,(e.clientY-r.top)/r.height*VH);}
+function setD(p){
+  cur.Dx=Math.max(VX0+1,Math.min(VX0+VW-1,p.x));cur.Dy=Math.max(1,Math.min(VH-1,p.y));
+  cur.Da=ang(pt(cur.Dx,cur.Dy),H);bubble=null;showBlock=false;draw();
+}
+cv.addEventListener('pointerdown',function(e){
+  if(mode!=='turn')return;
+  var p=toFeet(e);if(Math.hypot(p.x-cur.Dx,p.y-cur.Dy)>3)return;
+  dragging=true;cv.setPointerCapture(e.pointerId);e.preventDefault();
+});
+cv.addEventListener('pointermove',function(e){if(dragging)setD(toFeet(e));});
+['pointerup','pointercancel'].forEach(function(n){cv.addEventListener(n,function(){dragging=false;});});
+
+// ---------- mode + keys ----------
+function setMode(m){
+  mode=m;stopPlay();anim=null;
+  $('tabLesson').classList.toggle('on',m==='lesson');$('tabTurn').classList.toggle('on',m==='turn');
+  $('tabLesson').setAttribute('aria-selected',m==='lesson');$('tabTurn').setAttribute('aria-selected',m==='turn');
+  $('lesson').hidden=m!=='lesson';$('turn').hidden=m!=='turn';
+  if(m==='lesson'){showHint=false;cur=clone(LESSON[0].s);setStep(0,true);}
+  else{cur=turnState();newSpot(false);}
+}
+$('tabLesson').addEventListener('click',function(){setMode('lesson');});
+$('tabTurn').addEventListener('click',function(){setMode('turn');});
+document.addEventListener('keydown',function(e){
+  if(e.metaKey||e.ctrlKey||e.altKey)return;
+  if(mode==='lesson'){
+    if(e.key==='ArrowRight'){stopPlay();setStep(step+1);e.preventDefault();}
+    else if(e.key==='ArrowLeft'){stopPlay();setStep(step-1);e.preventDefault();}
+    else if(e.key===' '&&e.target.tagName!=='BUTTON'){$('play').click();e.preventDefault();}
+  }else if(document.activeElement===cv){
+    var d={ArrowLeft:[-.5,0],ArrowRight:[.5,0],ArrowUp:[0,-.5],ArrowDown:[0,.5]}[e.key];
+    if(d){setD(pt(cur.Dx+d[0],cur.Dy+d[1]));e.preventDefault();}
+    else if(e.key==='Enter'){$('check').click();}
+  }
+});
+window.addEventListener('resize',fit);
+setMode('lesson');fit();
+})();
+</script>
+</body>
+</html>

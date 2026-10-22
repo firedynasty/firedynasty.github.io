@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Horns Offense</title>
+<style>
+:root{--bg:#0a1019;--panel:#111a2b;--panel2:#0d1522;--line:#243452;--fg:#dbe6ff;--mute:#8aa0c8;--teal:#3ee0c0;--warn:#ffb454;--bad:#ff7a6b}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{padding:14px max(14px,env(safe-area-inset-right)) 48px max(14px,env(safe-area-inset-left))}
+main{max-width:860px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+main>*{min-width:0}
+h1{margin:0;font-size:24px;letter-spacing:.03em}
+h2{margin:0 0 8px;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+p{margin:6px 0}
+.sub{margin:2px 0 0;color:var(--mute);font-size:13px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button{font:inherit;color:var(--fg);background:var(--panel2);border:1px solid var(--line);border-radius:7px;padding:7px 12px;cursor:pointer}
+button:hover{border-color:#41598a}
+button.on{background:#12443f;border-color:var(--teal);color:#d9fff6}
+button.big{padding:9px 18px;font-weight:600}
+button:disabled{opacity:.4;cursor:default}
+.hint{color:var(--mute);font-size:12.5px;margin:6px 0 0}
+.banner{background:#2b2210;border:1px solid #8a6220;border-radius:10px;padding:10px 14px;color:#ffe2b0;font-size:14px}
+.stage{background:#0b1220;border:1px solid #2b3c5e;border-radius:12px;padding:8px;width:min(100%,540px);margin:0 auto}
+canvas{display:block;width:100%;aspect-ratio:50/36;border-radius:8px;background:#1b1409}
+.steps{margin:4px 0 0;padding:0;list-style:none;display:grid;gap:4px}
+.steps li{display:flex;gap:8px;align-items:flex-start;padding:6px 8px;border-radius:7px;border:1px solid transparent;cursor:pointer}
+.steps li .n{flex:0 0 22px;height:22px;border-radius:50%;background:#1b2a47;text-align:center;font-weight:700;font-size:12px;line-height:22px}
+.steps li.cur{background:#10284a;border-color:#2f5a9a}.steps li.cur .n{background:var(--teal);color:#062a22}
+.steps li.done{opacity:.6}.steps li.done .n{background:#2e7d70}
+.say{font-size:15.5px}
+.cue{margin-top:8px;padding:6px 10px;border-left:3px solid var(--teal);background:#0d1d2c;border-radius:0 6px 6px 0;font-size:14px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opt{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px}
+.opt b{display:block;margin-bottom:2px}
+.opt.cur{border-color:var(--teal);background:#0f2b28}
+.group{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.group>span{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+@media (max-width:560px){.opts{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Horns Offense</h1>
+    <p class="sub">Horns set with a 1/3 swap into a 5 ball screen. Call 1 and Call 2 differ on the weak side.</p>
+  </header>
+
+  <div class="banner">Spacing and timing here are approximate, drawn from one coach's description of the set. Your own playbook wins if it differs.</div>
+
+  <div class="row" style="gap:18px">
+    <div class="group"><span>Call</span>
+      <button class="big on" id="c1">Call 1</button><button class="big" id="c2">Call 2</button></div>
+    <div class="group"><span>Play side</span>
+      <button class="on" id="sR">Right</button><button id="sL">Left</button></div>
+  </div>
+
+  <div class="stage"><canvas id="cv" tabindex="0" aria-label="Half court showing the Horns offense with five players"></canvas></div>
+
+  <section class="card">
+    <h2 id="stepKicker"></h2>
+    <div class="say"><b id="stepTitle"></b></div>
+    <p class="say" id="stepBody"></p>
+    <div class="cue" id="stepCue"></div>
+    <div class="row" style="margin-top:10px">
+      <button id="prev">&larr; Back</button>
+      <button id="next" class="big on">Next &rarr;</button>
+      <button id="play">Auto-play</button>
+      <span class="hint">Keys: <b>&larr;</b>/<b>&rarr;</b> steps, <b>Space</b> auto-play</span>
+    </div>
+    <ul class="steps" id="stepList"></ul>
+  </section>
+
+  <section class="card">
+    <h2>Call 1 vs Call 2</h2>
+    <div class="opts">
+      <div class="opt" id="o1"><b>Call 1: 2 and 4 swap</b>The first five steps are the same. On the weak side, 2 and 4 trade spots, so 2 comes to the elbow with the ball and 4 goes to the wing.</div>
+      <div class="opt" id="o2"><b>Call 2: 2 cuts for the layup</b>Same first five steps. On the weak side, 2 cuts to the basket and finishes at the rim off 3's pass. 4 stays at the elbow.</div>
+    </div>
+    <p class="hint">The call is made before the possession, so 4 and 2 know their job from the call. The "depends on the defense" part is still open, and 3 reads that on the drive.</p>
+  </section>
+</main>
+
+<script>
+(function(){
+'use strict';
+var cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+var VW=50,VH=36,H={x:25,y:5.25};
+var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+var $=function(id){return document.getElementById(id);};
+var side='R',call=1,step=0;
+
+// ---------- steps (written for right-side play, mirrored when side is Left) ----------
+function X(x){return side==='R'?x:50-x;}
+function buildSteps(){
+  var pos={1:[25,30],2:[4,10],3:[46,10],4:[19,21],5:[31,21]};
+  function snap(h,o){
+    if(o)for(var k in o)pos[k]=o[k];
+    var s={};for(var i=1;i<=5;i++){s['x'+i]=X(pos[i][0]);s['y'+i]=pos[i][1];}
+    s.Bx=s['x'+h]+1.4;s.By=s['y'+h]-1.4;s.h=h;return s;
+  }
+  var st=[];
+  st.push({t:'Horns set',
+    b:'1 has the ball at the top. 4 and 5 are at the elbows, 2 and 3 are on the wings. Both bigs high means there is no help waiting near the rim.',
+    cue:'Spacing first: wings stay wide, bigs at the elbows.',
+    s:snap(1)});
+  st.push({t:'1 passes and loops, 3 slides up',
+    b:'1 passes to 5 and loops toward the strong-side corner. At the same time 3 slides up to the top, so 1 and 3 switch spots. 1 chooses which side to go.',
+    cue:'1 and 3 cross paths, no screens yet.',
+    s:snap(5,{1:[45,12],3:[37,27]})});
+  st.push({t:'3 gets the ball outside',
+    b:'5 swings the ball to 3, who is now the ball-handler above the arc.',
+    cue:'Catch with your eyes up, 5 is about to come to you.',
+    s:snap(3)});
+  st.push({t:'5 comes out to set the ball screen',
+    b:'5 steps out and sets a screen on the ball for 3. 4, 2 and 1 hold their spots and keep the floor spread.',
+    cue:'Set the screen with a wide base, and make contact.',
+    s:snap(3,{5:[35,24.5],3:[38.5,27.5]}),screen:true});
+  st.push({t:'3 reads: drive, shoot or pass',
+    b:'3 comes off the screen with three choices: drive to the rim, shoot, or pass to the opposite side. 5 rolls to the rim after setting the screen.',
+    cue:'Read the defender. Go over the screen, and wait for 5\'s roll.',
+    s:snap(3,{3:[33,17],5:[29,10]}),bubble:{p:3,t:'Drive / Shoot / Pass'}});
+  if(call===1){
+    st.push({t:'Call 1: 2 and 4 swap spots',
+      b:'3 swings the ball to the opposite side. 2 and 4 trade spots: 2 comes to the elbow and catches, 4 goes out to the wing.',
+      cue:'Time the swap with 3\'s pass, 2 needs to arrive as the ball does.',
+      s:snap(2,{2:[19,21],4:[4,10]})});
+  }else{
+    st.push({t:'Call 2: 2 cuts for the layup',
+      b:'3 passes to the opposite side where 2 cuts to the basket for a layup. 4 stays at the elbow as an outlet.',
+      cue:'2 cuts as 3 turns toward the pass, and finishes at the rim.',
+      s:snap(2,{2:[22,6.5]})});
+  }
+  return st;
+}
+var STEPS=buildSteps();
+
+// ---------- tween ----------
+var cur=null,anim=null,raf=0;
+function clone(o){var r={};for(var k in o)r[k]=o[k];return r;}
+function ease(t){return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;}
+function go(target,ms,done){
+  if(reduce||!ms||!cur){cur=clone(target);anim=null;draw();if(done)done();return;}
+  anim={from:clone(cur),to:clone(target),t0:performance.now(),ms:ms,done:done};
+  if(!raf)raf=requestAnimationFrame(tick);
+}
+function tick(now){
+  raf=0;if(!anim)return;
+  var t=Math.min(1,(now-anim.t0)/anim.ms),e=ease(t),f=anim.from,to=anim.to;
+  for(var k in to)if(k!=='h')cur[k]=f[k]+(to[k]-f[k])*e;
+  draw();
+  if(t<1)raf=requestAnimationFrame(tick);
+  else{var d=anim.done;anim=null;if(d)d();}
+}
+
+// ---------- drawing ----------
+var shown=null,prevS=null;       // shown = current step object; prevS = state before it
+function fit(){
+  var dpr=window.devicePixelRatio||1,r=cv.getBoundingClientRect();
+  cv.width=Math.round(r.width*dpr);cv.height=Math.round(r.height*dpr);draw();
+}
+function line(x1,y1,x2,y2){ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();}
+function court(){
+  ctx.fillStyle='#b5834a';ctx.fillRect(0,0,50,36);
+  ctx.fillStyle='#a8723b';ctx.fillRect(17,0,16,19);
+  ctx.strokeStyle='#f1e6cf';ctx.lineWidth=.17;
+  ctx.strokeRect(17,0,16,19);
+  ctx.beginPath();ctx.arc(25,19,6,0,Math.PI);ctx.stroke();
+  ctx.save();ctx.setLineDash([.7,.7]);ctx.beginPath();ctx.arc(25,19,6,Math.PI,2*Math.PI);ctx.stroke();ctx.restore();
+  ctx.beginPath();ctx.arc(H.x,H.y,4,0,Math.PI);ctx.stroke();
+  var dy=Math.sqrt(23.75*23.75-22*22);
+  line(3,0,3,H.y+dy);line(47,0,47,H.y+dy);
+  ctx.beginPath();ctx.arc(H.x,H.y,23.75,Math.atan2(dy,22),Math.PI-Math.atan2(dy,22));ctx.stroke();
+  line(22,4,28,4);
+  ctx.strokeStyle='#ff6a2b';ctx.lineWidth=.24;ctx.beginPath();ctx.arc(H.x,H.y,.75,0,2*Math.PI);ctx.stroke();
+}
+function arrow(x1,y1,x2,y2,col,dash){
+  var d=Math.hypot(x2-x1,y2-y1);if(d<1.5)return;
+  var a=Math.atan2(y2-y1,x2-x1),ex=x2-Math.cos(a)*1.7,ey=y2-Math.sin(a)*1.7,sx=x1+Math.cos(a)*1.7,sy=y1+Math.sin(a)*1.7;
+  if(d<3.6)return;
+  ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=.2;
+  ctx.save();ctx.setLineDash(dash?[.7,.5]:[]);line(sx,sy,ex,ey);ctx.restore();
+  ctx.beginPath();ctx.moveTo(ex,ey);ctx.lineTo(ex-Math.cos(a-.45)*1,ey-Math.sin(a-.45)*1);ctx.lineTo(ex-Math.cos(a+.45)*1,ey-Math.sin(a+.45)*1);ctx.closePath();ctx.fill();
+}
+function bubbleAt(x,y,text){
+  ctx.font='bold 1.5px system-ui,sans-serif';
+  var w=ctx.measureText(text).width+1.6,h=2.4,bx=Math.max(.3,Math.min(50-w-.3,x-w/2)),by=y-4.6;
+  ctx.fillStyle='#fffbe8';ctx.strokeStyle='#222';ctx.lineWidth=.12;
+  ctx.beginPath();ctx.roundRect?ctx.roundRect(bx,by,w,h,.6):ctx.rect(bx,by,w,h);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#222';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,bx+w/2,by+h/2+.05);
+}
+function draw(){
+  if(!cur)return;
+  var s=cv.width/VW;ctx.setTransform(s,0,0,s,0,0);
+  court();
+  if(prevS&&shown){                          // trails: where each player came from
+    for(var i=1;i<=5;i++)arrow(prevS['x'+i],prevS['y'+i],shown.s['x'+i],shown.s['y'+i],'rgba(255,255,255,.8)',true);
+    if(Math.hypot(prevS.Bx-shown.s.Bx,prevS.By-shown.s.By)>3)arrow(prevS.Bx,prevS.By,shown.s.Bx,shown.s.By,'rgba(255,154,60,.95)',false);
+  }
+  if(shown&&shown.screen){                    // screen bar next to 5 facing 3
+    var dx=cur.x3-cur.x5,dy=cur.y3-cur.y5,L=Math.hypot(dx,dy)||1,ux=dx/L,uy=dy/L,cx=cur.x5+ux*1.9,cy=cur.y5+uy*1.9;
+    ctx.strokeStyle='#fff';ctx.lineWidth=.4;ctx.lineCap='round';line(cx-uy*1.5,cy+ux*1.5,cx+uy*1.5,cy-ux*1.5);ctx.lineCap='butt';
+  }
+  for(var p=1;p<=5;p++){
+    ctx.fillStyle='#ffe36a';ctx.strokeStyle='#3a2f06';ctx.lineWidth=.14;
+    ctx.beginPath();ctx.arc(cur['x'+p],cur['y'+p],1.6,0,2*Math.PI);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#2a2205';ctx.font='bold 1.9px system-ui,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(p,cur['x'+p],cur['y'+p]+.1);
+  }
+  ctx.fillStyle='#ff9a3c';ctx.strokeStyle='#4a2200';ctx.lineWidth=.12;
+  ctx.beginPath();ctx.arc(cur.Bx,cur.By,.7,0,2*Math.PI);ctx.fill();ctx.stroke();
+  if(shown&&shown.bubble&&!anim)bubbleAt(cur['x'+shown.bubble.p],cur['y'+shown.bubble.p],shown.bubble.t);
+}
+
+// ---------- lesson ----------
+var list=$('stepList');
+function buildList(){
+  list.innerHTML='';
+  STEPS.forEach(function(st,i){
+    var li=document.createElement('li');
+    li.innerHTML='<span class="n">'+(i+1)+'</span><span></span>';
+    li.lastChild.textContent=st.t;
+    li.addEventListener('click',function(){stopPlay();setStep(i);});
+    list.appendChild(li);
+  });
+}
+function setStep(i,instant){
+  step=Math.max(0,Math.min(STEPS.length-1,i));
+  var st=STEPS[step];
+  prevS=step>0?STEPS[step-1].s:null;shown=st;
+  $('stepKicker').textContent='Step '+(step+1)+' of '+STEPS.length+' · Call '+call+' · '+(side==='R'?'right':'left')+' side';
+  $('stepTitle').textContent=st.t;$('stepBody').textContent=st.b;$('stepCue').textContent=st.cue;
+  $('prev').disabled=step===0;$('next').disabled=step===STEPS.length-1;
+  Array.prototype.forEach.call(list.children,function(li,j){li.className=j===step?'cur':(j<step?'done':'');});
+  $('o1').classList.toggle('cur',call===1&&step===STEPS.length-1);
+  $('o2').classList.toggle('cur',call===2&&step===STEPS.length-1);
+  go(st.s,instant?0:850,function(){draw();});
+}
+function rebuild(){
+  STEPS=buildSteps();buildList();
+  $('c1').classList.toggle('on',call===1);$('c2').classList.toggle('on',call===2);
+  $('sR').classList.toggle('on',side==='R');$('sL').classList.toggle('on',side==='L');
+  setStep(step,true);
+}
+var playT=0;
+function stopPlay(){if(playT){clearTimeout(playT);playT=0;}$('play').textContent='Auto-play';$('play').classList.remove('on');}
+function playNext(){if(step>=STEPS.length-1){stopPlay();return;}setStep(step+1);playT=setTimeout(playNext,3000);}
+$('prev').addEventListener('click',function(){stopPlay();setStep(step-1);});
+$('next').addEventListener('click',function(){stopPlay();setStep(step+1);});
+$('play').addEventListener('click',function(){
+  if(playT){stopPlay();return;}
+  if(step>=STEPS.length-1)setStep(0,true);
+  $('play').textContent='Pause';$('play').classList.add('on');playT=setTimeout(playNext,1600);
+});
+$('c1').addEventListener('click',function(){call=1;stopPlay();rebuild();});
+$('c2').addEventListener('click',function(){call=2;stopPlay();rebuild();});
+$('sR').addEventListener('click',function(){side='R';stopPlay();rebuild();});
+$('sL').addEventListener('click',function(){side='L';stopPlay();rebuild();});
+document.addEventListener('keydown',function(e){
+  if(e.metaKey||e.ctrlKey||e.altKey)return;
+  if(e.key==='ArrowRight'){stopPlay();setStep(step+1);e.preventDefault();}
+  else if(e.key==='ArrowLeft'){stopPlay();setStep(step-1);e.preventDefault();}
+  else if(e.key===' '&&e.target.tagName!=='BUTTON'){$('play').click();e.preventDefault();}
+});
+window.addEventListener('resize',fit);
+rebuild();fit();
+})();
+</script>
+</body>
+</html>
