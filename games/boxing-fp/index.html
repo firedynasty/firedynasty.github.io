@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Slip &amp; Duck</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; font-family: system-ui, sans-serif; color: #eee; }
+  canvas { display: block; width: 100vw; height: 100vh; }
+  #panel {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: min(440px, 90vw); background: rgba(15, 15, 20, .94); border: 1px solid #444; border-radius: 12px;
+    padding: 22px 24px; box-sizing: border-box;
+  }
+  #panel h1 { margin: 0 0 4px; font-size: 22px; }
+  #panel p { margin: 0 0 14px; font-size: 13px; color: #aaa; line-height: 1.4; }
+  label { display: block; margin: 10px 0 4px; font-size: 13px; color: #ccc; }
+  select, input[type=text] { width: 100%; box-sizing: border-box; padding: 7px 8px; background: #1b1b24; color: #eee; border: 1px solid #555; border-radius: 6px; font-size: 14px; }
+  input[type=range] { width: 100%; }
+  .row { display: flex; gap: 14px; align-items: center; }
+  .row label { margin: 10px 0 0; display: flex; align-items: center; gap: 6px; }
+  button { margin-top: 16px; width: 100%; padding: 11px; border: 0; border-radius: 8px; background: #d22; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; }
+  button:hover { background: #e33; }
+  small { display: block; margin-top: 12px; color: #888; font-size: 12px; line-height: 1.5; }
+  kbd { background: #2a2a35; border-radius: 3px; padding: 0 5px; }
+  #back { position: fixed; top: 10px; left: 12px; font-size: 13px; color: #888; text-decoration: none; }
+  body.playing #back { display: none; }
+  body.playing { cursor: none; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<a id="back" href="../games.html">&larr; games</a>
+<canvas id="c"></canvas>
+
+<div id="panel">
+  <h1>Slip &amp; Duck</h1>
+  <p>First-person boxing dodge simulator. Put it on a big screen, stand back and move with the camera. Nothing to press while it runs.</p>
+
+  <label for="mode">Punches</label>
+  <select id="mode">
+    <option value="random">Random</option>
+    <option value="seq">Set sequence</option>
+  </select>
+
+  <div id="seqWrap" class="hidden">
+    <label for="seq">Sequence (loops)</label>
+    <input type="text" id="seq" value="L R LH R RU -">
+    <small style="margin-top:4px">
+      <b>L</b> / <b>R</b> straight &rarr; slip &nbsp; <b>LH</b> / <b>RH</b> hook &rarr; duck &nbsp; <b>LU</b> / <b>RU</b> uppercut &rarr; lean back &nbsp; <b>-</b> rest
+    </small>
+  </div>
+
+  <label for="speed">Punch speed: <span id="speedV"></span></label>
+  <input type="range" id="speed" min="0.6" max="2" step="0.1" value="1">
+
+  <label for="gap">Pause between punches: <span id="gapV"></span></label>
+  <input type="range" id="gap" min="0.2" max="3" step="0.1" value="1.2">
+
+  <div class="row">
+    <label><input type="checkbox" id="cue" checked> Show dodge cue</label>
+    <label><input type="checkbox" id="sound" checked> Sound</label>
+  </div>
+
+  <button id="go">Start</button>
+  <small><kbd>Space</kbd> pause / settings &nbsp; <kbd>F</kbd> fullscreen &nbsp; <kbd>Esc</kbd> settings</small>
+</div>
+
+<script>
+(() => {
+  const cv = document.getElementById('c');
+  const ctx = cv.getContext('2d');
+  let W = 0, H = 0;
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = cv.width = innerWidth * dpr; H = cv.height = innerHeight * dpr;
+  }
+  addEventListener('resize', resize); resize();
+
+  // ---- settings ----
+  const $ = id => document.getElementById(id);
+  const S = { mode: 'random', seq: 'L R LH R RU -', speed: 1, gap: 1.2, cue: true, sound: true };
+  try { Object.assign(S, JSON.parse(localStorage.getItem('slipduck') || '{}')); } catch (e) {}
+  function syncUI() {
+    $('mode').value = S.mode; $('seq').value = S.seq; $('speed').value = S.speed; $('gap').value = S.gap;
+    $('cue').checked = S.cue; $('sound').checked = S.sound;
+    $('seqWrap').classList.toggle('hidden', S.mode !== 'seq');
+    $('speedV').textContent = (+S.speed).toFixed(1) + 'x'; $('gapV').textContent = (+S.gap).toFixed(1) + 's';
+  }
+  function readUI() {
+    S.mode = $('mode').value; S.seq = $('seq').value; S.speed = +$('speed').value; S.gap = +$('gap').value;
+    S.cue = $('cue').checked; S.sound = $('sound').checked;
+    try { localStorage.setItem('slipduck', JSON.stringify(S)); } catch (e) {}
+    syncUI();
+  }
+  syncUI();
+  ['mode', 'seq', 'speed', 'gap', 'cue', 'sound'].forEach(id => $(id).addEventListener('input', readUI));
+
+  // ---- punches ----
+  // from: guard glove start, to: where the glove ends up near the camera (units of screen height from centre)
+  const PUNCH = {
+    L:  { hand: 'L', dodge: 'left',  cue: 'SLIP LEFT',  from: [ .09, -.02], to: [ .05, -.12], arc: 0 },
+    R:  { hand: 'R', dodge: 'right', cue: 'SLIP RIGHT', from: [-.09, -.02], to: [-.05, -.12], arc: 0 },
+    LH: { hand: 'L', dodge: 'down',  cue: 'DUCK',       from: [ .30,  .02], to: [-.12, -.13], arc: -.05 },
+    RH: { hand: 'R', dodge: 'down',  cue: 'DUCK',       from: [-.30,  .02], to: [ .12, -.13], arc: -.05 },
+    LU: { hand: 'L', dodge: 'back',  cue: 'LEAN BACK',  from: [ .10,  .30], to: [ .03, -.30], arc: 0 },
+    RU: { hand: 'R', dodge: 'back',  cue: 'LEAN BACK',  from: [-.10,  .30], to: [-.03, -.30], arc: 0 },
+  };
+  const DODGE = {
+    left:  { x: -.2,  y: 0,    rot: -.07, zoom: 1 },
+    right: { x:  .2,  y: 0,    rot:  .07, zoom: 1 },
+    down:  { x:  0,   y: .26,  rot:  0,   zoom: 1.05 },
+    back:  { x:  0,   y: -.04, rot:  0,   zoom: .9 },
+  };
+  const KEYS = Object.keys(PUNCH);
+  const ARROW = { left: '←', right: '→', down: '↓', back: '↑' };
+
+  let seqIdx = 0;
+  function nextToken() {
+    if (S.mode === 'random') return KEYS[Math.random() * KEYS.length | 0];
+    const toks = S.seq.toUpperCase().split(/[\s,]+/).filter(t => t === '-' || PUNCH[t]);
+    if (!toks.length) return KEYS[Math.random() * KEYS.length | 0];
+    return toks[seqIdx++ % toks.length];
+  }
+
+  // ---- state ----
+  let playing = false, last = 0, T = 0;
+  let punch = null;       // { key, t } t = seconds since start
+  let wait = 1;           // seconds until next punch
+  const cam = { x: 0, y: 0, rot: 0, zoom: 1 };
+  const camT = { x: 0, y: 0, rot: 0, zoom: 1 };
+  let flash = 0;
+
+  const WIND = .5, STRIKE = .36, RECOVER = .45;
+  function phase() {
+    const sp = S.speed, t = punch.t;
+    const w = WIND / sp, s = STRIKE / sp, r = RECOVER / sp;
+    if (t < w) return { n: 'wind', p: t / w };
+    if (t < w + s) return { n: 'strike', p: (t - w) / s };
+    if (t < w + s + r) return { n: 'recover', p: (t - w - s) / r };
+    return { n: 'done', p: 1 };
+  }
+
+  const ease = p => p * p * (3 - 2 * p);
+  const lerp = (a, b, p) => a + (b - a) * p;
+
+  // ---- sound ----
+  let ac = null;
+  function whoosh(dur) {
+    if (!S.sound || !ac) return;
+    const n = ac.sampleRate * dur | 0, buf = ac.createBuffer(1, n, ac.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.sin(Math.PI * i / n);
+    const src = ac.createBufferSource(); src.buffer = buf;
+    const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1.2;
+    f.frequency.setValueAtTime(300, ac.currentTime); f.frequency.exponentialRampToValueAtTime(2200, ac.currentTime + dur);
+    const g = ac.createGain(); g.gain.value = .5;
+    src.connect(f); f.connect(g); g.connect(ac.destination); src.start();
+  }
+  function bell() {
+    if (!S.sound || !ac) return;
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.frequency.value = 880; g.gain.setValueAtTime(.25, ac.currentTime); g.gain.exponentialRampToValueAtTime(.001, ac.currentTime + 1.2);
+    o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime + 1.2);
+  }
+
+  // ---- update ----
+  function update(dt) {
+    T += dt;
+    if (!punch) {
+      wait -= dt;
+      if (wait <= 0) {
+        const k = nextToken();
+        if (k === '-') wait = S.gap;
+        else { punch = { key: k, t: 0, whooshed: false }; }
+      }
+    } else {
+      punch.t += dt;
+      const ph = phase();
+      if (ph.n === 'strike' && !punch.whooshed) { punch.whooshed = true; whoosh(.4 / S.speed); }
+      if (ph.n === 'done') {
+        punch = null;
+        wait = S.gap * (S.mode === 'random' ? .6 + Math.random() * .8 : 1);
+      }
+    }
+
+    // camera target: start reacting a beat into the strike, hold, then return
+    let tgt = { x: 0, y: 0, rot: 0, zoom: 1 };
+    if (punch) {
+      const ph = phase(), d = DODGE[PUNCH[punch.key].dodge];
+      let amt = 0;
+      if (ph.n === 'strike') amt = ph.p > .15 ? 1 : 0;
+      else if (ph.n === 'recover') amt = ph.p < .35 ? 1 : 0;
+      tgt = amt ? d : tgt;
+    }
+    Object.assign(camT, tgt);
+    const k = 1 - Math.exp(-dt * 14 * S.speed);
+    for (const key of ['x', 'y', 'rot', 'zoom']) cam[key] += (camT[key] - cam[key]) * k;
+  }
+
+  // ---- drawing helpers ----
+  function glove(x, y, r, hand, alpha) {
+    ctx.save();
+    ctx.globalAlpha = alpha == null ? 1 : alpha;
+    ctx.translate(x, y);
+    const side = hand === 'L' ? 1 : -1;
+    // cuff
+    ctx.fillStyle = '#e8e8e8';
+    ctx.beginPath(); ctx.ellipse(0, r * 1.05, r * .62, r * .45, 0, 0, 7); ctx.fill();
+    // fist
+    const g = ctx.createRadialGradient(-r * .3 * side, -r * .35, r * .1, 0, 0, r * 1.15);
+    g.addColorStop(0, '#ff5a4a'); g.addColorStop(.55, '#c8161a'); g.addColorStop(1, '#6a0608');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.ellipse(0, 0, r, r * .95, 0, 0, 7); ctx.fill();
+    // thumb
+    ctx.fillStyle = '#b01015';
+    ctx.beginPath(); ctx.ellipse(-r * .72 * side, r * .15, r * .32, r * .5, .4 * side, 0, 7); ctx.fill();
+    // knuckle highlight
+    ctx.fillStyle = 'rgba(255,255,255,.18)';
+    ctx.beginPath(); ctx.ellipse(r * .1 * side, -r * .5, r * .5, r * .2, 0, 0, 7); ctx.fill();
+    ctx.restore();
+  }
+
+  // deterministic crowd dots
+  const crowd = Array.from({ length: 160 }, (_, i) => {
+    const s = Math.sin(i * 91.7) * 43758.5453; const a = s - Math.floor(s);
+    const s2 = Math.sin(i * 12.9) * 12345.6789; const b = s2 - Math.floor(s2);
+    return { x: a * 2 - 1, y: -0.5 + b * .22, r: .008 + b * .012, h: 20 + a * 30 };
+  });
+
+  function drawRing(u) {
+    // arena dark, crowd
+    const bg = ctx.createLinearGradient(0, -u * .6, 0, u * .6);
+    bg.addColorStop(0, '#0a0a12'); bg.addColorStop(.5, '#1b1b2a'); bg.addColorStop(1, '#2b2118');
+    ctx.fillStyle = bg; ctx.fillRect(-u * 2, -u, u * 4, u * 2);
+    for (const c of crowd) {
+      ctx.fillStyle = `hsla(${c.h}, 30%, 35%, .55)`;
+      ctx.beginPath(); ctx.arc(c.x * u * 1.4, c.y * u, c.r * u, 0, 7); ctx.fill();
+    }
+    // spotlight
+    const sp = ctx.createRadialGradient(0, -u * .1, u * .05, 0, -u * .1, u * .9);
+    sp.addColorStop(0, 'rgba(255,240,210,.35)'); sp.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = sp; ctx.fillRect(-u * 2, -u, u * 4, u * 2);
+    // canvas floor
+    const hz = u * .2;
+    const fl = ctx.createLinearGradient(0, hz, 0, u);
+    fl.addColorStop(0, '#6b5a3c'); fl.addColorStop(1, '#2c2418');
+    ctx.fillStyle = fl;
+    ctx.beginPath(); ctx.moveTo(-u * 3, hz); ctx.lineTo(u * 3, hz); ctx.lineTo(u * 3, u * 2); ctx.lineTo(-u * 3, u * 2); ctx.fill();
+    // ropes converging to the corner posts
+    const ropes = ['#c22', '#eee', '#c22'];
+    ropes.forEach((col, i) => {
+      const y0 = -u * .22 + i * u * .12;
+      ctx.strokeStyle = col; ctx.lineWidth = u * .012; ctx.globalAlpha = .8;
+      ctx.beginPath(); ctx.moveTo(-u * 2.5, y0 - u * .1); ctx.lineTo(-u * .9, y0); ctx.lineTo(u * .9, y0); ctx.lineTo(u * 2.5, y0 - u * .1); ctx.stroke();
+      ctx.globalAlpha = 1;
+    });
+    ctx.fillStyle = '#333'; ctx.fillRect(-u * .93, -u * .3, u * .04, u * .5); ctx.fillRect(u * .89, -u * .3, u * .04, u * .5);
+  }
+
+  function drawOpponent(u, wind, windP, hand) {
+    const sway = Math.sin(T * 1.7) * .02 * u;
+    const bob = Math.sin(T * 3.1) * .012 * u;
+    const lean = wind ? windP * .03 * u * (hand === 'L' ? -1 : 1) : 0;
+    ctx.save();
+    ctx.translate(sway + lean, bob);
+    // shorts / legs
+    ctx.fillStyle = '#1a3a8a';
+    ctx.beginPath(); ctx.roundRect(-.13 * u, .16 * u, .26 * u, .2 * u, .03 * u); ctx.fill();
+    ctx.fillStyle = '#d9a37a';
+    ctx.fillRect(-.1 * u, .34 * u, .07 * u, .3 * u); ctx.fillRect(.03 * u, .34 * u, .07 * u, .3 * u);
+    // torso
+    const tg = ctx.createLinearGradient(-.18 * u, 0, .18 * u, 0);
+    tg.addColorStop(0, '#b27c55'); tg.addColorStop(.5, '#dba982'); tg.addColorStop(1, '#a77049');
+    ctx.fillStyle = tg;
+    ctx.beginPath(); ctx.moveTo(-.2 * u, -.04 * u); ctx.quadraticCurveTo(-.22 * u, .1 * u, -.12 * u, .2 * u);
+    ctx.lineTo(.12 * u, .2 * u); ctx.quadraticCurveTo(.22 * u, .1 * u, .2 * u, -.04 * u);
+    ctx.quadraticCurveTo(0, -.09 * u, -.2 * u, -.04 * u); ctx.fill();
+    // neck + head
+    ctx.fillStyle = '#c99068'; ctx.fillRect(-.03 * u, -.1 * u, .06 * u, .06 * u);
+    const hg = ctx.createRadialGradient(-.015 * u, -.14 * u, .01 * u, 0, -.12 * u, .08 * u);
+    hg.addColorStop(0, '#e7b690'); hg.addColorStop(1, '#b57f58');
+    ctx.fillStyle = hg;
+    ctx.beginPath(); ctx.ellipse(0, -.145 * u, .06 * u, .075 * u, 0, 0, 7); ctx.fill();
+    // headgear
+    ctx.fillStyle = '#1a3a8a';
+    ctx.beginPath(); ctx.ellipse(0, -.175 * u, .066 * u, .05 * u, 0, Math.PI, 0); ctx.fill();
+    ctx.fillRect(-.068 * u, -.175 * u, .016 * u, .06 * u); ctx.fillRect(.052 * u, -.175 * u, .016 * u, .06 * u);
+    // eyes, mouthguard line
+    ctx.fillStyle = '#211';
+    const ex = wind ? windP * .004 * u * (hand === 'L' ? 1 : -1) : 0;
+    ctx.beginPath(); ctx.ellipse(-.022 * u + ex, -.15 * u, .009 * u, .005 * u, 0, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(.022 * u + ex, -.15 * u, .009 * u, .005 * u, 0, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#7a3a30'; ctx.lineWidth = .004 * u;
+    ctx.beginPath(); ctx.moveTo(-.015 * u, -.115 * u); ctx.lineTo(.015 * u, -.115 * u); ctx.stroke();
+    ctx.restore();
+    return { sway, bob, lean };
+  }
+
+  function frame(now) {
+    requestAnimationFrame(frame);
+    const dt = Math.min((now - last) / 1000 || 0, .05); last = now;
+    if (playing) update(dt);
+
+    const u = H;                       // 1 unit = canvas height
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    ctx.save();
+    ctx.translate(W / 2, H / 2);
+    ctx.rotate(cam.rot);
+    ctx.scale(cam.zoom, cam.zoom);
+
+    // far layer: ring + opponent, little parallax
+    ctx.save();
+    ctx.translate(-cam.x * u * .3, -cam.y * u * .3);
+    drawRing(u);
+    const ph = punch ? phase() : null;
+    const pd = punch ? PUNCH[punch.key] : null;
+    const winding = ph && ph.n === 'wind';
+    const o = drawOpponent(u, winding, winding ? ease(ph.p) : 0, pd && pd.hand);
+
+    // guard gloves (the punching one is drawn later in the near layer)
+    ctx.translate(o.sway + o.lean, o.bob);
+    for (const h of ['L', 'R']) {
+      if (pd && pd.hand === h && ph.n !== 'recover') continue;
+      const side = h === 'L' ? 1 : -1;
+      let gx = side * .09 * u, gy = -.03 * u + Math.sin(T * 3.1 + side) * .005 * u;
+      if (pd && pd.hand === h) { // recovering glove returns to guard
+        const q = ease(ph.p), f = pd.from;
+        gx = lerp(f[0] * u * .6, gx, q); gy = lerp(f[1] * u * .6, gy, q);
+      }
+      glove(gx, gy, .045 * u, h);
+    }
+    ctx.restore();
+
+    // near layer: the punching glove, strong parallax
+    if (punch && ph.n !== 'done') {
+      let gx, gy, sc, par, alpha = 1;
+      const f = pd.from, t = pd.to;
+      if (ph.n === 'wind') {
+        // pulls back and down, shrinking slightly
+        const q = ease(ph.p);
+        gx = f[0] * u * (1 + .15 * q) * .6; gy = (f[1] + .05 * q) * u * .6; sc = 1 - .1 * q; par = .3;
+        gx += Math.sin(T * 3.1) * 0;
+      } else if (ph.n === 'strike') {
+        const q = ph.p, e = q * q;
+        gx = lerp(f[0], t[0], e) * u; gy = lerp(f[1], t[1], e) * u + Math.sin(q * Math.PI) * pd.arc * u * 1;
+        // overshoot: keeps flying past the head near the end
+        const over = Math.max(0, q - .8) / .2;
+        gx += over * (t[0] - f[0]) * .25 * u; gy += over * (t[1] - f[1]) * .25 * u;
+        sc = lerp(1, 8.5, Math.pow(q, 2.4)); par = lerp(.3, 1.7, Math.pow(q, 1.8));
+        alpha = 1;
+      } else { // recover: glove flies off past the camera, fades while going back
+        const q = ph.p;
+        gx = t[0] * u * (1 + q * .6); gy = t[1] * u * (1 + q * .4); sc = lerp(8.5, 14, q); par = 1.7; alpha = 1 - q * 1.6;
+        if (q > .62) alpha = 0;
+      }
+      if (alpha > 0) {
+        ctx.save();
+        ctx.translate(-cam.x * u * par, -cam.y * u * par);
+        const r = .045 * u * sc;
+        if (ph.n === 'strike' && ph.p > .3) {  // motion trail
+          for (let i = 3; i >= 1; i--) {
+            const bq = Math.max(0, ph.p - i * .04), be = bq * bq;
+            const bx = lerp(f[0], t[0], be) * u, by = lerp(f[1], t[1], be) * u + Math.sin(bq * Math.PI) * pd.arc * u;
+            glove(bx, by, .045 * u * lerp(1, 8.5, Math.pow(bq, 2.4)), pd.hand, .12);
+          }
+        }
+        // opponent-relative start offset while winding / early strike
+        glove(gx, gy, r, pd.hand, alpha);
+        ctx.restore();
+      }
+    }
+    ctx.restore();
+
+    // vignette
+    const v = ctx.createRadialGradient(W / 2, H / 2, H * .35, W / 2, H / 2, H * .95);
+    v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.65)');
+    ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+
+    // dodge cue
+    if (playing && S.cue && punch && (ph.n === 'wind' || ph.n === 'strike')) {
+      const d = PUNCH[punch.key];
+      ctx.save();
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = `800 ${H * .08}px system-ui, sans-serif`;
+      ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.shadowColor = 'rgba(0,0,0,.8)'; ctx.shadowBlur = 18;
+      ctx.fillText(`${ARROW[d.dodge]}  ${d.cue}`, W / 2, H * .12);
+      ctx.restore();
+    }
+    if (!playing && document.body.classList.contains('playing')) {
+      ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.textAlign = 'center'; ctx.font = `600 ${H * .05}px system-ui`;
+      ctx.fillText('paused', W / 2, H * .5);
+    }
+  }
+  requestAnimationFrame(frame);
+
+  // ---- control ----
+  function start() {
+    readUI();
+    if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+    if (ac && ac.state === 'suspended') ac.resume();
+    $('panel').classList.add('hidden');
+    document.body.classList.add('playing');
+    if (!playing) { playing = true; punch = null; wait = 1.2; seqIdx = 0; bell(); }
+  }
+  function pause() {
+    playing = false;
+    $('panel').classList.remove('hidden');
+    document.body.classList.remove('playing');
+  }
+  $('go').addEventListener('click', start);
+  addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' && e.key !== 'Escape') return;
+    if (e.key === 'f' || e.key === 'F') {
+      if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => {});
+    } else if (e.key === ' ' || e.key === 'Escape') {
+      e.preventDefault();
+      if (playing) pause(); else start();
+    }
+  });
+})();
+</script>
+</body>
+</html>
