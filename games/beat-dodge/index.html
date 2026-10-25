@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Beat Dodge</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #05070d; overflow: hidden; font-family: system-ui, sans-serif; color: #eee; }
+  canvas { display: block; width: 100vw; height: 100vh; touch-action: none; }
+  #panel {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: min(420px, 90vw); background: rgba(15, 15, 22, .95); border: 1px solid #444; border-radius: 12px;
+    padding: 22px 24px; box-sizing: border-box;
+  }
+  #panel h1 { margin: 0 0 4px; font-size: 22px; }
+  #panel p { margin: 0 0 14px; font-size: 13px; color: #aaa; line-height: 1.4; }
+  label { display: block; margin: 10px 0 4px; font-size: 13px; color: #ccc; }
+  select, input[type=number] { width: 100%; box-sizing: border-box; padding: 7px 8px; background: #1b1b24; color: #eee; border: 1px solid #555; border-radius: 6px; font-size: 14px; }
+  input[type=range] { width: 100%; }
+  .row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .row label { margin: 10px 0 0; display: flex; align-items: center; gap: 6px; }
+  #go { margin-top: 16px; width: 100%; padding: 11px; border: 0; border-radius: 8px; background: #1f8fe0; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; }
+  #go:hover { background: #3aa3f0; }
+  #resetCount { margin-top: 8px; width: 100%; padding: 9px; border: 1px solid #456; border-radius: 8px; background: #101a26; color: #cde; font-size: 14px; cursor: pointer; }
+  #resetCount:hover { background: #1a2a3c; }
+  small { display: block; margin-top: 12px; color: #888; font-size: 12px; line-height: 1.5; }
+  kbd { background: #2a2a35; border-radius: 3px; padding: 0 5px; }
+  #back { position: fixed; top: 10px; left: 12px; font-size: 13px; color: #888; text-decoration: none; z-index: 2; }
+  body.playing #back { display: none; }
+  body.playing { cursor: none; }
+  .hidden { display: none; }
+  #presets { display: flex; gap: 6px; margin-top: 8px; }
+  #presets button { flex: 1; padding: 7px 0; border: 1px solid #456; background: #101a26; color: #cde; border-radius: 6px; font-size: 14px; cursor: pointer; }
+  #presets button:hover { background: #1a2a3c; }
+  #presets button.on { background: #1f8fe0; border-color: #1f8fe0; color: #fff; font-weight: 600; }
+  #bpmHud { position: fixed; top: 10px; right: 14px; display: flex; align-items: center; gap: 8px; font-size: 14px; color: #9ab; }
+  #bpmHud button { width: 30px; height: 30px; border: 1px solid #456; background: #101a26; color: #cde; border-radius: 6px; font-size: 18px; cursor: pointer; line-height: 1; }
+  #bpmHud button:hover { background: #1a2a3c; }
+  #bpmHud b { min-width: 3.2em; text-align: center; color: #fff; font-size: 18px; }
+  body.playing #bpmHud { cursor: default; }
+  #bpmHud.hidden { display: none; }
+</style>
+</head>
+<body>
+<a id="back" href="../games.html">&larr; games</a>
+<canvas id="c"></canvas>
+
+<div id="bpmHud" class="hidden">
+  <button id="bpmDown" aria-label="Slower">&minus;</button>
+  <b><span id="bpmHudV">80</span> BPM</b>
+  <button id="bpmUp" aria-label="Faster">+</button>
+</div>
+
+<div id="panel">
+  <h1>Beat Dodge</h1>
+  <p>Play your music in another tab, set the BPM to match, and fly the delta wing. A ball is fired on the beat and reaches you on a beat. Dodge it and the counter goes up.</p>
+
+  <label for="bpm">BPM (60&ndash;105)</label>
+  <div class="row">
+    <input type="number" id="bpm" min="60" max="105" step="1" value="80" style="width:90px">
+    <input type="range" id="bpmR" min="60" max="105" step="1" value="80">
+  </div>
+
+  <div id="presets">
+    <button type="button" data-bpm="60">60</button>
+    <button type="button" data-bpm="70">70</button>
+    <button type="button" data-bpm="80">80</button>
+    <button type="button" data-bpm="90">90</button>
+    <button type="button" data-bpm="105">105</button>
+  </div>
+
+  <label for="every">Fire a ball every</label>
+  <select id="every">
+    <option value="1">Beat</option>
+    <option value="2">2 beats</option>
+    <option value="4">4 beats (bar)</option>
+  </select>
+
+  <label for="aim">Aim at your plane: <span id="aimV"></span></label>
+  <input type="range" id="aim" min="0" max="100" step="5" value="75">
+
+  <div class="row">
+    <label><input type="checkbox" id="click"> Click on beat</label>
+    <label><input type="checkbox" id="sound" checked> Dodge sounds</label>
+    <label><input type="checkbox" id="demo"> Demo (auto-dodge)</label>
+  </div>
+
+  <button id="go">Start</button>
+  <button id="resetCount" type="button">Reset count</button>
+  <small>
+    <kbd>&uarr;</kbd><kbd>&darr;</kbd> or <kbd>W</kbd><kbd>S</kbd> or mouse / touch to fly &nbsp;
+    <kbd>-</kbd><kbd>=</kbd> BPM &nbsp; <kbd>Space</kbd> pause / settings &nbsp; <kbd>F</kbd> fullscreen
+  </small>
+</div>
+
+<script>
+(() => {
+  const cv = document.getElementById('c');
+  const ctx = cv.getContext('2d');
+  let W = 0, H = 0, U = 1;
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = cv.width = innerWidth * dpr; H = cv.height = innerHeight * dpr;
+    U = Math.min(W, H) / 100;
+  }
+  addEventListener('resize', resize); resize();
+
+  // ---- settings ----
+  const $ = id => document.getElementById(id);
+  const BPM_MIN = 60, BPM_MAX = 105;
+  const set = { bpm: 80, every: 1, aim: 0.75, click: false, sound: true, demo: false };
+  const clampBpm = v => Math.max(BPM_MIN, Math.min(BPM_MAX, Math.round(+v) || set.bpm));
+
+  function setBpm(v) {
+    set.bpm = clampBpm(v);
+    $('bpm').value = set.bpm; $('bpmR').value = set.bpm; $('bpmHudV').textContent = set.bpm;
+    document.querySelectorAll('#presets button').forEach(b => b.classList.toggle('on', +b.dataset.bpm === set.bpm));
+  }
+  document.querySelectorAll('#presets button').forEach(b =>
+    b.addEventListener('click', () => { setBpm(b.dataset.bpm); b.blur(); }));
+  setBpm(set.bpm);
+  $('bpm').addEventListener('change', e => setBpm(e.target.value));
+  $('bpmR').addEventListener('input', e => setBpm(e.target.value));
+  $('aim').addEventListener('input', e => { $('aimV').textContent = e.target.value + '%'; });
+  $('aimV').textContent = $('aim').value + '%';
+  $('bpmDown').addEventListener('click', e => { setBpm(set.bpm - 1); e.target.blur(); });
+  $('bpmUp').addEventListener('click', e => { setBpm(set.bpm + 1); e.target.blur(); });
+
+  // ---- best streak (per-viewer convenience only) ----
+  let best = 0;
+  try { best = +localStorage.getItem('beatDodgeBest') || 0; } catch (e) {}
+  function saveBest() { try { localStorage.setItem('beatDodgeBest', best); } catch (e) {} }
+
+  // ---- audio ----
+  let ac = null;
+  function audio() {
+    if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+    return ac;
+  }
+  function blip(freq, dur, type, vol) {
+    const a = audio(); if (!a) return;
+    const o = a.createOscillator(), g = a.createGain();
+    o.type = type || 'sine'; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol || 0.15, a.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + dur);
+    o.connect(g); g.connect(a.destination);
+    o.start(); o.stop(a.currentTime + dur);
+  }
+
+  // ---- state ----
+  let running = false, paused = true;
+  let t = 0, last = 0;               // game clock (seconds), only advances while playing
+  let nextBeat = 0, beatIdx = 0, pulse = 0;
+  let balls = [], pops = [];
+  let stats;
+  const plane = { y: 0, target: 0, shake: 0, flash: 0 };
+  const keys = {};
+
+  function newStats() { return { dodged: 0, hit: 0, streak: 0 }; }
+
+  function reset() {
+    t = 0; nextBeat = 0.8; beatIdx = 0; pulse = 0;
+    balls = []; pops = []; stats = newStats();
+    plane.y = plane.target = H / 2; plane.shake = plane.flash = 0;
+  }
+
+  const planeX = () => W * 0.2;
+  const ballR = () => U * 2.6;
+  const hitDist = () => ballR() + U * 2.4;
+  const planeMaxV = () => H * 0.85;        // px per second
+  const clampY = y => Math.max(U * 6, Math.min(H - U * 12, y));
+
+  function spawnBall(beatT) {
+    const interval = 60 / set.bpm;
+    const aimed = Math.random() < set.aim;
+    let y = aimed ? plane.y + (Math.random() - 0.5) * U * 5 : U * 6 + Math.random() * (H - U * 18);
+    balls.push({ y: clampY(y), launch: beatT, arrive: beatT + interval * 2, judged: false });
+  }
+
+  // demo: park the plane at the nearest height that clears every ball still on its way
+  function autopilot() {
+    const pending = balls.filter(b => !b.judged).sort((a, b) => a.arrive - b.arrive);
+    if (!pending.length) return;
+    const gap = hitDist() * 1.5;
+    const cands = [plane.target];
+    for (const b of pending) cands.push(clampY(b.y - gap), clampY(b.y + gap));
+    const clearance = c => Math.min(...pending.map(b => Math.abs(c - b.y)));
+    const safe = cands.filter(c => clearance(c) >= gap);
+    if (safe.length) {
+      plane.target = safe.reduce((a, c) => Math.abs(c - plane.y) < Math.abs(a - plane.y) ? c : a);
+    } else {
+      // too dense to clear all of them: clear the soonest one as far as possible
+      const first = pending[0];
+      plane.target = cands.reduce((a, c) => Math.abs(c - first.y) > Math.abs(a - first.y) ? c : a);
+    }
+  }
+
+  function step(dt) {
+    t += dt;
+
+    // beats
+    while (t >= nextBeat) {
+      const bt = nextBeat;
+      nextBeat += 60 / set.bpm;
+      pulse = 1;
+      if (set.click) blip(beatIdx % 4 === 0 ? 1200 : 800, 0.05, 'square', 0.06);
+      if (beatIdx % set.every === 0) spawnBall(bt);
+      beatIdx++;
+    }
+    pulse = Math.max(0, pulse - dt * 4);
+
+    // plane
+    if (set.demo) autopilot();
+    else {
+      let dir = 0;
+      if (keys.ArrowUp || keys.w) dir -= 1;
+      if (keys.ArrowDown || keys.s) dir += 1;
+      if (dir) plane.target = clampY(plane.target + dir * planeMaxV() * dt);
+    }
+    const d = plane.target - plane.y, mv = planeMaxV() * dt;
+    plane.y += Math.abs(d) < mv ? d : Math.sign(d) * mv;
+    plane.shake = Math.max(0, plane.shake - dt * 3);
+    plane.flash = Math.max(0, plane.flash - dt * 3);
+
+    // balls: judged the moment they reach the plane's x
+    for (const b of balls) {
+      if (!b.judged && t >= b.arrive) {
+        b.judged = true;
+        if (Math.abs(b.y - plane.y) < hitDist()) {
+          stats.hit++; stats.streak = 0; plane.shake = 1; plane.flash = 1;
+          pops.push({ x: planeX(), y: plane.y - U * 4, txt: 'HIT', col: '#ff5a5a', age: 0 });
+          if (set.sound) blip(110, 0.25, 'sawtooth', 0.18);
+        } else {
+          stats.dodged++; stats.streak++;
+          if (!set.demo && stats.streak > best) { best = stats.streak; saveBest(); }
+          pops.push({ x: planeX(), y: plane.y - U * 4, txt: '+1', col: '#6fe39a', age: 0 });
+          if (set.sound) blip(660 + Math.min(stats.streak, 12) * 30, 0.12, 'triangle', 0.12);
+        }
+      }
+    }
+    balls = balls.filter(b => t < b.arrive + 1.2);
+    for (const p of pops) p.age += dt;
+    pops = pops.filter(p => p.age < 0.8);
+  }
+
+  // ---- drawing ----
+  function drawPlane() {
+    const x = planeX() + (plane.shake ? (Math.random() - 0.5) * U * 2 * plane.shake : 0);
+    const y = plane.y + (plane.shake ? (Math.random() - 0.5) * U * 2 * plane.shake : 0);
+    const s = U * 0.5;
+    // engine glow
+    const g = ctx.createRadialGradient(x - 30 * s, y, 0, x - 30 * s, y, 22 * s);
+    g.addColorStop(0, 'rgba(255,170,60,.8)'); g.addColorStop(1, 'rgba(255,170,60,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x - 30 * s, y, 22 * s, 0, 7); ctx.fill();
+    // delta wing, nose to the right
+    ctx.beginPath();
+    ctx.moveTo(x + 48 * s, y);
+    ctx.lineTo(x - 34 * s, y - 36 * s);
+    ctx.lineTo(x - 18 * s, y);
+    ctx.lineTo(x - 34 * s, y + 36 * s);
+    ctx.closePath();
+    ctx.fillStyle = plane.flash > 0 ? '#ff7a7a' : '#cfe8ff';
+    ctx.fill();
+    ctx.strokeStyle = '#6fb3ff'; ctx.lineWidth = Math.max(1, U * 0.25); ctx.stroke();
+    // cockpit
+    ctx.beginPath(); ctx.moveTo(x + 22 * s, y); ctx.lineTo(x - 2 * s, y - 6 * s); ctx.lineTo(x - 2 * s, y + 6 * s);
+    ctx.closePath(); ctx.fillStyle = '#1f6fb5'; ctx.fill();
+  }
+
+  function draw() {
+    ctx.fillStyle = '#05070d'; ctx.fillRect(0, 0, W, H);
+
+    // scrolling lane lines
+    ctx.strokeStyle = 'rgba(80,120,180,.12)'; ctx.lineWidth = 1;
+    const off = (t * U * 12) % (U * 12);
+    for (let x = -off; x < W; x += U * 12) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+    for (let y = U * 6; y < H; y += U * 12) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+
+    // beat line at the plane's x
+    const px = planeX();
+    ctx.strokeStyle = `rgba(111,179,255,${0.15 + pulse * 0.6})`;
+    ctx.lineWidth = U * (0.3 + pulse * 0.6);
+    ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, H); ctx.stroke();
+
+    // balls
+    const startX = W + ballR();
+    for (const b of balls) {
+      const p = (t - b.launch) / (b.arrive - b.launch);
+      const x = px + (startX - px) * (1 - p);
+      // trail
+      ctx.strokeStyle = 'rgba(255,200,90,.25)'; ctx.lineWidth = ballR() * 0.6;
+      ctx.beginPath(); ctx.moveTo(x, b.y); ctx.lineTo(Math.min(W, x + U * 14), b.y); ctx.stroke();
+      ctx.beginPath(); ctx.arc(x, b.y, ballR(), 0, 7);
+      ctx.fillStyle = '#ffbf47'; ctx.fill();
+      ctx.strokeStyle = '#fff3d1'; ctx.lineWidth = Math.max(1, U * 0.2); ctx.stroke();
+    }
+
+    drawPlane();
+
+    // pops
+    ctx.textAlign = 'center'; ctx.font = `700 ${U * 3.2}px system-ui, sans-serif`;
+    for (const p of pops) {
+      ctx.globalAlpha = 1 - p.age / 0.8; ctx.fillStyle = p.col;
+      ctx.fillText(p.txt, p.x + U * 6, p.y - p.age * U * 8);
+    }
+    ctx.globalAlpha = 1;
+
+    // beat dots (4 per bar)
+    const cur = (beatIdx - 1 + 4) % 4;
+    for (let i = 0; i < 4; i++) {
+      ctx.beginPath(); ctx.arc(W / 2 + (i - 1.5) * U * 5, H - U * 4, U * 1.1, 0, 7);
+      ctx.fillStyle = (i === cur && pulse > 0) ? '#6fb3ff' : 'rgba(255,255,255,.18)'; ctx.fill();
+    }
+
+    // HUD
+    if (set.demo) {
+      ctx.textAlign = 'center'; ctx.fillStyle = '#ffbf47'; ctx.font = `700 ${U * 2.4}px system-ui, sans-serif`;
+      ctx.fillText('DEMO', W / 2, U * 5);
+    }
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#fff'; ctx.font = `800 ${U * 9}px system-ui, sans-serif`;
+    ctx.fillText(stats.dodged, U * 3, U * 10);
+    ctx.fillStyle = '#7f95ad'; ctx.font = `600 ${U * 2.2}px system-ui, sans-serif`;
+    ctx.fillText('DODGED', U * 3.2, U * 13.5);
+    const total = stats.dodged + stats.hit;
+    const acc = total ? Math.round(stats.dodged / total * 100) + '%' : '--';
+    ctx.fillText(`HIT ${stats.hit}   STREAK ${stats.streak}   BEST ${best}   ACC ${acc}`, U * 3.2, U * 17.5);
+  }
+
+  function loop(now) {
+    if (running) {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      if (!paused) step(dt);
+      draw();
+    }
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  // ---- flow ----
+  function showPanel(show) {
+    $('panel').classList.toggle('hidden', !show);
+    $('bpmHud').classList.toggle('hidden', show);
+    document.body.classList.toggle('playing', !show);
+  }
+  function start() {
+    audio(); if (ac && ac.state === 'suspended') ac.resume();
+    set.every = +$('every').value; set.aim = +$('aim').value / 100;
+    set.click = $('click').checked; set.sound = $('sound').checked; set.demo = $('demo').checked;
+    setBpm($('bpm').value);
+    reset();
+    running = true; paused = false; last = performance.now();
+    showPanel(false);
+  }
+  function togglePause() {
+    if (!running) return;
+    paused = !paused;
+    if (paused) showPanel(true); else { last = performance.now(); showPanel(false); }
+  }
+  $('go').addEventListener('click', () => { if (running && paused && t > 0) resume(); else start(); });
+  function resume() {
+    set.every = +$('every').value; set.aim = +$('aim').value / 100;
+    set.click = $('click').checked; set.sound = $('sound').checked; set.demo = $('demo').checked;
+    setBpm($('bpm').value);
+    paused = false; last = performance.now(); showPanel(false);
+  }
+  $('go').textContent = 'Start';
+  // zero dodged / hit / streak; best streak is kept
+  $('resetCount').addEventListener('click', e => { stats = newStats(); pops = []; e.target.blur(); draw(); });
+
+  addEventListener('keydown', e => {
+    if (e.target && e.target.tagName === 'INPUT' && e.target.type !== 'checkbox' && e.target.type !== 'range') {
+      if (e.key === 'Enter') e.target.blur();
+      return;
+    }
+    const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    if (k === ' ') { e.preventDefault(); if (running && !e.repeat) { togglePause(); $('go').textContent = paused ? 'Resume' : 'Start'; } return; }
+    if (k === 'Escape') { if (running && !paused) { togglePause(); $('go').textContent = 'Resume'; } return; }
+    if (k === 'f') { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen(); return; }
+    if (k === '-' || k === '_') { setBpm(set.bpm - 1); return; }
+    if (k === '=' || k === '+') { setBpm(set.bpm + 1); return; }
+    if (k === 'ArrowUp' || k === 'ArrowDown') e.preventDefault();
+    keys[k] = true;
+  });
+  addEventListener('keyup', e => { keys[e.key.length === 1 ? e.key.toLowerCase() : e.key] = false; });
+  addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
+
+  // mouse / touch: plane follows pointer height, limited by max speed
+  function pointer(e) {
+    if (!running || paused || set.demo) return;
+    const dpr = cv.height / innerHeight;
+    plane.target = clampY(e.clientY * dpr);
+  }
+  cv.addEventListener('pointermove', pointer);
+  cv.addEventListener('pointerdown', pointer);
+
+  stats = newStats();
+  reset();
+  draw();
+})();
+</script>
+</body>
+</html>
