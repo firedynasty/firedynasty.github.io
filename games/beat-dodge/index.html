@@ -89,7 +89,7 @@
   <button id="resetCount" type="button">Reset count</button>
   <small>
     <kbd>&uarr;</kbd><kbd>&darr;</kbd> or <kbd>W</kbd><kbd>S</kbd> or mouse / touch to fly &nbsp;
-    <kbd>-</kbd><kbd>=</kbd> BPM &nbsp; <kbd>Space</kbd> pause / settings &nbsp; <kbd>F</kbd> fullscreen
+    <kbd>&larr;</kbd><kbd>&rarr;</kbd> BPM &plusmn;2, <kbd>-</kbd><kbd>=</kbd> &plusmn;1 &nbsp; <kbd>Space</kbd> pause / settings &nbsp; <kbd>F</kbd> fullscreen
   </small>
 </div>
 
@@ -380,6 +380,8 @@
     if (k === 'f') { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen(); return; }
     if (k === '-' || k === '_') { setBpm(set.bpm - 1); return; }
     if (k === '=' || k === '+') { setBpm(set.bpm + 1); return; }
+    if (k === 'ArrowLeft') { e.preventDefault(); setBpm(set.bpm - 2); return; }
+    if (k === 'ArrowRight') { e.preventDefault(); setBpm(set.bpm + 2); return; }
     if (k === 'ArrowUp' || k === 'ArrowDown') e.preventDefault();
     keys[k] = true;
   });
