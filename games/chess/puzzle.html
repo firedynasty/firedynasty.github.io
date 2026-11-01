@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pocket Chess Puzzle</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<style>
+  :root { --light:#f0d9b5; --dark:#b58863; --bg:#262421; --panel:#33302c; --text:#eee; --muted:#aaa; --accent:#7fa650; --bad:#d9534f; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:system-ui,sans-serif; }
+  .wrap { max-width:520px; margin:0 auto; padding:16px; }
+  h1 { font-size:20px; margin:0 0 2px; }
+  .meta { color:var(--muted); font-size:14px; margin-bottom:10px; display:flex; justify-content:space-between; }
+  #prompt { font-size:18px; font-weight:600; margin-bottom:10px; min-height:26px; }
+  #board { display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); aspect-ratio:1; width:100%; border:3px solid #111; user-select:none; touch-action:manipulation; }
+  .sq { position:relative; display:flex; align-items:center; justify-content:center; font-size:min(8.5vw,48px); line-height:1; cursor:pointer; overflow:hidden; }
+  .sq.l { background:var(--light); } .sq.d { background:var(--dark); }
+  .sq.sel::after, .sq.last::after { content:""; position:absolute; inset:0; background:rgba(255,235,59,.5); }
+  .sq.ok::after { content:""; position:absolute; inset:0; background:rgba(127,166,80,.7); }
+  .sq.bad::after { content:""; position:absolute; inset:0; background:rgba(217,83,79,.7); }
+  .sq img { position:relative; z-index:1; width:100%; height:100%; pointer-events:none; }
+  #msg { margin-top:12px; min-height:24px; font-size:16px; }
+  #msg.good { color:var(--accent); } #msg.err { color:var(--bad); }
+  .row { display:flex; gap:8px; margin-top:10px; }
+  button { flex:1; background:var(--panel); color:var(--text); border:1px solid #555; border-radius:6px; padding:10px; font-size:16px; cursor:pointer; }
+  button:hover { background:#444; } button.go { background:var(--accent); border-color:var(--accent); color:#111; font-weight:700; }
+  .dots { display:flex; gap:4px; margin-top:12px; flex-wrap:wrap; }
+  .dot { width:10px; height:10px; border-radius:50%; background:#555; } .dot.done { background:var(--accent); } .dot.cur { outline:2px solid #fff; }
+  a { color:var(--muted); font-size:13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Pocket Chess Puzzle</h1>
+  <div class="meta"><span id="info"></span><span id="score"></span></div>
+  <div id="prompt"></div>
+  <div id="board"></div>
+  <div id="msg"></div>
+  <div class="row">
+    <button id="hint">Hint</button>
+    <button id="skip">Skip</button>
+    <button id="next" class="go" style="display:none">Next ▶</button>
+  </div>
+  <div class="dots" id="dots"></div>
+  <p><a href="index.html">Chess viewer</a> · Puzzles from the <a href="https://database.lichess.org/#puzzles">Lichess puzzle database</a> (CC0)</p>
+</div>
+<script>
+const PUZZLES = [{"id":"j7ziX","fen":"r4rk1/pbp2pp1/1p2p2p/3n1q2/2B5/1P2P3/PB1P1PQ1/2KR3R b - - 3 18","moves":"d5b4 g2g7","rating":781,"theme":"mateIn1"},{"id":"LKRry","fen":"r1b1k1nr/p3q1p1/2p1pp2/1p1p3p/1n1P3P/1PQ1PNP1/PBP2PB1/2KR3R w kq - 1 13","moves":"a2a3 b4a2 c1d2 a2c3","rating":875,"theme":"fork"},{"id":"qiV9o","fen":"2r2k2/5p1p/pp2pp2/8/8/2PnN1PP/P1R2PK1/8 b - - 2 36","moves":"d3b4 c3b4 c8c2 e3c2","rating":914,"theme":"hangingPiece"},{"id":"saQin","fen":"q4rk1/2p1bppp/4pn2/8/1n1PN3/1P3N1P/1BPRQ1P1/rK3B1R w - - 1 19","moves":"b2a1 a8a2 b1c1 a2a1","rating":916,"theme":"mateIn2"},{"id":"apEpy","fen":"r3k1nr/1pp2pQp/p7/4P3/5P2/3nq3/PP2B1PP/RN2K1NR w kq - 7 16","moves":"e1d1 e3c1","rating":920,"theme":"mateIn1"},{"id":"gVfFq","fen":"5k2/R7/p1pK4/3b1r2/8/8/8/6R1 b - - 6 49","moves":"f5f7 a7a8","rating":928,"theme":"mateIn1"},{"id":"X1R55","fen":"3q4/pQR5/1p4pk/3p1p2/1B1Pn2r/P5pP/6K1/8 b - - 7 43","moves":"h6g5 b4e7 d8e7 c7e7","rating":940,"theme":"fork"},{"id":"YXYpw","fen":"2b1k3/3pnp2/p1p1p3/2P1P1p1/1P1PN1r1/5N1p/5P1P/4RK2 b - - 1 22","moves":"e7f5 e4f6 e8d8 f6g4","rating":946,"theme":"fork"},{"id":"OZl71","fen":"5k2/r4pp1/2B4p/1R2P3/p4P2/6P1/2n2K1P/8 b - - 1 38","moves":"c2d4 b5b8 f8e7 b8e8","rating":952,"theme":"mateIn2"},{"id":"8agcS","fen":"1r1q4/1p4kp/5pp1/3Pp3/1Q1nP3/5P2/P4P1P/R4RK1 w - - 0 26","moves":"b4c3 d4e2 g1g2 e2c3","rating":962,"theme":"fork"},{"id":"IKEAc","fen":"r3k2r/pbpnqppp/1p3n2/6B1/2B5/4PN2/PP3PPP/R2QK2R w KQkq - 0 11","moves":"c4b5 e7b4 d1d2 b4b5","rating":962,"theme":"fork"},{"id":"FloPZ","fen":"r2qrbk1/pbp2p2/1p4p1/2n1N1P1/2B2p2/BPP4P/P2NQ3/R3K1R1 b Q - 1 19","moves":"e8e5 e2e5 c5d3 c4d3","rating":967,"theme":"hangingPiece"},{"id":"9jsQe","fen":"3R1q1k/5p2/1pB2P1p/r4bpQ/p7/2P4P/2P3P1/7K b - - 8 30","moves":"f8d8 h5h6 f5h7 h6g7","rating":968,"theme":"mateIn2"},{"id":"kE4Dq","fen":"r1bq1r2/ppp1k1pp/1b6/4p3/4P3/1BP2Q2/PP3PPP/RN2K2R w KQ - 4 13","moves":"f3g3 b6f2 g3f2 f8f2","rating":975,"theme":"fork"},{"id":"strLj","fen":"rn1q1rk1/1b1pnpbp/2p1p1p1/8/1p1PP2P/1BN1BN2/1PPQ1PP1/2KR3R w - - 0 13","moves":"c3e2 a8a1","rating":984,"theme":"mateIn1"},{"id":"XtGYj","fen":"6rk/pp3p2/2p2P1p/2b2RpP/3p4/1B4PK/Pr6/3R4 w - - 0 36","moves":"f5c5 g5g4 h3h4 b2h2","rating":985,"theme":"mateIn2"},{"id":"bxRBj","fen":"r4k1r/pR3bpB/2n1p3/3pP3/2pP3Q/2P2N2/5KPP/q7 b - - 3 24","moves":"c6d8 h4e7","rating":989,"theme":"mateIn1"},{"id":"tkX7J","fen":"r3k2r/p2bnppp/1qp1p3/3pP3/1P1N4/P1B2P2/2P3PP/R2QK2R w KQkq - 1 15","moves":"d4b3 b6e3 d1e2 e3c3","rating":993,"theme":"fork"},{"id":"eW2vd","fen":"3Q4/p4ppk/q6p/4P3/P7/3b2P1/5PBP/1r1R2K1 w - - 2 30","moves":"g2e4 d3e4 d1b1 e4b1","rating":995,"theme":"hangingPiece"},{"id":"vpWO1","fen":"r3r1k1/1R3pp1/2p4p/8/3p4/PQ3P2/q2B2PP/2R3K1 b - - 1 33","moves":"a2d2 b3f7 g8h8 f7g7","rating":998,"theme":"mateIn2"},{"id":"YKszb","fen":"r4rk1/5p1p/p2p2p1/1p1Pp1q1/5n2/P2B3P/1PP2PP1/3RQRK1 w - - 0 23","moves":"e1e3 g5g2","rating":1020,"theme":"mateIn1"},{"id":"POXbn","fen":"8/8/k5pp/8/2K3P1/2N4P/1b6/8 b - - 0 44","moves":"a6b6 c3a4 b6c7 a4b2","rating":1026,"theme":"fork"},{"id":"exwIs","fen":"r3k2r/2p2pp1/1q2p2p/1p1p4/pPP2Pn1/4P1P1/PQ1N2P1/R3R1K1 b kq - 0 23","moves":"b5c4 b2g7 e8c8 g7g4","rating":1034,"theme":"fork"},{"id":"h5RFi","fen":"r1bqkbnr/pp1ppp1p/6p1/1B6/3pP3/5Q2/PPPP1PPP/RNB1K2R w KQkq - 0 6","moves":"d2d3 d8a5 c2c3 a5b5","rating":1038,"theme":"fork"},{"id":"Fh6DN","fen":"r1b3k1/3p2p1/1bp3qp/pp1BPp2/3P1P2/P1B2Q2/1P4PP/2R3K1 b - - 0 32","moves":"c6d5 f3d5 g6e6 d5a8","rating":1039,"theme":"fork"},{"id":"wFrV4","fen":"8/4R1pk/p6p/1p1b2q1/3Q4/7P/PPP3P1/4R1K1 w - - 0 31","moves":"e1e5 g5g2","rating":1041,"theme":"mateIn1"},{"id":"WDkMx","fen":"5r1k/p4pbp/1n4p1/1Q6/PNpq4/5bP1/1P2r2P/R2R1BK1 w - - 2 25","moves":"d1d4 g7d4","rating":1042,"theme":"mateIn1"},{"id":"c1Scm","fen":"r1bqk2r/ppp1bp2/5n2/3Pp1pp/2P1Pp2/2N4P/PP1BB1P1/R2QK2R b KQkq - 3 11","moves":"e7b4 d1a4 c8d7 a4b4","rating":1051,"theme":"fork"},{"id":"VchMz","fen":"2b5/8/6k1/1P1p4/1K1P1b2/3N2p1/8/8 b - - 1 52","moves":"g3g2 d3f4 g6f5 f4g2","rating":1063,"theme":"hangingPiece"},{"id":"vKKqT","fen":"r1b2k1r/ppppnBpp/3q4/2b1N2Q/4P3/2N5/PP3PPP/R4RK1 b - - 2 12","moves":"g7g6 h5h6","rating":1075,"theme":"mateIn1"},{"id":"6N0Pz","fen":"8/8/p4B1R/P4pp1/4prkP/3b4/5PK1/8 b - - 0 46","moves":"g5h4 h6h4","rating":1076,"theme":"mateIn1"},{"id":"8aRIn","fen":"1r3rk1/2pnqppp/p3b3/3p4/5R2/2NP3P/PPP1Q1PN/R5K1 w - - 2 16","moves":"b2b3 e7c5 e2f2 c5c3","rating":1078,"theme":"fork"},{"id":"uuKDh","fen":"r7/pp4pk/2pq2np/3pNQ2/3Pn3/2PN3P/PPB3PK/R7 w - - 1 27","moves":"h2h1 e4g3 h1g1 g3f5","rating":1082,"theme":"fork"},{"id":"dEpMc","fen":"3q3k/r5p1/1p4Pp/p2B1Q2/2P5/PP6/8/2K5 b - - 1 33","moves":"d8e7 f5c8 e7d8 c8d8","rating":1093,"theme":"mateIn2"},{"id":"WB3Xq","fen":"r3k2r/p2n1pp1/2p5/2bpp3/8/2NP2qB/PPP3P1/R1BQR2K w kq - 2 17","moves":"c3e2 h8h3 g2h3 g3h3","rating":1096,"theme":"mateIn2"},{"id":"rPF7Q","fen":"r1b2rk1/p3qpp1/2pp3p/4p3/1P2n2N/2N4P/P3BPP1/2RQ1RK1 w - - 0 18","moves":"h4f5 c8f5 c3e4 f5e4","rating":1098,"theme":"hangingPiece"},{"id":"Lgi5Q","fen":"5r2/1p2Qp1k/4pPpp/1P6/2n2q2/P6P/6P1/2R4K w - - 0 39","moves":"e7f8 f4c1 h1h2 c1f4","rating":1100,"theme":"hangingPiece"},{"id":"rZxR5","fen":"1r1q1rk1/Q4ppp/B1n1p3/1N1pPb2/5P2/P7/1P4PP/R3K1NR w KQ - 5 18","moves":"a7f2 d8a5 f2d2 a5a6","rating":1106,"theme":"fork"},{"id":"bLhv8","fen":"8/4R3/5p2/8/1KBqPk2/P7/8/8 w - - 5 46","moves":"a3a4 d4d6 b4b5 d6e7","rating":1108,"theme":"fork"},{"id":"T7PLz","fen":"r1bb1r2/p2n2pp/2p1k3/1p2P1B1/4P3/2N5/PPP3PP/2KR1R2 w - - 4 16","moves":"f1f8 d8g5 c1b1 d7f8","rating":1108,"theme":"hangingPiece"},{"id":"qdJoG","fen":"1k1r3r/2p1qppp/3nb3/1Bp5/R7/Q3P3/PPP1N1PP/R5K1 b - - 0 19","moves":"d6b5 a4a8 b8b7 a3a6","rating":1109,"theme":"mateIn2"},{"id":"2oV24","fen":"8/8/8/4Qpq1/7p/5k2/1P3P1P/3R2K1 w - - 0 44","moves":"g1f1 g5g2 f1e1 g2f2","rating":1118,"theme":"mateIn2"},{"id":"PcD6C","fen":"8/5kpp/p4p2/1p2p3/2r4P/PR2PKP1/1P3P2/8 w - - 1 39","moves":"b3d3 e5e4 f3e2 e4d3","rating":1118,"theme":"fork"},{"id":"awqGj","fen":"r4rk1/ppp2ppp/2np4/2b1p3/4P1n1/2PP1N1q/PP2BP2/R1BQRNK1 w - - 2 12","moves":"f3g5 c5f2","rating":1120,"theme":"mateIn1"},{"id":"lgu1R","fen":"1r1n1k1r/p2R3p/3N1pp1/6b1/2PB4/3K4/P4PPP/8 b - - 0 26","moves":"b8b1 d7d8 f8e7 d8h8","rating":1123,"theme":"hangingPiece"},{"id":"x8bpk","fen":"r3k2r/pp2pp1p/5q2/3Pb3/2R3Q1/8/P3KPPP/7R b kq - 3 24","moves":"h7h5 c4c8 a8c8 g4c8","rating":1124,"theme":"mateIn2"},{"id":"ptwNm","fen":"1R3bk1/3qpp1p/b1pp2p1/p1nP4/2P1P3/2r2P1P/3NB1P1/Q5K1 b - - 1 25","moves":"c3c2 b8f8 g8f8 a1h8","rating":1127,"theme":"mateIn2"},{"id":"KHhc8","fen":"6Q1/4r3/p1p2q1k/1p5r/1P1P3P/P3P3/4KP2/6R1 b - - 0 35","moves":"e7g7 g8h8 g7h7 h8f6","rating":1127,"theme":"mateIn2"},{"id":"ABhIW","fen":"r2q2kQ/1p6/3p1rp1/p1pP4/8/8/PPP5/1K5R b - - 1 25","moves":"g8f7 h1h7","rating":1128,"theme":"mateIn1"},{"id":"NxIV1","fen":"2k4r/ppp2ppp/6r1/1B6/3n1Q2/2P2nBq/PP3P1P/R4R1K b - - 2 19","moves":"f3h2 f4c7","rating":1130,"theme":"mateIn1"},{"id":"DjFY7","fen":"r3r3/p4pkp/2p3p1/2Qp4/6P1/1P3q1P/P1P2P2/3RR1K1 w - - 2 25","moves":"e1e8 f3d1 e8e1 d1e1","rating":1132,"theme":"hangingPiece"},{"id":"O8Mx7","fen":"3R1Q2/5p1k/p3b1pp/1p2q3/4p3/6P1/P4P2/6K1 b - - 3 41","moves":"g6g5 f8g8","rating":1134,"theme":"mateIn1"},{"id":"6xKJc","fen":"rnb1k1r1/ppp2pBp/8/8/2B1n3/8/P2q1PPP/R2Q1RK1 w q - 1 13","moves":"d1d2 e4d2 f1e1 c8e6","rating":1134,"theme":"fork"},{"id":"QluhP","fen":"3r2qk/1b1QBp1p/2p2p2/p7/8/8/PPP2PPP/4R1K1 b - - 2 23","moves":"d8d7 e7f6 g8g7 e1e8","rating":1139,"theme":"mateIn2"},{"id":"MJVyw","fen":"r2k1r2/1pp1qRp1/1p4Qp/8/3nP3/P2P4/1PP3PP/R1B3K1 w - - 5 18","moves":"f7e7 d4e2 g1h1 f8f1","rating":1142,"theme":"mateIn2"},{"id":"lM4ec","fen":"r3R3/2q3k1/p4ppp/3p4/2pP1Q2/8/PP3PPP/4R1K1 b - - 0 26","moves":"c7f4 e1e7","rating":1143,"theme":"mateIn1"},{"id":"WKLPL","fen":"2rr2k1/p3ppbp/8/1p2Pp2/2B5/2K1B2P/PP3PP1/R6R w - - 0 20","moves":"f2f4 c8c4 c3b3 d8d3","rating":1143,"theme":"mateIn2"},{"id":"FmRou","fen":"1k1r4/1p3ppp/pN6/2pP4/P1Q2b2/3R1P2/KPR5/6qr b - - 7 31","moves":"d8d6 c4f4 g1b1 a2b3","rating":1143,"theme":"hangingPiece"},{"id":"iYVwH","fen":"2r3rk/1p3ppp/pq2p3/3p2Q1/3P1N2/1P4RP/P5P1/6K1 b - - 6 24","moves":"f7f6 f4g6 h7g6 g5h4","rating":1145,"theme":"mateIn2"},{"id":"ycr0v","fen":"r1bq1rk1/pp3ppp/2nbpn2/2pp4/4PP2/3P1NP1/PPP3BP/RNBQR1K1 b - - 0 8","moves":"c8d7 e4e5 d6e7 e5f6","rating":1148,"theme":"fork"},{"id":"7c2C6","fen":"4r2k/1Q1R2bp/p7/4Bpp1/5P2/2q4P/P5PK/8 b - - 1 29","moves":"g7e5 d7h7 h8g8 b7f7","rating":1150,"theme":"mateIn2"},{"id":"OWNLX","fen":"3k4/3p4/1p1p2pQ/p2P2K1/P7/3qN1P1/4bP2/8 b - - 4 45","moves":"e2f3 h6f8 d8c7 f8f3","rating":1151,"theme":"fork"},{"id":"e1jM5","fen":"r3k2r/ppp1bppp/2qp1n2/8/3QP1P1/2N1B3/PPP2P1P/2KR3R b kq - 0 11","moves":"f6g4 d4g7 e7f6 g7g4","rating":1155,"theme":"fork"},{"id":"QEjNK","fen":"r1b2rk1/ppB3pp/2p5/7q/3N2n1/N1P3P1/PP3PB1/R2Q1RK1 w - - 0 23","moves":"f1e1 h5h2 g1f1 f8f2","rating":1157,"theme":"mateIn2"},{"id":"iZhx6","fen":"r5k1/5pb1/1p1P2p1/1qp1rb1p/3pB3/3P2PP/2QBR2K/4R3 b - - 0 30","moves":"b5d7 e4a8 e5e2 e1e2","rating":1157,"theme":"hangingPiece"},{"id":"3XsAL","fen":"r4rk1/ppp2pbp/2q1bnp1/4p1B1/1P2P3/P1NB1P2/2P1Q1PP/3R1R1K w - - 1 17","moves":"c3a4 c6a4 d3b5 a4a3","rating":1157,"theme":"hangingPiece"},{"id":"EOBRA","fen":"5k2/1b3P1p/p5p1/1p3pN1/3q4/5P1P/PP4P1/2R4K b - - 2 32","moves":"h7h6 g5e6 f8f7 e6d4","rating":1158,"theme":"fork"},{"id":"2NWBK","fen":"3r2k1/5pp1/p3q2p/8/R2P4/5QP1/5PKP/8 w - - 10 32","moves":"f3d3 e6c6 d4d5 c6a4","rating":1160,"theme":"fork"},{"id":"MlZIt","fen":"8/r4B1k/p4QpR/P5r1/1p6/4P3/6PK/5q2 b - - 0 45","moves":"h7h6 f6h8","rating":1163,"theme":"mateIn1"},{"id":"Lzjvm","fen":"3r2k1/1pp5/p6p/3P1B2/P2b1P1P/8/6K1/4R3 b - - 0 29","moves":"d8d5 f5e6 g8f8 e6d5","rating":1166,"theme":"fork"},{"id":"ghbYO","fen":"1q6/2p3p1/Q2p1k1p/1PpPPp2/2P5/4K3/3P2PP/8 b - - 0 34","moves":"f6e5 a6a1","rating":1169,"theme":"mateIn1"},{"id":"nHfvv","fen":"r5k1/pp1qn2p/2np4/2p3N1/2PbB1P1/1P1P4/P6P/1R3Q1K b - - 0 20","moves":"d7g4 f1f7 g8h8 f7h7","rating":1169,"theme":"mateIn2"},{"id":"NYUZq","fen":"5r2/1pp4R/1pkpr1p1/8/2P1P3/4KP2/P7/1R6 b - - 1 28","moves":"c6c5 h7c7","rating":1170,"theme":"mateIn1"},{"id":"dRIIU","fen":"2kr4/pp3P2/6Pr/8/7p/8/P1K5/6R1 b - - 0 42","moves":"h6g6 g1g6 c8d7 g6g8","rating":1170,"theme":"hangingPiece"},{"id":"rRaj8","fen":"r1bk1R1N/ppppn1pp/8/2b1p1Bq/4P3/3P2P1/PPP4P/RN2K3 b Q - 1 15","moves":"h5e8 h8f7","rating":1172,"theme":"mateIn1"},{"id":"SVt8F","fen":"3r1k2/1Q3ppp/2N1p3/1pp5/3q1P2/1B1P4/P1P2nPP/R4R1K w - - 5 22","moves":"f1f2 d4a1 f2f1 a1f1","rating":1172,"theme":"mateIn2"},{"id":"O9ChJ","fen":"8/1pk5/p7/3R4/3nN1B1/P3bP2/1PP4r/3K4 w - - 5 32","moves":"c2c3 h2h1","rating":1173,"theme":"mateIn1"},{"id":"NlCc0","fen":"r2q2kr/pbpnb2p/1p3p1B/5Q2/3P4/8/PPP2PPP/R3K2R b KQ - 0 14","moves":"e7f8 f5e6","rating":1173,"theme":"mateIn1"},{"id":"mTR9b","fen":"8/1k1P3p/4Q1p1/1p6/8/8/1r1r4/7K w - - 1 45","moves":"d7d8q b2b1 e6e1 b1e1","rating":1173,"theme":"mateIn2"},{"id":"qnRIp","fen":"1r3rk1/2p2R1p/3p2p1/8/2Q1P2P/PB2q1P1/1P5K/2n5 b - - 0 31","moves":"f8f7 c4f7 g8h8 f7f6","rating":1173,"theme":"mateIn2"},{"id":"MCNZM","fen":"r4rk1/p2Rbppp/8/2N5/1nPB4/5Q2/PP1q2PP/5RK1 w - - 10 28","moves":"d4c3 e7c5 g1h1 d2d7","rating":1175,"theme":"hangingPiece"},{"id":"pn90G","fen":"3rkbnr/ppp3pp/8/2p3q1/4p3/4PNPP/PPP1NP2/R1BQ1RK1 b k - 0 13","moves":"d8d1 f3g5 d1f1 g1f1","rating":1175,"theme":"hangingPiece"},{"id":"7dm1q","fen":"r1bq1b1r/p4Qp1/2pkpn1p/2pp4/4NP2/2N5/PPP3PP/R1B2RK1 b - - 1 14","moves":"f6e4 c3e4 d5e4 f1d1","rating":1180,"theme":"mateIn2"},{"id":"h5VYJ","fen":"r3kb1r/pp3ppp/2np4/4pP2/4q3/2K5/PPP4P/RNBQ1B1R w kq - 0 12","moves":"f1d3 e4b4","rating":1181,"theme":"mateIn1"},{"id":"X8gjd","fen":"r1b1k2r/p3ppb1/1q5p/3NP3/5Pp1/6P1/PPPQ2P1/2KR3R b kq - 0 17","moves":"b6b7 d5f6 e7f6 d2d8","rating":1181,"theme":"mateIn2"},{"id":"oGU70","fen":"7K/6P1/6qk/8/5P2/8/8/8 w - - 3 60","moves":"g7g8q g6f6 g8g7 f6g7","rating":1185,"theme":"mateIn2"},{"id":"rwh4B","fen":"1k4nr/ppp3pp/8/4PQ2/8/2q2R2/P1P3PP/1RBr2K1 w - - 2 17","moves":"g1f2 c3e1","rating":1187,"theme":"mateIn1"},{"id":"qpPE2","fen":"r1b2rk1/p1p2ppp/2p3q1/4P1N1/2B2Q2/8/PP3PPP/3R2K1 b - - 2 20","moves":"h7h6 c4f7 g6f7 g5f7","rating":1187,"theme":"fork"},{"id":"K0sv5","fen":"2r1kb1r/Q4R2/1Rq1p2p/3pP3/2pB2bp/6P1/P2N1P2/6K1 b k - 1 25","moves":"c6a8 a7d7","rating":1189,"theme":"mateIn1"},{"id":"fHPAs","fen":"2r3k1/1p3ppp/1q2p3/pn1pN3/1b1P1BP1/1Q2P3/2b1BP1P/2R3K1 b - - 2 23","moves":"c2b3 c1c8 b4f8 e5d7","rating":1190,"theme":"hangingPiece"},{"id":"F9nFL","fen":"1k1r3r/ppp2ppp/5n2/4p3/3nP3/P2PQ1P1/1PP1N1qP/R2BK2R w KQ - 5 18","moves":"e3g1 d4f3","rating":1192,"theme":"mateIn1"},{"id":"WH3Jt","fen":"6k1/3q2p1/2p1pr1p/Q7/P2P4/B1nB2bP/5P2/4R1K1 w - - 0 33","moves":"f2g3 d7d4 g1h1 d4d3","rating":1192,"theme":"fork"},{"id":"STP2Y","fen":"8/4R2p/p5k1/1p4P1/1n3PK1/1q6/6P1/8 b - - 0 55","moves":"b4c6 f4f5","rating":1193,"theme":"mateIn1"},{"id":"fJTEb","fen":"8/5pk1/Q6p/2p3p1/P5P1/5N2/1P3nPK/7q w - - 1 33","moves":"h2g3 f2e4","rating":1203,"theme":"mateIn1"},{"id":"ehGzM","fen":"rnbq3r/p3p3/1kp5/1pNp4/PP1b4/6B1/2P1QPPP/R3KB1R b KQ - 0 18","moves":"d4a1 a4a5","rating":1204,"theme":"mateIn1"},{"id":"Vyi6q","fen":"rn2kb1r/pp2pppp/2p2n2/1N3b2/1q6/4BP2/PPP4P/2KRQBNR b kq - 2 10","moves":"b4e1 b5c7","rating":1206,"theme":"mateIn1"},{"id":"SHHpq","fen":"3rkq1r/1bp1n3/pn1p2B1/1p1P4/3B1P1p/P7/1PP5/1K1RQ2R b k - 3 30","moves":"e8d7 e1e6","rating":1207,"theme":"mateIn1"},{"id":"dIYWy","fen":"8/5p2/6pk/3Q1q2/5P2/P5P1/2rR2KP/8 w - - 1 42","moves":"d5f5 c2d2 g2f1 g6f5","rating":1208,"theme":"hangingPiece"},{"id":"6qMXC","fen":"3q1rk1/p2n1pp1/3Q1n1p/1B1p4/3P4/P1r2P1P/5P2/R1B1K1R1 b Q - 1 18","moves":"c3c1 a1c1 d8a5 d6b4","rating":1209,"theme":"hangingPiece"},{"id":"Xqvhf","fen":"1r5r/5pk1/8/p3Q1P1/q2p3p/b6P/1B6/K1R3R1 b - - 0 38","moves":"g7g8 e5b8 a3f8 a1b1","rating":1212,"theme":"hangingPiece"},{"id":"fTv5A","fen":"8/8/7P/1R1k1b2/P1p1p3/1p3p2/8/4K3 b - - 3 70","moves":"d5d4 b5f5 b3b2 f5b5","rating":1214,"theme":"hangingPiece"},{"id":"633TH","fen":"5k2/3b1p1p/P3p1p1/1P6/N2b2P1/3B4/5PP1/5K2 w - - 4 30","moves":"b5b6 d7a4 b6b7 d4a7","rating":1215,"theme":"hangingPiece"},{"id":"8qdP6","fen":"n3bbr1/4k3/1p6/p1p1Np1p/1nP2Pp1/1K5P/PP1BB3/3R2R1 w - - 0 27","moves":"d2c3 a5a4 b3a3 b4c2","rating":1216,"theme":"mateIn2"},{"id":"zpr76","fen":"r1brN3/1pb2pkp/p7/5p2/8/2P5/PP3PPP/3RR1K1 b - - 5 23","moves":"g7f8 e8c7 d8d1 e1d1","rating":1217,"theme":"hangingPiece"},{"id":"ciFDJ","fen":"r4rk1/ppp1qppb/8/3p4/2nP2N1/2P1PPQ1/P3K2P/R4BR1 b - - 8 20","moves":"f8e8 g4h6 g8h8 g3g7","rating":1224,"theme":"mateIn2"},{"id":"tg406","fen":"4rk1r/p2b1p2/3R1n2/7p/2p2PpP/2Q5/PPP2Bq1/1K1R4 b - - 1 28","moves":"g2f2 c3f6 h8h7 d6d7","rating":1224,"theme":"hangingPiece"},{"id":"59Hum","fen":"3qr3/p6R/5kpQ/5b2/1P2p3/2P5/P6P/5RK1 w - - 7 39","moves":"h7a7 d8b6 g1h1 b6a7","rating":1226,"theme":"fork"},{"id":"5AHAO","fen":"3r4/1R4Pk/4b2p/4N3/1P3P1b/2P2K2/6P1/8 w - - 2 36","moves":"g2g4 e6d5 f3e2 d5b7","rating":1227,"theme":"fork"},{"id":"v5Xxl","fen":"8/1Bk5/P7/1P2p3/4Kp2/8/5b2/8 w - - 63 87","moves":"a6a7 c7b7 a7a8q b7a8","rating":1237,"theme":"hangingPiece"},{"id":"Lgged","fen":"r4r1k/3q2pp/2b2n2/R7/pQ6/3p1N1P/1P1B2P1/R5K1 b - - 5 30","moves":"a8a5 b4f8 f6g8 d2a5","rating":1240,"theme":"hangingPiece"},{"id":"QydFV","fen":"8/5p1k/1p6/1P1RP2P/8/2Np2r1/P6r/1NK5 w - - 5 52","moves":"c3d1 h2c2","rating":1244,"theme":"mateIn1"},{"id":"lRsXi","fen":"2rn1qrk/4bpp1/p2p1n1p/4pP2/B1p1P3/2N4P/PPPB1QRP/6RK w - - 4 26","moves":"d2h6 g7h6 g2g8 f6g8","rating":1244,"theme":"hangingPiece"},{"id":"XfKgj","fen":"2r2rk1/pp1Nbppp/4pn2/2q3B1/7R/2n5/PPQ2PPP/2R3K1 b - - 1 20","moves":"c5g5 d7f6 g7f6 c2h7","rating":1247,"theme":"mateIn2"},{"id":"9ZZhG","fen":"6k1/3r3p/7K/6Q1/4r3/8/8/8 b - - 5 41","moves":"g8f8 g5f5 d7f7 f5e4","rating":1249,"theme":"fork"},{"id":"xymeB","fen":"1nk5/1p2b3/1Pp1b3/3pP1p1/3Pp2r/P3P1K1/5Q2/6R1 w - - 6 35","moves":"g1g2 h4h3","rating":1254,"theme":"mateIn1"},{"id":"eV8mX","fen":"rnb1kb1r/1p1ppppp/8/pP1N4/1q6/4PQ2/1B1P1PPP/2R1K1NR b Kkq - 3 12","moves":"b4b2 c1c8","rating":1256,"theme":"mateIn1"},{"id":"eC46x","fen":"2r1r1k1/5ppp/2R2P2/1p4P1/3pQ3/1q5P/5P2/3R2K1 w - - 0 30","moves":"c6c8 b3d1 g1g2 e8c8","rating":1256,"theme":"hangingPiece"},{"id":"Enpk2","fen":"8/2k5/3n4/5p2/1K6/8/8/3R4 w - - 0 43","moves":"d1d6 c7d6 b4c3 d6e5","rating":1263,"theme":"hangingPiece"},{"id":"5l9El","fen":"5q1k/2R3b1/4p2p/pP2P3/P1p5/6Q1/5PPK/8 w - - 0 44","moves":"g3g6 g7e5 h2g1 e5c7","rating":1264,"theme":"fork"},{"id":"omeDY","fen":"r1b2rk1/1ppp1pp1/1p5p/4P3/1PnP1B2/7P/P1B3P1/3R1R1K b - - 0 21","moves":"a8a2 c2b3 a2b2 b3c4","rating":1268,"theme":"fork"},{"id":"DbQa9","fen":"6k1/6pp/p4p2/3P4/3PpP1N/b5Pq/1r2Q2P/5RK1 w - - 1 29","moves":"e2a6 h3h2","rating":1271,"theme":"mateIn1"},{"id":"89hLf","fen":"1r3rk1/4b2p/q1n3p1/1p3p2/1P3P2/2QP2P1/2N3BP/5RK1 b - - 0 26","moves":"f8c8 g2d5 g8f8 c3h8","rating":1276,"theme":"mateIn2"},{"id":"RCvEI","fen":"1rr3k1/5pp1/1q2bP1p/3p4/3N3P/Pp2QP2/1P6/1K1R3R b - - 0 26","moves":"e6f5 d4f5 b6e3 f5e3","rating":1282,"theme":"hangingPiece"},{"id":"zaDhT","fen":"r3k2r/1pp2ppp/1pb1p3/8/2PbN3/5B2/PP3PPP/R1KR4 b kq - 2 16","moves":"d4f2 e4f2 c6f3 g2f3","rating":1285,"theme":"hangingPiece"},{"id":"O9Gt1","fen":"r1q2r2/p1p2ppQ/1p1p1n1k/n3P1NP/2bP4/2P5/P5P1/R1B1K2R b KQ - 2 19","moves":"f6h7 g5f7","rating":1286,"theme":"mateIn1"},{"id":"8l1VM","fen":"4r1k1/5pp1/b2q3p/2pP4/2N5/1rQ5/1P3PPP/R3R1K1 b - - 0 24","moves":"b3c3 e1e8 d6f8 e8f8","rating":1286,"theme":"hangingPiece"},{"id":"30Ed4","fen":"1r4k1/4rpbp/p1N1bnp1/8/P3p3/1P2P1P1/5PBP/2R2RK1 b - - 3 27","moves":"e7c7 c6b8 c7c1 f1c1","rating":1287,"theme":"hangingPiece"},{"id":"ORShB","fen":"6r1/2P2p2/3p3k/p2P1P2/1p6/8/1Q5p/1R4qK w - - 0 47","moves":"b1g1 h2g1q","rating":1291,"theme":"mateIn1"},{"id":"lC9TO","fen":"1r4k1/5pp1/p3p1p1/3pQ1Pn/1q1N1P1P/8/1Pr5/1R3RK1 b - - 1 26","moves":"b4d2 e5b8 g8h7 d4c2","rating":1291,"theme":"hangingPiece"},{"id":"FKDzh","fen":"8/Q1P3pk/4p2p/1q1pPp2/4b3/4r3/P2R1RPP/6K1 w - - 0 34","moves":"c7c8q e3e1 f2f1 b5f1","rating":1292,"theme":"mateIn2"},{"id":"5OjAm","fen":"r1b2rk1/ppp3pp/4p3/b3Np2/3q1P2/1QPB4/PP3PPP/R3K2R w KQ - 0 17","moves":"e1c1 d4f4 c1b1 f4e5","rating":1295,"theme":"fork"},{"id":"p1Gvl","fen":"r1b2rk1/4bppp/p1nq1n2/1ppNp1N1/2B5/PP2P3/1BQP1PPP/R3K2R b KQ - 1 12","moves":"b5c4 d5f6 g7f6 c2h7","rating":1296,"theme":"mateIn2"},{"id":"cLCI9","fen":"1k1r4/p1p5/1p1p2R1/3PbP2/1q6/1P2Q2P/P1P4P/1K4R1 w - - 1 29","moves":"e3c1 b4c3 a2a3 c3a1","rating":1301,"theme":"mateIn2"},{"id":"3eFR9","fen":"2r1r1k1/2q2pp1/R6p/nP1Pp3/2P1P3/7P/2QN2P1/1R4K1 w - - 5 32","moves":"b1b4 c7c5 g1h2 c5b4","rating":1304,"theme":"fork"},{"id":"bXZEc","fen":"2k4r/2p2p1p/1p3p2/3r4/P7/2P5/1P3PPP/R3K2R w KQ - 0 22","moves":"a1d1 h8e8 e1f1 d5d1","rating":1307,"theme":"mateIn2"},{"id":"XSlkX","fen":"8/p1b2kp1/2p1pp2/1p3bp1/3P4/P1P1BQ1P/1P3PPq/4RK2 w - - 2 28","moves":"f3c6 f5d3 e1e2 h2h1","rating":1312,"theme":"mateIn2"},{"id":"YZRAj","fen":"8/6pk/1P6/P7/3P3p/4P1b1/2rBR1P1/6K1 w - - 0 39","moves":"d2e1 c2e2 e1g3 h4g3","rating":1315,"theme":"hangingPiece"},{"id":"W9kIC","fen":"1r1q1rk1/pb1n1pp1/1p1ppn1p/7N/3P3B/2PB1Q2/P1P2PPP/R3K2R w KQ - 2 14","moves":"f3f4 f6h5 h4d8 h5f4","rating":1318,"theme":"hangingPiece"},{"id":"oES9n","fen":"r3kbnr/ppq2ppp/2n1p3/1Q1p4/3P1B2/2N2N2/PPP2PPP/R3K2R b KQkq - 3 9","moves":"c7f4 b5b7 c6d8 b7a8","rating":1319,"theme":"fork"},{"id":"4EBXG","fen":"3Q2k1/5pp1/1p6/p1b5/7p/1b5P/6P1/7K b - - 1 42","moves":"g8h7 d8d3 h7g8 d3b3","rating":1322,"theme":"fork"},{"id":"42xqv","fen":"r1bq1rk1/ppp2pp1/2nbpn1p/3pN3/3P4/2PBP1B1/PP1N1PPP/R2QK2R b KQ - 7 9","moves":"c6e5 d4e5 d6e5 g3e5","rating":1325,"theme":"fork"},{"id":"ScsJM","fen":"1k1rr3/ppp1qppp/1bp5/4nQ2/3P1N2/P3B3/1PP4P/2KR1B1R w - - 2 18","moves":"d4e5 b6e3 c1b1 d8d1","rating":1326,"theme":"hangingPiece"},{"id":"uzQb5","fen":"8/P6r/1kN1Bn2/5P2/4p1p1/2P1Rbr1/8/R4K2 w - - 0 45","moves":"a7a8q h7h1 f1f2 g3g2","rating":1328,"theme":"mateIn2"},{"id":"qTWxV","fen":"r1b2rk1/pp3ppp/3p4/2p2Pq1/2BpP2b/3P3P/PPPK2P1/R1BQ3R w - - 3 13","moves":"d2e2 g5g2","rating":1331,"theme":"mateIn1"},{"id":"fp9xh","fen":"7r/1pp1k1p1/p3p3/5B1p/3q4/8/PP2QnPP/R1B4K w - - 1 23","moves":"h1g1 f2h3 g1f1 d4g1","rating":1333,"theme":"mateIn2"},{"id":"yZadm","fen":"2r5/1p1nkp2/7p/3Pp1p1/8/2rB1P1P/3K2P1/2B4R b - - 7 31","moves":"d7c5 d2c3 c5d3 c3d3","rating":1340,"theme":"hangingPiece"},{"id":"N6HmJ","fen":"6Q1/1b1nkn2/1p2p3/1P1p4/Nq1b4/8/2B2BPP/4R1K1 w - - 0 31","moves":"g8g3 b4e1","rating":1342,"theme":"mateIn1"},{"id":"1G7HE","fen":"2r2rk1/ppp3pp/2n1p3/6P1/3PPp1q/P1N2QnP/1PK1N2B/2R3R1 w - - 2 23","moves":"e2g3 c6d4 c2b1 d4f3","rating":1344,"theme":"fork"},{"id":"vOR4n","fen":"2kr3r/ppp1q1p1/2p3pp/8/2N1n1P1/2PPb2P/PP2QP2/2KR3R w - - 0 17","moves":"f2e3 e4g3 e2f3 g3h1","rating":1346,"theme":"fork"},{"id":"KZPQT","fen":"8/6p1/2pBpk2/1bPp4/5PP1/2r5/5K2/3R4 b - - 12 39","moves":"g7g5 d6e5 f6f7 e5c3","rating":1358,"theme":"fork"},{"id":"DSDjj","fen":"8/1k3Np1/1p5p/2p2b2/8/1PR4P/1P3rPK/8 b - - 0 38","moves":"f5e6 f7d8 b7a6 d8e6","rating":1359,"theme":"fork"},{"id":"Tk1Im","fen":"7q/3pkp2/3RpN2/1KPbPpPB/r7/8/8/3R4 b - - 0 38","moves":"h8a8 d6d7 e7f8 d7f7","rating":1372,"theme":"mateIn2"},{"id":"o2Kk0","fen":"7R/1k6/pBp1P3/5P2/2p1KP1b/2Pr4/PP5r/R7 w - - 3 30","moves":"e4e5 h2e2 b6e3 e2e3","rating":1375,"theme":"mateIn2"},{"id":"x3tlr","fen":"8/8/N2k4/8/4R3/1P2b1P1/1P2rr2/1K5R w - - 1 41","moves":"h1h6 e3h6 e4e2 f2e2","rating":1377,"theme":"hangingPiece"},{"id":"fjkdB","fen":"4r2k/ppp2q1p/6p1/5p2/2P5/1Q3NP1/Pb3PKP/4R3 b - - 5 28","moves":"e8e1 b3b2 h8g8 f3e1","rating":1379,"theme":"hangingPiece"},{"id":"2VcD2","fen":"6k1/p4p1p/1p2p1p1/6QP/2P1r3/1P1r1KR1/P1R3P1/6q1 w - - 2 27","moves":"f3e4 g1d4","rating":1383,"theme":"mateIn1"},{"id":"f1YRH","fen":"8/1p4p1/8/4N2B/p5Pk/8/1r3PK1/8 b - - 1 42","moves":"a4a3 e5f3","rating":1387,"theme":"mateIn1"},{"id":"z0N6m","fen":"3rr1k1/4np1p/3Bb1p1/p3P3/1p1N4/3B4/5PPP/R5K1 b - - 0 26","moves":"f7f6 d4e6 f6e5 e6d8","rating":1388,"theme":"hangingPiece"},{"id":"iODBV","fen":"r1b3k1/pp1q1Ppp/3N1b2/8/8/BnP2B2/P5PP/4R2K b - - 0 23","moves":"g8f8 e1e8 d7e8 f7e8q","rating":1397,"theme":"mateIn2"},{"id":"4MrGq","fen":"3r3k/pp3p1p/5P2/4N1R1/8/1P4KP/n2p2P1/7r b - - 3 36","moves":"h7h6 e5f7 h8h7 g5g7","rating":1398,"theme":"mateIn2"}];
+const LABEL = {mateIn1:'Mate in 1', mateIn2:'Mate in 2', fork:'Find the fork', hangingPiece:'Win material'};
+const $ = id => document.getElementById(id);
+const store = { get(k,d){ try{ return JSON.parse(localStorage.getItem(k)) ?? d; }catch(e){ return d; } },
+                set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} } };
+
+let solved = new Set(store.get('pcp_solved', []));
+let idx = 0, game, line, step, flip, sel = null, locked = false, missed = false;
+
+// Puzzles are sorted easiest-first; resume at the first one not yet solved.
+function pickStart() {
+  const unsolved = PUZZLES.findIndex(p => !solved.has(p.id));
+  return unsolved === -1 ? 0 : unsolved;
+}
+
+function load(i) {
+  idx = i; const p = PUZZLES[idx];
+  game = new Chess(p.fen);
+  line = p.moves.split(' ');
+  step = 0; sel = null; locked = true; missed = false;
+  flip = false;
+  $('next').style.display = 'none'; $('hint').disabled = false;
+  setMsg('');
+  render(null);
+  // opponent's first move, shown after a beat so the player sees what changed
+  setTimeout(() => {
+    const m = play(line[step++]);
+    flip = game.turn() === 'b';
+    render(m); locked = false;
+    $('prompt').textContent = (game.turn()==='w' ? 'White' : 'Black') + ' to move — ' + (LABEL[p.theme] || 'Find the best move');
+  }, 600);
+  $('info').textContent = `Puzzle ${idx+1}/${PUZZLES.length} · rating ${p.rating}`;
+  $('score').textContent = `Solved ${solved.size}`;
+  dots();
+}
+
+function play(uci) {
+  return game.move({from:uci.slice(0,2), to:uci.slice(2,4), promotion:uci[4]});
+}
+
+function render(last) {
+  const b = $('board'); b.innerHTML = '';
+  const files = 'abcdefgh';
+  for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) {
+    const rank = flip ? r + 1 : 8 - r, file = flip ? 7 - f : f;
+    const name = files[file] + rank;
+    const d = document.createElement('div');
+    d.className = 'sq ' + ((file + rank) % 2 === 0 ? 'd' : 'l');
+    d.dataset.sq = name;
+    if (sel === name) d.classList.add('sel');
+    if (last && (last.from === name || last.to === name)) d.classList.add('last');
+    const pc = game.get(name);
+    if (pc) { const im = document.createElement('img'); im.src = `pieces/${pc.color}${pc.type.toUpperCase()}.png`; im.alt = ''; im.draggable = false; d.appendChild(im); }
+    d.onclick = () => tap(name);
+    b.appendChild(d);
+  }
+}
+
+function flash(names, cls) {
+  names.forEach(n => { const e = document.querySelector(`[data-sq=${n}]`); if (e) e.classList.add(cls); });
+}
+
+function setMsg(t, c) { const m = $('msg'); m.textContent = t; m.className = c || ''; }
+
+function tap(name) {
+  if (locked) return;
+  const pc = game.get(name);
+  if (!sel) { if (pc && pc.color === game.turn()) { sel = name; render(null); flash([name],'sel'); } return; }
+  if (pc && pc.color === game.turn()) { sel = name; render(null); return; }
+  const from = sel, want = line[step];
+  sel = null;
+  // Any checkmate is accepted on a mating move, even if it isn't the stored one.
+  const trial = new Chess(game.fen());
+  const mv = trial.move({from, to:name, promotion:'q'});
+  if (!mv) { render(null); return; }
+  const exact = from + name === want.slice(0,4);
+  const altMate = trial.in_checkmate() && step === line.length - 1;
+  if (!exact && !altMate) {
+    missed = true; render(null); flash([from, name], 'bad'); setMsg('Not quite — try again', 'err');
+    setTimeout(() => render(null), 500); return;
+  }
+  game.move({from, to:name, promotion:mv.promotion}); step++;
+  render(mv);
+  if (step >= line.length) return done();
+  locked = true;
+  setTimeout(() => { const m = play(line[step++]); render(m); locked = false; setMsg('Good — keep going', 'good'); }, 450);
+}
+
+function done() {
+  locked = true;
+  if (!missed) { solved.add(PUZZLES[idx].id); store.set('pcp_solved', [...solved]); }
+  setMsg(missed ? 'Solved (with a miss) ✓' : 'Solved! ✓', 'good');
+  $('next').style.display = ''; $('hint').disabled = true;
+  $('score').textContent = `Solved ${solved.size}`; dots();
+}
+
+function dots() {
+  $('dots').innerHTML = PUZZLES.map((p,i) => `<div class="dot${solved.has(p.id)?' done':''}${i===idx?' cur':''}"></div>`).join('');
+}
+
+$('hint').onclick = () => { if (locked || !line[step]) return; missed = true; render(null); flash([line[step].slice(0,2)], 'sel'); setMsg('Move the highlighted piece'); };
+$('skip').onclick = () => load((idx + 1) % PUZZLES.length);
+$('next').onclick = () => { let n = idx + 1; while (n < PUZZLES.length && solved.has(PUZZLES[n].id)) n++; load(n % PUZZLES.length); };
+
+if (PUZZLES.length) load(pickStart()); else $('prompt').textContent = 'No puzzles loaded.';
+</script>
+</body>
+</html>
