@@ -100,11 +100,13 @@ canvas { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); b
         <li><b>Plaza ?</b>: waiting on you</li>
         <li><b>House, z</b>: resting, or done</li>
       </ul>
+      <h3>Project notes</h3>
+      <div class="isl" id="projList"></div>
       <h3>Islanders</h3>
       <div class="isl" id="islList"><p>Nobody yet. Start working in Claude Code, or press Demo.</p></div>
     </div>
     <div id="talk">
-      <header><b id="chName">Mochi</b><small id="chSub">teacher</small><button id="chCopy" title="Copy this character's hook log and our chat, ready to paste into ChatGPT or the OpenAI Playground">Copy</button><button id="chClose" title="Back to info">&times;</button></header>
+      <header><b id="chName">Mochi</b><small id="chSub">teacher</small><button id="chCopy" title="Copy the whole chat as Markdown (paste into Typora). Shift-click: copy the hook log + chat as a prompt for ChatGPT or the OpenAI Playground">Copy</button><button id="chClose" title="Back to info">&times;</button></header>
       <div class="prov" id="prov"><button type="button" data-p="ollama" class="sel">Ollama</button><button type="button" data-p="openai">OpenAI</button><label class="web" id="webLbl" title="OpenAI only: lets the model look things up online (small extra fee per search)"><input type="checkbox" id="webBox"> Web search</label></div>
       <div id="msgs"></div>
       <div class="chips2" id="chSug"></div>
@@ -456,17 +458,19 @@ try { if (localStorage.getItem('island-provider') === 'openai') provider = 'open
 var SUGGEST = [['What?', 'What am I working on?'], ['Explain', 'Explain what is happening right now, like I\'m new to this.']]; // [button label, full question sent]
 function tidy(t) { return t.replace(/\s*\(\[[^\]]*\]\([^)]*\)\)/g, '').replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1').replace(/[?&]utm_source=openai/g, ''); } // chat shows plain text: drop inline markdown links
 function addMsg(cls, text) { var d = document.createElement('div'); d.className = 'm ' + cls; d.textContent = text; msgsEl.appendChild(d); msgsEl.scrollTop = msgsEl.scrollHeight; return d; }
+var SCOUT = { id: 'projects', name: 'Scout', color: '#ffb454' }; // fixed character: owns the notes in the server's projects folder
+var SCOUT_SUGGEST = [['Projects', 'What projects am I working on, based on my notes?'], ['Next', 'What should I do next, based on my notes?']];
 function openChat(c) {
   if (chatId === c.id && chatEl.classList.contains('chatting')) { chIn.focus(); return; } // already open: don't wipe a reply that is streaming in
   chatId = c.id; chatEl.classList.add('chatting');
   document.getElementById('chName').textContent = c.name; document.getElementById('chName').style.color = c.color;
   msgsEl.innerHTML = '';
   var h = history[c.id] = history[c.id] || [];
-  if (!h.length) addMsg('hint', 'Hi, I\'m ' + c.name + '. Ask me about what\'s going on while you wait, and I\'ll explain it.');
+  if (!h.length) addMsg('hint', c === SCOUT ? 'Hi, I\'m Scout. I read your project notes. Pick OpenAI above to ask GPT about them, or Ollama to keep them local.' : 'Hi, I\'m ' + c.name + '. Ask me about what\'s going on while you wait, and I\'ll explain it.');
   h.forEach(function (m) { addMsg(m.role === 'user' ? 'u' : 'a', m.shown || m.content); });
   var sug = document.getElementById('chSug'); sug.innerHTML = '';
-  SUGGEST.forEach(function (q) { var b = document.createElement('button'); b.type = 'button'; b.textContent = q[0]; b.title = q[1]; b.onclick = function () { ask(q[1]); }; sug.appendChild(b); });
-  var pb = document.createElement('button'); pb.type = 'button'; pb.textContent = 'Paste'; pb.title = 'Explain whatever is on your clipboard (an error, a command, some code)'; pb.onclick = pasteAsk; sug.appendChild(pb);
+  (c === SCOUT ? SCOUT_SUGGEST : SUGGEST).forEach(function (q) { var b = document.createElement('button'); b.type = 'button'; b.textContent = q[0]; b.title = q[1]; b.onclick = function () { ask(q[1]); }; sug.appendChild(b); });
+  if (c !== SCOUT) { var pb = document.createElement('button'); pb.type = 'button'; pb.textContent = 'Paste'; pb.title = 'Explain whatever is on your clipboard (an error, a command, some code)'; pb.onclick = pasteAsk; sug.appendChild(pb); }
   chIn.focus();
 }
 function pasteAsk() {
@@ -482,7 +486,7 @@ function pasteAsk() {
 }
 function ask(q, shown) {
   q = (q || '').trim(); if (!q || busy || !chatId) return;
-  var c = chars[chatId], h = history[chatId];
+  var c = chatId === SCOUT.id ? SCOUT : chars[chatId], h = history[chatId];
   h.push({ role: 'user', content: q, shown: shown }); addMsg('u', shown || q); chIn.value = '';
   var bub = addMsg('a', '...'), got = '';
   busy = true;
@@ -532,6 +536,12 @@ function renderIslanders() {
   });
 }
 setInterval(renderIslanders, 500);
+(function () {
+  var b = document.createElement('button');
+  b.innerHTML = '<i style="background:' + SCOUT.color + '"></i>Scout<small>reads your projects folder</small>';
+  b.onclick = function () { openChat(SCOUT); };
+  document.getElementById('projList').appendChild(b);
+})();
 
 // ---------- copy log + chat to the clipboard ----------
 function fmtEv(ev) {
@@ -561,9 +571,19 @@ function copyText(t) {
     try { document.execCommand('copy') ? ok() : no(new Error('copy blocked')); } catch (e) { no(e); } document.body.removeChild(ta);
   });
 }
-document.getElementById('chCopy').addEventListener('click', function () {
-  var btn = this, c = chars[chatId]; if (!c) return;
+// Markdown of the whole chat, same shape as session_to_md.py (## You / ## <name>), ready to paste into Typora
+function chatMarkdown(c) {
+  var h = history[c.id] || [], out = ['# Chat with ' + c.name, ''];
+  h.forEach(function (m) { out.push('## ' + (m.role === 'user' ? 'You' : c.name), '', (m.shown || m.content).trim(), ''); });
+  return out.join('\n');
+}
+document.getElementById('chCopy').addEventListener('click', function (ev) {
+  var btn = this, c = chatId === SCOUT.id ? SCOUT : chars[chatId]; if (!c) return;
   function flash(t) { btn.textContent = t; setTimeout(function () { btn.textContent = 'Copy'; }, 1400); }
+  if (!ev.shiftKey || c === SCOUT) {
+    if (!(history[c.id] || []).length) return flash('Empty');
+    return void copyText(chatMarkdown(c)).then(function () { flash('Copied!'); }, function () { flash('Blocked'); });
+  }
   fetch('/recent?n=400').then(function (r) { return r.json(); }).then(function (all) {
     return all.filter(function (e) { return (e.agent || e.session) === c.id; }).slice(-60);
   }).catch(function () { return (c.events || []).slice(-60); }).then(function (evs) {
