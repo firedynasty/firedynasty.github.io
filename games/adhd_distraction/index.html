@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Roll &amp; Dodge</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; font-family: system-ui, sans-serif; color: #eee; }
+  canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+
+  #top {
+    position: fixed; top: 0; left: 0; right: 0; padding: calc(8px + env(safe-area-inset-top)) 12px 8px;
+    background: linear-gradient(rgba(0,0,0,.85), rgba(0,0,0,.55)); border-bottom: 1px solid #333;
+  }
+  #topRow { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  #topRow a { margin-right: auto; padding: 4px 10px; font-size: 12px; border: 1px solid #555; border-radius: 6px; background: #1b1b24; color: #ccc; text-decoration: none; }
+  #sum { font-size: 22px; font-weight: 800; }
+  #sumBtn { background: #d22; border-color: #d22; color: #fff; font-weight: 700; }
+  #counts { font-size: 12px; color: #aaa; }
+  #log {
+    font: 700 22px/1.25 ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: .08em; word-break: break-all;
+    max-height: 3.8em; overflow-y: auto; min-height: 1.25em; color: #555;
+  }
+  #log .d1 { color: #ff6b5b; } #log .d2 { color: #5bc8ff; }
+  .mini { padding: 4px 10px; font-size: 12px; border: 1px solid #555; border-radius: 6px; background: #1b1b24; color: #ccc; }
+
+  #bottom {
+    position: fixed; left: 0; right: 0; bottom: 0; padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+    background: linear-gradient(rgba(0,0,0,.55), rgba(0,0,0,.9)); border-top: 1px solid #333;
+  }
+  #roll {
+    width: 100%; height: 76px; border: 0; border-radius: 14px; background: #d22; color: #fff;
+    font-size: 24px; font-weight: 800; touch-action: manipulation; user-select: none;
+  }
+  #roll:active { background: #f44; transform: scale(.98); }
+  #paste { display: flex; gap: 8px; margin-top: 10px; }
+  #paste input {
+    flex: 1; min-width: 0; padding: 10px; background: #1b1b24; color: #eee; border: 1px solid #555; border-radius: 8px;
+    font: 16px ui-monospace, Menlo, monospace;
+  }
+  #pasteOut { margin-top: 6px; font-size: 14px; color: #ccc; min-height: 1.3em; }
+  #pasteOut b { color: #fff; font-size: 18px; }
+  #opts { display: flex; gap: 14px; margin-top: 8px; font-size: 12px; color: #999; flex-wrap: wrap; }
+  #opts label { display: flex; align-items: center; gap: 5px; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="top">
+  <div id="topRow">
+    <a href="../games.html">&larr; Games</a>
+    <span id="counts"></span>
+    <span id="sum"></span>
+    <button class="mini" id="sumBtn">Sum</button>
+    <button class="mini" id="undo">Undo</button>
+    <button class="mini" id="copy">Copy</button>
+    <button class="mini" id="clear">Clear</button>
+  </div>
+  <div id="log"></div>
+</div>
+
+<div id="bottom">
+  <button id="roll">Tap: 1 or 2</button>
+  <div id="paste">
+    <input id="pin" type="text" inputmode="numeric" autocomplete="off" placeholder="Paste digits, e.g. 111222112">
+    <button class="mini" id="pclr">&times;</button>
+  </div>
+  <div id="pasteOut"></div>
+  <div id="opts">
+    <label><input type="checkbox" id="sound" checked> Sound</label>
+    <label>Speed <input type="range" id="speed" min="0.6" max="2" step="0.1" value="1" style="width:80px"></label>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const cv = $('c'), ctx = cv.getContext('2d');
+  let W = 0, H = 0;
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = cv.width = innerWidth * dpr; H = cv.height = innerHeight * dpr;
+  }
+  addEventListener('resize', resize); resize();
+
+  // ---------- settings ----------
+  const S = { sound: true, speed: 1 };
+  try { Object.assign(S, JSON.parse(localStorage.getItem('rolldodge_s') || '{}')); } catch (e) {}
+  $('sound').checked = S.sound; $('speed').value = S.speed;
+  ['sound', 'speed'].forEach(id => $(id).addEventListener('input', () => {
+    S.sound = $('sound').checked; S.speed = +$('speed').value;
+    try { localStorage.setItem('rolldodge_s', JSON.stringify(S)); } catch (e) {}
+  }));
+
+  // ---------- the digit log ----------
+  let digits = '', showSum = false;
+  try { digits = (localStorage.getItem('rolldodge_log') || '').replace(/[^12]/g, ''); } catch (e) {}
+
+  function sumOf(str) {
+    let sum = 0, ones = 0, twos = 0, other = 0;
+    for (const ch of str) {
+      if (ch < '0' || ch > '9') continue;
+      const n = +ch; sum += n;
+      if (n === 1) ones++; else if (n === 2) twos++; else other++;
+    }
+    return { sum, ones, twos, other, len: ones + twos + other };
+  }
+  function renderLog() {
+    const r = sumOf(digits);
+    $('sum').textContent = showSum ? r.sum : '';
+    $('counts').textContent = !r.len ? '' : showSum ? `${r.len} rolls · ${r.ones}×1 · ${r.twos}×2` : `${r.len} rolls`;
+    $('sumBtn').textContent = showSum ? 'Hide' : 'Sum';
+    $('log').innerHTML = digits ? digits.replace(/./g, c => `<span class="d${c}">${c}</span>`) : 'tap to roll';
+    $('log').scrollTop = $('log').scrollHeight;
+    try { localStorage.setItem('rolldodge_log', digits); } catch (e) {}
+  }
+  renderLog();
+
+  $('sumBtn').addEventListener('click', () => { showSum = !showSum; renderLog(); });
+  $('undo').addEventListener('click', () => { digits = digits.slice(0, -1); renderLog(); });
+  $('clear').addEventListener('click', () => { digits = ''; renderLog(); });
+  $('copy').addEventListener('click', () => {
+    const b = $('copy');
+    const done = () => { b.textContent = 'Copied'; setTimeout(() => b.textContent = 'Copy', 900); };
+    if (navigator.clipboard) navigator.clipboard.writeText(digits).then(done, () => {});
+    else done();
+  });
+
+  // ---------- paste & sum ----------
+  function pasteUpdate() {
+    const v = $('pin').value, r = sumOf(v);
+    $('pasteOut').innerHTML = r.len
+      ? `Sum <b>${r.sum}</b> &nbsp;·&nbsp; ${r.len} digits &nbsp;·&nbsp; ${r.ones}×1 &nbsp; ${r.twos}×2` + (r.other ? ` &nbsp; ${r.other} other` : '')
+      : '';
+  }
+  $('pin').addEventListener('input', pasteUpdate);
+  $('pclr').addEventListener('click', () => { $('pin').value = ''; pasteUpdate(); });
+
+  // ---------- punches (from the boxing game) ----------
+  const PUNCH = {
+    L:  { hand: 'L', dodge: 'left',  from: [ .09, -.02], to: [ .05, -.12], arc: 0 },
+    R:  { hand: 'R', dodge: 'right', from: [-.09, -.02], to: [-.05, -.12], arc: 0 },
+    LH: { hand: 'L', dodge: 'down',  from: [ .30,  .02], to: [-.12, -.13], arc: -.05 },
+    RH: { hand: 'R', dodge: 'down',  from: [-.30,  .02], to: [ .12, -.13], arc: -.05 },
+    LU: { hand: 'L', dodge: 'back',  from: [ .10,  .30], to: [ .03, -.30], arc: 0 },
+    RU: { hand: 'R', dodge: 'back',  from: [-.10,  .30], to: [-.03, -.30], arc: 0 },
+  };
+  const DODGE = {
+    left:  { x: -.2,  y: 0,    rot: -.07, zoom: 1 },
+    right: { x:  .2,  y: 0,    rot:  .07, zoom: 1 },
+    down:  { x:  0,   y: .26,  rot:  0,   zoom: 1.05 },
+    back:  { x:  0,   y: -.04, rot:  0,   zoom: .9 },
+  };
+
+  let T = 0, last = 0;
+  let punch = null;
+  const queue = [];                 // forced punches from button taps: { key, digit }
+  const cam = { x: 0, y: 0, rot: 0, zoom: 1 }, camT = { x: 0, y: 0, rot: 0, zoom: 1 };
+  let pop = null;                   // big digit shown on the hit: { d, t }
+
+  const WIND = .5, STRIKE = .36, RECOVER = .45;
+  function phase() {
+    const sp = S.speed, t = punch.t, w = WIND / sp, s = STRIKE / sp, r = RECOVER / sp;
+    if (t < w) return { n: 'wind', p: t / w };
+    if (t < w + s) return { n: 'strike', p: (t - w) / s };
+    if (t < w + s + r) return { n: 'recover', p: (t - w - s) / r };
+    return { n: 'done', p: 1 };
+  }
+  const ease = p => p * p * (3 - 2 * p);
+  const lerp = (a, b, p) => a + (b - a) * p;
+
+  // ---------- sound ----------
+  let ac = null;
+  function whoosh(dur) {
+    if (!S.sound || !ac) return;
+    const n = ac.sampleRate * dur | 0, buf = ac.createBuffer(1, n, ac.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.sin(Math.PI * i / n);
+    const src = ac.createBufferSource(); src.buffer = buf;
+    const f = ac.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1.2;
+    f.frequency.setValueAtTime(300, ac.currentTime); f.frequency.exponentialRampToValueAtTime(2200, ac.currentTime + dur);
+    const g = ac.createGain(); g.gain.value = .5;
+    src.connect(f); f.connect(g); g.connect(ac.destination); src.start();
+  }
+  function ding(freq) {
+    if (!S.sound || !ac) return;
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.frequency.value = freq; g.gain.setValueAtTime(.18, ac.currentTime); g.gain.exponentialRampToValueAtTime(.001, ac.currentTime + .35);
+    o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime + .35);
+  }
+
+  // ---------- roll button ----------
+  function roll(forced) {
+    if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} }
+    if (ac && ac.state === 'suspended') ac.resume();
+    const d = forced || (Math.random() < .5 ? '1' : '2');
+    digits += d; renderLog();
+    $('roll').textContent = `Tap: 1 or 2   (last: ${d})`;
+    if (navigator.vibrate) navigator.vibrate(15);
+    if (queue.length < 3) queue.push({ key: d === '1' ? 'L' : 'R', digit: d });   // 1 = left jab, 2 = right jab
+  }
+  $('roll').addEventListener('pointerdown', e => { e.preventDefault(); roll(); });
+  addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT') return;
+    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); roll(); }
+    else if (e.key === '1' || e.key === '2') { e.preventDefault(); roll(e.key); }   // 1/2 keycode (e.g. F9 via Hammerspoon) = a tap
+  });
+
+  // ---------- update ----------
+  function update(dt) {
+    T += dt;
+    if (!punch) {
+      if (queue.length) { const q = queue.shift(); punch = { key: q.key, digit: q.digit, t: 0, whooshed: false, hit: false }; }
+    } else {
+      punch.t += dt;
+      const ph = phase();
+      if (ph.n === 'strike' && !punch.whooshed) { punch.whooshed = true; whoosh(.4 / S.speed); }
+      if (ph.n === 'strike' && ph.p > .8 && !punch.hit) {
+        punch.hit = true;
+        if (punch.digit) { pop = { d: punch.digit, t: 0 }; ding(punch.digit === '1' ? 520 : 780); }
+      }
+      if (ph.n === 'done') punch = null;
+    }
+    if (pop) { pop.t += dt; if (pop.t > .9) pop = null; }
+
+    Object.assign(camT, { x: 0, y: 0, rot: 0, zoom: 1 });
+    const k = 1 - Math.exp(-dt * 14 * S.speed);
+    for (const key of ['x', 'y', 'rot', 'zoom']) cam[key] += (camT[key] - cam[key]) * k;
+  }
+
+  // ---------- drawing ----------
+  function glove(x, y, r, hand, alpha) {
+    ctx.save();
+    ctx.globalAlpha = alpha == null ? 1 : alpha;
+    ctx.translate(x, y);
+    const side = hand === 'L' ? 1 : -1;
+    ctx.fillStyle = '#e8e8e8';
+    ctx.beginPath(); ctx.ellipse(0, r * 1.05, r * .62, r * .45, 0, 0, 7); ctx.fill();
+    const g = ctx.createRadialGradient(-r * .3 * side, -r * .35, r * .1, 0, 0, r * 1.15);
+    g.addColorStop(0, '#ff5a4a'); g.addColorStop(.55, '#c8161a'); g.addColorStop(1, '#6a0608');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.ellipse(0, 0, r, r * .95, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = '#b01015';
+    ctx.beginPath(); ctx.ellipse(-r * .72 * side, r * .15, r * .32, r * .5, .4 * side, 0, 7); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.18)';
+    ctx.beginPath(); ctx.ellipse(r * .1 * side, -r * .5, r * .5, r * .2, 0, 0, 7); ctx.fill();
+    ctx.restore();
+  }
+
+  const crowd = Array.from({ length: 160 }, (_, i) => {
+    const s = Math.sin(i * 91.7) * 43758.5453; const a = s - Math.floor(s);
+    const s2 = Math.sin(i * 12.9) * 12345.6789; const b = s2 - Math.floor(s2);
+    return { x: a * 2 - 1, y: -0.5 + b * .22, r: .008 + b * .012, h: 20 + a * 30 };
+  });
+
+  function drawRing(u) {
+    const bg = ctx.createLinearGradient(0, -u * .6, 0, u * .6);
+    bg.addColorStop(0, '#0a0a12'); bg.addColorStop(.5, '#1b1b2a'); bg.addColorStop(1, '#2b2118');
+    ctx.fillStyle = bg; ctx.fillRect(-u * 2, -u, u * 4, u * 2);
+    for (const c of crowd) {
+      ctx.fillStyle = `hsla(${c.h}, 30%, 35%, .55)`;
+      ctx.beginPath(); ctx.arc(c.x * u * 1.4, c.y * u, c.r * u, 0, 7); ctx.fill();
+    }
+    const sp = ctx.createRadialGradient(0, -u * .1, u * .05, 0, -u * .1, u * .9);
+    sp.addColorStop(0, 'rgba(255,240,210,.35)'); sp.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = sp; ctx.fillRect(-u * 2, -u, u * 4, u * 2);
+    const hz = u * .2;
+    const fl = ctx.createLinearGradient(0, hz, 0, u);
+    fl.addColorStop(0, '#6b5a3c'); fl.addColorStop(1, '#2c2418');
+    ctx.fillStyle = fl;
+    ctx.beginPath(); ctx.moveTo(-u * 3, hz); ctx.lineTo(u * 3, hz); ctx.lineTo(u * 3, u * 2); ctx.lineTo(-u * 3, u * 2); ctx.fill();
+    ['#c22', '#eee', '#c22'].forEach((col, i) => {
+      const y0 = -u * .22 + i * u * .12;
+      ctx.strokeStyle = col; ctx.lineWidth = u * .012; ctx.globalAlpha = .8;
+      ctx.beginPath(); ctx.moveTo(-u * 2.5, y0 - u * .1); ctx.lineTo(-u * .9, y0); ctx.lineTo(u * .9, y0); ctx.lineTo(u * 2.5, y0 - u * .1); ctx.stroke();
+      ctx.globalAlpha = 1;
+    });
+    ctx.fillStyle = '#333'; ctx.fillRect(-u * .93, -u * .3, u * .04, u * .5); ctx.fillRect(u * .89, -u * .3, u * .04, u * .5);
+  }
+
+  function drawOpponent(u, wind, windP, hand) {
+    const sway = Math.sin(T * 1.7) * .02 * u, bob = Math.sin(T * 3.1) * .012 * u;
+    const lean = wind ? windP * .03 * u * (hand === 'L' ? -1 : 1) : 0;
+    ctx.save();
+    ctx.translate(sway + lean, bob);
+    ctx.fillStyle = '#1a3a8a';
+    ctx.beginPath(); ctx.roundRect(-.13 * u, .16 * u, .26 * u, .2 * u, .03 * u); ctx.fill();
+    ctx.fillStyle = '#d9a37a';
+    ctx.fillRect(-.1 * u, .34 * u, .07 * u, .3 * u); ctx.fillRect(.03 * u, .34 * u, .07 * u, .3 * u);
+    const tg = ctx.createLinearGradient(-.18 * u, 0, .18 * u, 0);
+    tg.addColorStop(0, '#b27c55'); tg.addColorStop(.5, '#dba982'); tg.addColorStop(1, '#a77049');
+    ctx.fillStyle = tg;
+    ctx.beginPath(); ctx.moveTo(-.2 * u, -.04 * u); ctx.quadraticCurveTo(-.22 * u, .1 * u, -.12 * u, .2 * u);
+    ctx.lineTo(.12 * u, .2 * u); ctx.quadraticCurveTo(.22 * u, .1 * u, .2 * u, -.04 * u);
+    ctx.quadraticCurveTo(0, -.09 * u, -.2 * u, -.04 * u); ctx.fill();
+    ctx.fillStyle = '#c99068'; ctx.fillRect(-.03 * u, -.1 * u, .06 * u, .06 * u);
+    const hg = ctx.createRadialGradient(-.015 * u, -.14 * u, .01 * u, 0, -.12 * u, .08 * u);
+    hg.addColorStop(0, '#e7b690'); hg.addColorStop(1, '#b57f58');
+    ctx.fillStyle = hg;
+    ctx.beginPath(); ctx.ellipse(0, -.145 * u, .06 * u, .075 * u, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = '#1a3a8a';
+    ctx.beginPath(); ctx.ellipse(0, -.175 * u, .066 * u, .05 * u, 0, Math.PI, 0); ctx.fill();
+    ctx.fillRect(-.068 * u, -.175 * u, .016 * u, .06 * u); ctx.fillRect(.052 * u, -.175 * u, .016 * u, .06 * u);
+    ctx.fillStyle = '#211';
+    const ex = wind ? windP * .004 * u * (hand === 'L' ? 1 : -1) : 0;
+    ctx.beginPath(); ctx.ellipse(-.022 * u + ex, -.15 * u, .009 * u, .005 * u, 0, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(.022 * u + ex, -.15 * u, .009 * u, .005 * u, 0, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#7a3a30'; ctx.lineWidth = .004 * u;
+    ctx.beginPath(); ctx.moveTo(-.015 * u, -.115 * u); ctx.lineTo(.015 * u, -.115 * u); ctx.stroke();
+    ctx.restore();
+    return { sway, bob, lean };
+  }
+
+  function frame(now) {
+    requestAnimationFrame(frame);
+    const dt = Math.min((now - last) / 1000 || 0, .05); last = now;
+    update(dt);
+
+    const u = Math.min(H, W * 1.4);   // portrait phones: keep the scene from getting huge
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    ctx.save();
+    ctx.translate(W / 2, H / 2);
+    ctx.rotate(cam.rot);
+    ctx.scale(cam.zoom, cam.zoom);
+
+    ctx.save();
+    ctx.translate(-cam.x * u * .3, -cam.y * u * .3);
+    drawRing(u);
+    const ph = punch ? phase() : null;
+    const pd = punch ? PUNCH[punch.key] : null;
+    const winding = ph && ph.n === 'wind';
+    const o = drawOpponent(u, winding, winding ? ease(ph.p) : 0, pd && pd.hand);
+
+    ctx.translate(o.sway + o.lean, o.bob);
+    for (const h of ['L', 'R']) {
+      if (pd && pd.hand === h && ph.n !== 'recover') continue;
+      const side = h === 'L' ? 1 : -1;
+      let gx = side * .09 * u, gy = -.03 * u + Math.sin(T * 3.1 + side) * .005 * u;
+      if (pd && pd.hand === h) {
+        const q = ease(ph.p), f = pd.from;
+        gx = lerp(f[0] * u * .6, gx, q); gy = lerp(f[1] * u * .6, gy, q);
+      }
+      glove(gx, gy, .045 * u, h);
+    }
+    ctx.restore();
+
+    if (punch && ph.n !== 'done') {
+      let gx, gy, sc, par, alpha = 1;
+      const f = pd.from, t = pd.to;
+      if (ph.n === 'wind') {
+        const q = ease(ph.p);
+        gx = f[0] * u * (1 + .15 * q) * .6; gy = (f[1] + .05 * q) * u * .6; sc = 1 - .1 * q; par = .3;
+      } else if (ph.n === 'strike') {
+        const q = ph.p, e = q * q;
+        gx = lerp(f[0], t[0], e) * u; gy = lerp(f[1], t[1], e) * u + Math.sin(q * Math.PI) * pd.arc * u;
+        const over = Math.max(0, q - .8) / .2;
+        gx += over * (t[0] - f[0]) * .25 * u; gy += over * (t[1] - f[1]) * .25 * u;
+        sc = lerp(1, 8.5, Math.pow(q, 2.4)); par = lerp(.3, 1.7, Math.pow(q, 1.8));
+      } else {
+        const q = ph.p;
+        gx = t[0] * u * (1 + q * .6); gy = t[1] * u * (1 + q * .4); sc = lerp(8.5, 14, q); par = 1.7; alpha = 1 - q * 1.6;
+        if (q > .62) alpha = 0;
+      }
+      if (alpha > 0) {
+        ctx.save();
+        ctx.translate(-cam.x * u * par, -cam.y * u * par);
+        const r = .045 * u * sc;
+        if (ph.n === 'strike' && ph.p > .3) {
+          for (let i = 3; i >= 1; i--) {
+            const bq = Math.max(0, ph.p - i * .04), be = bq * bq;
+            const bx = lerp(f[0], t[0], be) * u, by = lerp(f[1], t[1], be) * u + Math.sin(bq * Math.PI) * pd.arc * u;
+            glove(bx, by, .045 * u * lerp(1, 8.5, Math.pow(bq, 2.4)), pd.hand, .12);
+          }
+        }
+        glove(gx, gy, r, pd.hand, alpha);
+        ctx.restore();
+      }
+    }
+    ctx.restore();
+
+    const v = ctx.createRadialGradient(W / 2, H / 2, H * .35, W / 2, H / 2, H * .95);
+    v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.65)');
+    ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+
+    // the rolled digit, popping on impact
+    if (pop) {
+      const p = pop.t / .9, size = Math.min(W, H) * (.35 + .25 * Math.min(1, p * 4));
+      ctx.save();
+      ctx.globalAlpha = 1 - p * p;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = `900 ${size}px system-ui, sans-serif`;
+      ctx.shadowColor = 'rgba(0,0,0,.9)'; ctx.shadowBlur = 30;
+      ctx.fillStyle = pop.d === '1' ? '#ff6b5b' : '#5bc8ff';
+      ctx.fillText(pop.d, W / 2, H / 2);
+      ctx.restore();
+    }
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
