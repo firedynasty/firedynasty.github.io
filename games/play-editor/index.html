@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Play Editor</title>
+<style>
+:root{--bg:#0a1019;--panel:#111a2b;--panel2:#0d1522;--line:#243452;--fg:#dbe6ff;--mute:#8aa0c8;--teal:#3ee0c0;--warn:#ffb454}
+*{box-sizing:border-box}[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{padding:14px 14px 48px}
+main{max-width:980px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;align-items:start}
+@media(max-width:820px){main{grid-template-columns:minmax(0,1fr)}}
+header{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+h1{margin:0;font-size:22px}
+input[type=text],textarea{font:inherit;color:var(--fg);background:var(--panel2);border:1px solid var(--line);border-radius:7px;padding:7px 10px;width:100%}
+textarea{resize:vertical;min-height:70px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:12px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button,select{font:inherit;color:var(--fg);background:var(--panel2);border:1px solid var(--line);border-radius:7px;padding:7px 12px;cursor:pointer}
+button:hover{border-color:#41598a}button.on{background:#12443f;border-color:var(--teal);color:#d9fff6}
+button:disabled{opacity:.4;cursor:default}button.danger:hover{border-color:#ff7a6b}
+.stage{background:#0b1220;border:1px solid #2b3c5e;border-radius:12px;padding:8px;max-width:600px;margin:0 auto}
+canvas{display:block;width:100%;aspect-ratio:49/52;border-radius:8px;touch-action:none;cursor:grab}
+canvas.drag{cursor:grabbing}
+h2{margin:0 0 8px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+.steps{margin:0;padding:0;list-style:none;display:grid;gap:4px}
+.steps li{display:flex;gap:8px;padding:6px 8px;border-radius:7px;border:1px solid transparent;cursor:pointer}
+.steps li .n{flex:0 0 22px;height:22px;border-radius:50%;background:#1b2a47;text-align:center;font-weight:700;font-size:12px;line-height:22px}
+.steps li.cur{background:#10284a;border-color:#2f5a9a}.steps li.cur .n{background:var(--teal);color:#062a22}
+.steps li span.t{overflow-wrap:anywhere;font-size:14px}
+.hint{color:var(--mute);font-size:12.5px;margin:8px 0 0}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips button{padding:5px 10px;min-width:36px}
+.say{font-size:16px;min-height:48px}
+label.chk{display:flex;gap:6px;align-items:center;font-size:14px;color:var(--mute)}
+</style></head><body>
+<main>
+<header>
+  <div style="flex:1;min-width:200px"><h1>Play Editor</h1><input type="text" id="title" placeholder="Name your play" aria-label="Play name"></div>
+  <div class="row"><button id="mE" class="on">Edit</button><button id="mP">Play</button></div>
+</header>
+
+<section>
+  <div class="stage"><canvas id="cv" width="980" height="1040" aria-label="Half court. Drag players to place them."></canvas></div>
+  <p class="hint" id="canvasHint">Drag any numbered player or X to where they should be in this scene. A move carries into the later steps until you place that player somewhere else.</p>
+</section>
+
+<aside>
+  <div class="card" id="playCard" hidden>
+    <h2 id="kicker"></h2>
+    <div class="say" id="say"></div>
+    <div class="row" style="margin-top:10px"><button id="prev">&larr; Back</button><button id="next">Next &rarr;</button><button id="auto">Auto-play</button></div>
+    <p class="hint">Keys: &larr; / &rarr; scenes, Space auto-play.</p>
+  </div>
+
+  <div class="card" id="editCard">
+    <h2>Scene <span id="stepNo"></span></h2>
+    <div class="row" style="margin-bottom:8px">
+      <button id="add" class="on">+ Add scene</button>
+      <button id="del" class="danger">Delete</button>
+      <button id="left" title="Move this scene earlier">&uarr;</button>
+      <button id="right" title="Move this scene later">&darr;</button>
+    </div>
+    <textarea id="note" placeholder="What happens in this scene? e.g. 5 screens for 3, 3 drives right." aria-label="Scene note"></textarea>
+    <h2 style="margin-top:12px">Ball</h2>
+    <div class="chips" id="ballChips"></div>
+    <h2 style="margin-top:12px">Screens &mdash; stays on until you turn it off</h2>
+    <div class="chips" id="screenChips"></div>
+    <label class="chk" style="margin-top:12px"><input type="checkbox" id="repos"> Reposition &mdash; drag without an arrow</label>
+    <label class="chk" style="margin-top:8px"><input type="checkbox" id="showD"> Show defenders</label>
+  </div>
+
+  <div class="card">
+    <h2>Scenes</h2>
+    <ul class="steps" id="list"></ul>
+  </div>
+
+  <div class="card">
+    <h2>Play</h2>
+    <div class="row">
+      <button id="mirror" title="Flip the whole play top to bottom">Mirror</button>
+      <button id="export">Export</button>
+      <button id="import">Import</button>
+      <button id="reset" class="danger">New play</button>
+    </div>
+    <input type="file" id="file" accept="application/json,.json" hidden>
+    <p class="hint" id="saveNote">Saved in this browser automatically. Export for a file you can keep.</p>
+  </div>
+</aside>
+</main>
+
+<script>
+// ---------- court geometry (feet). Half court, baseline on the right. ----------
+var L=94,W=50,X0=47,HOOP=[88.75,25];
+var cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+var S=cv.width/(L-X0+2);
+function px(x){return (x-X0+1)*S} function py(y){return (y+1)*S}
+function fx(cx){return cx/S+X0-1} function fy(cy){return cy/S-1}
+
+// ---------- state ----------
+var KEY='playEditor.v1';
+function startPositions(){
+  return {o:[[64,25],[72,10],[72,40],[80,19],[80,31]],
+          d:[[68,25],[76,12],[76,38],[84,21],[84,29]]};
+}
+function newStep(from){
+  var s=from?JSON.parse(JSON.stringify(from)):Object.assign(startPositions(),{ball:1,screens:[],note:''});
+  if(from){s.note=''}   // screens carry forward into the new scene; the note is per scene
+  return s;
+}
+var state={title:'',showD:false,steps:[newStep()]};
+var cur=0,mode='E',playT=0,drag=null,reposition=false;
+
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify(state));document.getElementById('saveNote').textContent='Saved in this browser automatically. Export for a file you can keep.'}
+  catch(e){document.getElementById('saveNote').textContent='Could not save in this browser. Use Export to keep your play.'}
+}
+function load(){
+  try{var t=localStorage.getItem(KEY);if(t){var s=JSON.parse(t);if(valid(s))state=s}}catch(e){}
+}
+function valid(s){
+  if(!s||!Array.isArray(s.steps)||!s.steps.length)return false;
+  return s.steps.every(function(p){return p&&Array.isArray(p.o)&&p.o.length===5&&Array.isArray(p.d)&&p.d.length===5&&
+    p.o.concat(p.d).every(function(q){return Array.isArray(q)&&isFinite(q[0])&&isFinite(q[1])})});
+}
+function fixup(s){
+  s.title=String(s.title||'');s.showD=s.showD!==false;
+  s.steps.forEach(function(p){p.ball=(p.ball>=0&&p.ball<=5)?(p.ball|0):0;p.screens=Array.isArray(p.screens)?p.screens.filter(function(i){return i>=1&&i<=5}):[];p.note=String(p.note||'')});
+  return s;
+}
+
+// ---------- drawing ----------
+function line(a,b,c,d){ctx.beginPath();ctx.moveTo(a,b);ctx.lineTo(c,d);ctx.stroke()}
+function court(){
+  ctx.setLineDash([]);
+  ctx.fillStyle='#c8955a';ctx.fillRect(0,0,cv.width,cv.height);
+  ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.strokeRect(px(X0),py(0),(L-X0)*S,W*S);
+  ctx.fillStyle='rgba(120,70,40,.35)';ctx.fillRect(px(L-19),py(17),19*S,16*S);ctx.strokeRect(px(L-19),py(17),19*S,16*S);
+  ctx.beginPath();ctx.arc(px(L-19),py(25),6*S,0,7);ctx.stroke();
+  var hx=HOOP[0];ctx.strokeStyle='#ff7a1a';ctx.beginPath();ctx.arc(px(hx),py(25),.75*S,0,7);ctx.stroke();
+  ctx.strokeStyle='#fff';line(px(L-4),py(22),px(L-4),py(28));
+  ctx.beginPath();ctx.arc(px(hx),py(25),4*S,Math.PI/2,Math.PI*1.5);ctx.stroke();
+  var r=23.75,sx=hx-Math.sqrt(r*r-22*22);
+  ctx.beginPath();ctx.moveTo(px(L),py(3));ctx.lineTo(px(sx),py(3));
+  ctx.arc(px(hx),py(25),r*S,Math.atan2(3-25,sx-hx),Math.atan2(47-25,sx-hx),true);ctx.lineTo(px(L),py(47));ctx.stroke();
+}
+function arrow(a,b,col,dash,w){
+  var x1=px(a[0]),y1=py(a[1]),x2=px(b[0]),y2=py(b[1]),len=Math.hypot(x2-x1,y2-y1);if(len<34)return;
+  var ux=(x2-x1)/len,uy=(y2-y1)/len,ex=x2-ux*30,ey=y2-uy*30;
+  ctx.save();ctx.strokeStyle=col;ctx.lineWidth=w||3;ctx.setLineDash(dash?[10,7]:[]);line(x1+ux*14,y1+uy*14,ex,ey);ctx.restore();
+  ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(ex+ux*12,ey+uy*12);ctx.lineTo(ex-uy*8,ey+ux*8);ctx.lineTo(ex+uy*8,ey-ux*8);ctx.closePath();ctx.fill();
+}
+function offense(p,n,ghost){
+  var x=px(p[0]),y=py(p[1]);
+  ctx.fillStyle=ghost?'rgba(13,74,47,.4)':'#0d4a2f';ctx.beginPath();ctx.arc(x,y,19,0,7);ctx.fill();
+  if(ghost){ctx.save();ctx.setLineDash([5,4]);ctx.strokeStyle='rgba(255,255,255,.6)';ctx.lineWidth=2;ctx.stroke();ctx.restore();
+    ctx.fillStyle='rgba(255,255,255,.75)';ctx.font='bold 22px system-ui,sans-serif';ctx.textAlign='center';ctx.fillText(n,x,y+8);return}
+  ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.stroke();
+  ctx.fillStyle='#fff';ctx.font='bold 22px system-ui,sans-serif';ctx.textAlign='center';ctx.fillText(n,x,y+8);
+}
+function defender(p){
+  var x=px(p[0]),y=py(p[1]);
+  ctx.setLineDash([]);ctx.strokeStyle='#fff';ctx.lineWidth=7;line(x-13,y-13,x+13,y+13);line(x+13,y-13,x-13,y+13);
+  ctx.strokeStyle='#1a4fd6';ctx.lineWidth=4;line(x-13,y-13,x+13,y+13);line(x+13,y-13,x-13,y+13);
+}
+function ball(p){
+  var x=px(p[0])+17,y=py(p[1])-17;
+  ctx.fillStyle='#ff9a3c';ctx.beginPath();ctx.arc(x,y,9,0,7);ctx.fill();ctx.strokeStyle='#7a3a00';ctx.lineWidth=2;ctx.stroke();
+  ctx.beginPath();ctx.moveTo(x-9,y);ctx.lineTo(x+9,y);ctx.stroke();
+}
+// A screener on the move gets the classic bar across the end of their path;
+// one already holding the screen faces the ball handler.
+function screenFace(was,at,n,ballNo,spots){
+  if(Math.hypot(at[0]-was[0],at[1]-was[1])>=1)return [at[0]+(at[0]-was[0]),at[1]+(at[1]-was[1])];
+  if(n===ballNo||!ballNo)return HOOP;
+  return spots[ballNo-1];
+}
+function screenBar(p,toward){
+  var dx=toward[0]-p[0],dy=toward[1]-p[1],d=Math.hypot(dx,dy)||1,ux=dx/d,uy=dy/d;
+  var cx=px(p[0])+ux*28,cy=py(p[1])+uy*28;
+  ctx.strokeStyle='#ffd34d';ctx.lineWidth=6;ctx.lineCap='round';line(cx-uy*17,cy+ux*17,cx+uy*17,cy-ux*17);ctx.lineCap='butt';
+}
+function draw(){
+  court();
+  var s=state.steps[cur],nx=state.steps[cur+1]||null;
+  if(nx){
+    for(var i=0;i<5;i++){
+      var a=s.o[i],b=nx.o[i];
+      if(Math.hypot(a[0]-b[0],a[1]-b[1])>=1){offense(b,i+1,true);arrow(a,b,'rgba(255,255,255,.92)',true)}
+    }
+    if(s.ball&&nx.ball&&s.ball!==nx.ball)arrow(s.o[s.ball-1],nx.o[nx.ball-1],'rgba(255,154,60,.95)',false,4);
+  }
+  if(state.showD)s.d.forEach(defender);
+  s.screens.forEach(function(n){
+    var was=s.o[n-1],at=nx?nx.o[n-1]:was;
+    screenBar(at,screenFace(was,at,n,s.ball,s.o));
+  });
+  s.o.forEach(function(q,i){offense(q,i+1)});
+  if(s.ball)ball(s.o[s.ball-1]);
+}
+
+// ---------- scene-to-scene animation (Play mode) ----------
+var anim=null;   // {from,to,t0,dur,trails,pass}
+function ease(t){return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2}
+function lerp(a,b,t){return [a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t]}
+function animateNext(){
+  if(anim||cur>=state.steps.length-1)return;
+  var from=state.steps[cur],to=state.steps[cur+1];
+  anim={from:from,to:to,t0:performance.now(),dur:1200,trails:{},
+        pass:(from.ball&&to.ball&&from.ball!==to.ball)
+          ?{a:from.o[from.ball-1],b:to.o[to.ball-1]}:null};
+  requestAnimationFrame(animTick);
+}
+function animTick(ts){
+  if(!anim)return;
+  var t=Math.min(1,(performance.now()-anim.t0)/anim.dur),e=ease(t),from=anim.from,to=anim.to;
+  var O=from.o.map(function(p,i){return lerp(p,to.o[i],e)});
+  var D=from.d.map(function(p,i){return lerp(p,to.d[i],e)});
+  O.forEach(function(p,i){(anim.trails['o'+i]=anim.trails['o'+i]||[]).push(p)});
+  if(state.showD)D.forEach(function(p,i){(anim.trails['d'+i]=anim.trails['d'+i]||[]).push(p)});
+  court();
+  for(var k in anim.trails){
+    var tr=anim.trails[k],cut=Math.max(0,tr.length-14);
+    for(var j=cut;j<tr.length-1;j++){
+      var a1=px(tr[j][0]),b1=py(tr[j][1]),a2=px(tr[j+1][0]),b2=py(tr[j+1][1]);
+      if(Math.hypot(a2-a1,b2-b1)>60)continue;   // don't streak across a carry-forward jump
+      ctx.strokeStyle=(k[0]==='o'?'rgba(255,255,255,':'rgba(120,170,255,')+((j-cut)/(tr.length-cut||1)*.55+.05)+')';
+      ctx.lineWidth=3;line(a1,b1,a2,b2);
+    }
+  }
+  if(state.showD)D.forEach(defender);
+  to.screens.forEach(function(n){screenBar(O[n-1],screenFace(from.o[n-1],to.o[n-1],n,to.ball,O))});
+  O.forEach(function(q,i){offense(q,i+1)});
+  if(anim.pass){
+    var bp=lerp(anim.pass.a,anim.pass.b,e);
+    ctx.fillStyle='#ff9a3c';ctx.beginPath();ctx.arc(px(bp[0]),py(bp[1]),9,0,7);ctx.fill();
+    ctx.strokeStyle='#7a3a00';ctx.lineWidth=2;ctx.stroke();
+  }else if(from.ball){
+    var hb=O[from.ball-1];
+    ctx.fillStyle='#ff9a3c';ctx.beginPath();ctx.arc(px(hb[0])+17,py(hb[1])-17,9,0,7);ctx.fill();
+    ctx.strokeStyle='#7a3a00';ctx.lineWidth=2;ctx.stroke();
+  }
+  if(t<1){requestAnimationFrame(animTick)}
+  else{anim=null;go(cur+1)}
+}
+
+// ---------- UI ----------
+function $(id){return document.getElementById(id)}
+function chips(el,labels,isOn,onPick){
+  el.innerHTML='';
+  labels.forEach(function(l){var b=document.createElement('button');b.textContent=l.t;
+    if(isOn(l.v))b.className='on';b.onclick=function(){onPick(l.v)};el.appendChild(b)});
+}
+function refresh(){
+  var s=state.steps[cur];
+  $('title').value=state.title;$('showD').checked=state.showD;
+  $('stepNo').textContent=(cur+1)+' of '+state.steps.length;
+  $('note').value=s.note;
+  chips($('ballChips'),[{t:'None',v:0}].concat([1,2,3,4,5].map(function(n){return {t:''+n,v:n}})),
+    function(v){return s.ball===v},function(v){s.ball=v;commit()});
+  chips($('screenChips'),[1,2,3,4,5].map(function(n){return {t:''+n,v:n}}),
+    function(v){return s.screens.indexOf(v)>=0},toggleScreen);
+  $('repos').checked=reposition;
+  $('canvasHint').textContent=reposition
+    ?'Reposition is on: drag a player to a new spot. No arrow, and the move carries into the scenes after this one.'
+    :(cur===0&&state.steps.length===1)
+    ?'Drag the players to where the play starts, then press + Add scene to draw the first move.'
+    :'Drag a player to where they go in this scene. The arrow shows the move, and the next scene starts at the arrow tip. To move a starting spot, adjust the arrow tip in the scene before it.';
+  $('del').disabled=state.steps.length<2;$('left').disabled=cur===0;$('right').disabled=cur===state.steps.length-1;
+  var ul=$('list');ul.innerHTML='';
+  state.steps.forEach(function(st,i){
+    var li=document.createElement('li');if(i===cur)li.className='cur';
+    li.innerHTML='<span class="n">'+(i+1)+'</span><span class="t"></span>';
+    li.lastChild.textContent=st.note||'(no note)';
+    li.onclick=function(){stopAuto();go(i)};ul.appendChild(li);
+  });
+  $('kicker').textContent=(state.title?state.title+' · ':'')+'Scene '+(cur+1)+' of '+state.steps.length;
+  $('say').textContent=s.note||'';
+  $('prev').disabled=cur===0;$('next').disabled=cur===state.steps.length-1;
+  draw();
+}
+function commit(){save();refresh()}
+function setScreen(s,n,on){
+  var k=s.screens.indexOf(n);
+  if(on&&k<0)s.screens.push(n);
+  if(!on&&k>=0)s.screens.splice(k,1);
+}
+// Setting or clearing a screen carries into the later scenes, stopping at one
+// where that screener was already set differently.
+function toggleScreen(n){
+  var had=state.steps[cur].screens.indexOf(n)>=0,now=!had;
+  setScreen(state.steps[cur],n,now);
+  for(var j=cur+1;j<state.steps.length;j++){
+    if((state.steps[j].screens.indexOf(n)>=0)!==had)break;
+    setScreen(state.steps[j],n,now);
+  }
+  commit();
+}
+function go(i){anim=null;cur=Math.max(0,Math.min(state.steps.length-1,i));refresh()}
+
+// ---------- dragging ----------
+function pointer(e){var r=cv.getBoundingClientRect();return [(e.clientX-r.left)*cv.width/r.width,(e.clientY-r.top)*cv.height/r.height]}
+cv.addEventListener('pointerdown',function(e){
+  if(mode!=='E')return;
+  var q=pointer(e);
+  var setup=reposition||(cur===0&&state.steps.length===1);   // placement, or a brand-new play
+  var idx=setup?cur:cur+1,created=false;          // moves are stored on the next scene
+  if(!setup&&cur===state.steps.length-1){state.steps.push(newStep(state.steps[cur]));created=true}
+  var dest=state.steps[idx],start=state.steps[cur],best=null,bd=40;
+  function grab(list,g){list.forEach(function(p,i){var d=Math.hypot(px(p[0])-q[0],py(p[1])-q[1]);if(d<bd){bd=d;best={g:g,i:i}}})}
+  grab(dest.o,'o');grab(dest.d,'d');              // the arrow tips (ghosts)
+  if(!setup){grab(start.o,'o');grab(start.d,'d')} // or the solid players where they stand
+  if(!best){if(created)state.steps.pop();return}
+  if(created===false&&!state.showD&&best.g==='d'){return}
+  drag=best;drag.idx=idx;drag.created=created;
+  drag.from=state.steps[idx][best.g][best.i].slice();
+  try{cv.setPointerCapture(e.pointerId)}catch(err){}cv.classList.add('drag');
+});
+cv.addEventListener('pointermove',function(e){
+  if(!drag)return;var q=pointer(e),s=state.steps[drag.idx];
+  var x=Math.max(X0-0.5,Math.min(L+0.5,fx(q[0]))),y=Math.max(-0.5,Math.min(W+0.5,fy(q[1])));
+  s[drag.g][drag.i]=[Math.round(x*10)/10,Math.round(y*10)/10];draw();
+});
+function endDrag(){
+  if(!drag)return;
+  var now=state.steps[drag.idx][drag.g][drag.i],from=drag.from,moved=now[0]!==from[0]||now[1]!==from[1];
+  if(!moved&&drag.created)state.steps.pop();       // a click with no move shouldn't leave an extra scene
+  if(moved){
+    // Carry the move forward: later scenes that still had this player at the old spot follow,
+    // until a scene where the player was already placed somewhere else.
+    for(var j=drag.idx+1;j<state.steps.length;j++){
+      var q=state.steps[j][drag.g][drag.i];
+      if(q[0]!==from[0]||q[1]!==from[1])break;
+      state.steps[j][drag.g][drag.i]=[now[0],now[1]];
+    }
+  }
+  drag=null;cv.classList.remove('drag');commit();
+}
+cv.addEventListener('pointerup',endDrag);cv.addEventListener('pointercancel',endDrag);
+
+// ---------- buttons ----------
+$('add').onclick=function(){state.steps.splice(cur+1,0,newStep(state.steps[cur]));cur++;commit()};
+$('del').onclick=function(){if(state.steps.length<2)return;state.steps.splice(cur,1);cur=Math.min(cur,state.steps.length-1);commit()};
+$('left').onclick=function(){if(cur>0){var t=state.steps[cur];state.steps[cur]=state.steps[cur-1];state.steps[cur-1]=t;cur--;commit()}};
+$('right').onclick=function(){if(cur<state.steps.length-1){var t=state.steps[cur];state.steps[cur]=state.steps[cur+1];state.steps[cur+1]=t;cur++;commit()}};
+$('note').oninput=function(){state.steps[cur].note=this.value;save();
+  var li=$('list').children[cur];if(li)li.lastChild.textContent=this.value||'(no note)'};
+$('title').oninput=function(){state.title=this.value;save();$('kicker').textContent=(state.title?state.title+' · ':'')+'Scene '+(cur+1)+' of '+state.steps.length};
+$('showD').onchange=function(){state.showD=this.checked;commit()};
+$('repos').onchange=function(){reposition=this.checked;refresh()};
+$('mirror').onclick=function(){state.steps.forEach(function(s){s.o.concat(s.d).forEach(function(q){q[1]=Math.round((W-q[1])*10)/10})});commit()};
+$('reset').onclick=function(){
+  if(state.steps.length>1||state.steps[0].note){if(!confirm('Start a new play? The current one will be cleared unless you exported it.'))return}
+  state={title:'',showD:false,steps:[newStep()]};cur=0;commit();
+};
+$('export').onclick=function(){
+  var name=(state.title||'play').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'play';
+  var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,1)],{type:'application/json'}));
+  a.download=name+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href)},1000);
+};
+$('import').onclick=function(){$('file').click()};
+$('file').onchange=function(){
+  var f=this.files[0];if(!f)return;var r=new FileReader();
+  r.onload=function(){try{var s=JSON.parse(r.result);if(!valid(s))throw 0;state=fixup(s);cur=0;commit()}
+    catch(e){alert('That file is not a play from this editor.')}};
+  r.readAsText(f);this.value='';
+};
+
+// ---------- play mode ----------
+function stopAuto(){clearTimeout(playT);playT=0;$('auto').textContent='Auto-play';$('auto').classList.remove('on')}
+function stepAuto(){
+  if(cur>=state.steps.length-1){stopAuto();return}
+  animateNext();
+  playT=setTimeout(function chk(){if(anim){playT=setTimeout(chk,100);return}playT=setTimeout(stepAuto,1400)},100);
+}
+$('prev').onclick=function(){stopAuto();if(anim)return;go(cur-1)};
+$('next').onclick=function(){stopAuto();animateNext()};
+$('auto').onclick=function(){if(playT){stopAuto();return}$('auto').textContent='Stop';$('auto').classList.add('on');
+  if(cur>=state.steps.length-1)go(0);playT=setTimeout(stepAuto,3000)};
+function setMode(m){
+  mode=m;stopAuto();$('mE').classList.toggle('on',m==='E');$('mP').classList.toggle('on',m==='P');
+  $('editCard').hidden=m!=='E';$('playCard').hidden=m!=='P';
+  $('canvasHint').hidden=m!=='E';cv.style.cursor=m==='E'?'grab':'default';refresh();
+}
+$('mE').onclick=function(){setMode('E')};$('mP').onclick=function(){setMode('P')};
+addEventListener('keydown',function(e){
+  if(mode!=='P'||/INPUT|TEXTAREA/.test(document.activeElement.tagName))return;
+  if(e.key==='ArrowRight'){stopAuto();animateNext();e.preventDefault()}
+  else if(e.key==='ArrowLeft'){stopAuto();if(!anim)go(cur-1);e.preventDefault()}
+  else if(e.key===' '){$('auto').click();e.preventDefault()}
+});
+
+load();state=fixup(state);cur=0;setMode('E');
+</script></body></html>
