@@ -13,8 +13,12 @@ games/vibe-jet/
 games/soccer_game/
 games/javascript-starfield/
 
+# Clones at the repo root. The leading slash anchors these to the root, so
+# Sky-Combat/ does NOT also swallow games/Sky-Combat, which is a real tracked
+# game linked from games.html.
+/Sky-Combat/
+/slop-newyork/
+
 # Source footage, not part of the site
 *.mp4
 *.mov
-Sky-Combat/
-slop-newyork/
