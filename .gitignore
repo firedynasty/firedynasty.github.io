@@ -8,7 +8,13 @@ games/CarDash/
 games/gorescript/
 games/SuperTux-Classic/
 games/animal-crossing-major-project/
+games/Thomas-was-a-clone/
+games/vibe-jet/
+games/soccer_game/
+games/javascript-starfield/
 
 # Source footage, not part of the site
 *.mp4
 *.mov
+Sky-Combat/
+slop-newyork/
