@@ -1,0 +1,14 @@
+.DS_Store
+
+# Vendored game clones. Each has its own .git inside, so committing one would
+# create a broken gitlink rather than real files. None is linked from
+# games/games.html. Delete the folder or add it as a real submodule if you ever
+# want it on the site.
+games/CarDash/
+games/gorescript/
+games/SuperTux-Classic/
+games/animal-crossing-major-project/
+
+# Source footage, not part of the site
+*.mp4
+*.mov
